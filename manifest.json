@@ -1,0 +1,14 @@
+{
+  "manifest_version": 3,
+  "name": "Custom20",
+  "version": "1.0",
+  "description": "Adds custom folder options for players in roll20",
+  "content_scripts": [
+    {
+      "matches": ["https://app.roll20.net/editor/"],
+      "js": ["library/sortable.js", "library/lzstring.js", "journal.js"],
+      "css": ["styles.css"],
+      "world": "MAIN"
+    }
+  ]
+}
