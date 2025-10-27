@@ -184,14 +184,21 @@ function createFolderContextMenu() {
   context.folderMenu.addEventListener("click", function (e) {
     var actionType = e.target.getAttribute("data-action-type");
     if (actionType === "add") {
-      createNewFolder();
+      var newFolder = createNewFolder({
+        id: generateUUID(),
+        pf: undefined,
+        type: "folder",
+        name: "New Folder",
+        isCollapsed: false,
+        isHidden: false,
+      });
+      context.curEl.closest("li").after(newFolder);
     } else if (actionType === "rename") {
       renameFolder();
     } else if (actionType === "remove") {
       context.curEl.remove();
     } else if (actionType === "hide") {
       context.curEl.classList.add("c20-hidden");
-      saveState();
     } else if (actionType === "show") {
       var hiddenParents = context.curEl.parentElement.closest(".c20-hidden");
       if (hiddenParents) {
@@ -201,11 +208,9 @@ function createFolderContextMenu() {
             hiddenParents = hiddenParents.closest(".c20-hidden");
           }
           context.curEl.classList.remove("c20-hidden");
-          saveState();
         }
       } else {
         context.curEl.classList.remove("c20-hidden");
-        saveState();
       }
     } else if (actionType === "toggle") {
       let root = document.querySelector("#journalfolderroot");
@@ -279,12 +284,19 @@ function createItemContextMenu() {
   context.itemMenu.addEventListener("click", function (e) {
     var actionType = e.target.getAttribute("data-action-type");
     if (actionType === "add") {
-      createNewFolder();
+      var newFolder = createNewFolder({
+        id: generateUUID(),
+        pf: undefined,
+        type: "folder",
+        name: "New Folder",
+        isCollapsed: false,
+        isHidden: false,
+      });
+      context.curEl.after(newFolder);
     } else if (actionType === "notes") {
       // Future functionality??
     } else if (actionType === "hide") {
       context.curEl.classList.add("c20-hidden");
-      saveState();
     } else if (actionType === "show") {
       var hiddenParents = context.curEl.parentElement.closest(".c20-hidden");
       if (hiddenParents) {
@@ -294,16 +306,13 @@ function createItemContextMenu() {
             hiddenParents = hiddenParents.closest(".c20-hidden");
           }
           context.curEl.classList.remove("c20-hidden");
-          saveState();
         }
       } else {
         context.curEl.classList.remove("c20-hidden");
-        saveState();
       }
     } else if (actionType === "toggle") {
       let root = document.querySelector("#journalfolderroot");
       root.classList.toggle("c20-toggle");
-      saveState();
     }
 
     context.itemMenu.style.display = "none";
@@ -327,18 +336,18 @@ function displayItemContextMenu(e, curEl) {
 }
 
 // folders
-function createNewFolder(onLoad) {
+function createNewFolder(data) {
   var expandControl = document.createElement("button");
   expandControl.type = "button";
   expandControl.className = "dd-sortablehandle";
-  expandControl.style.display = "block";
+  expandControl.style.display = data.isCollapsed ? "block" : "none";
   expandControl.setAttribute("data-action", "expand");
   expandControl.textContent = "Expand";
 
   var collapseControl = document.createElement("button");
   collapseControl.type = "button";
   collapseControl.className = "dd-unsortable";
-  collapseControl.style.display = "none";
+  collapseControl.style.display = data.isCollapsed ? "none" : "block";
   collapseControl.setAttribute("data-action", "collapse");
   collapseControl.textContent = "Collapse";
 
@@ -354,14 +363,16 @@ function createNewFolder(onLoad) {
 
   var contentTitle = document.createElement("div");
   contentTitle.className = "folder-title";
-  contentTitle.textContent = "New Folder";
+  contentTitle.textContent = data.name;
 
   var newList = document.createElement("ol");
   newList.className = "dd-list";
+  if (data.isCollapsed) newList.style.display = "none";
 
   var newFolder = document.createElement("li");
   newFolder.className = "dd-item dd-folder";
-  newFolder.setAttribute("draggable", "true");
+  newFolder.setAttribute("data-globalfolderid", data.id);
+  if (data.isCollapsed) newFolder.classList.add("dd-collapsed");
 
   content.appendChild(contentTitle);
   newFolder.appendChild(collapseControl);
@@ -370,15 +381,7 @@ function createNewFolder(onLoad) {
   newFolder.appendChild(content);
   newFolder.appendChild(newList);
 
-  if (onLoad) return newFolder;
-
-  if (context.curEl.className.includes("dd-content")) {
-    const parentLi = context.curEl.parentElement;
-    const folderList = parentLi.querySelector(".dd-list");
-    folderList.appendChild(newFolder);
-  } else {
-    context.curEl.after(newFolder);
-  }
+  return newFolder;
 }
 
 function renameFolder() {
@@ -420,8 +423,30 @@ function renameFolder() {
 
 // saving
 function saveState() {
-  var root = document.querySelector("#journalfolderroot");
-  localStorage.setItem(settings.storageId, LZString.compressToUTF16(root.innerHTML));
+  var folders = Array.from(document.querySelectorAll("#journalfolderroot"));
+  folders = folders.concat(Array.from(document.querySelectorAll("#journalfolderroot .dd-item.dd-folder")));
+
+  //create directory structure with important data elements
+  const saveData = Array.from(folders).map((folder) => {
+    return {
+      id: folder.getAttribute("data-globalfolderid"),
+      name: folder.querySelector(".folder-title").textContent,
+      pf: folder.parentElement.closest(".dd-item.dd-folder")?.getAttribute("data-globalfolderid"),
+      isCollapsed: folder.classList.contains("dd-collapsed"),
+      items: Array.from(folder.querySelector("ol").children).map((item) => {
+        if (item.classList.contains("dd-folder"))
+          return {
+            type: "folder",
+            id: item.getAttribute("data-globalfolderid"),
+            isHidden: item.classList.contains("c20-hidden"),
+          };
+        return { type: "item", id: item.getAttribute("data-itemid"), isHidden: item.classList.contains("c20-hidden") };
+      }),
+    };
+  });
+
+  localStorage.setItem(settings.storageId, LZString.compressToUTF16(JSON.stringify(saveData)));
+  console.log("save");
 }
 
 // loading
@@ -429,58 +454,59 @@ function loadState() {
   var storedData = localStorage.getItem(settings.storageId);
   if (storedData === null) return;
 
-  var domParser = new DOMParser();
-  var savedData = domParser.parseFromString(LZString.decompressFromUTF16(storedData), "text/html");
-  var savedIds = Array.from(savedData.querySelectorAll(".journalitem.dd-item")).map((x) =>
-    x.getAttribute("data-itemid")
-  );
-  var curItems = document.querySelectorAll("#journalfolderroot .journalitem.dd-item");
-  var newItems = [];
+  var savedData = JSON.parse(LZString.decompressFromUTF16(storedData));
 
-  // check for missing items
-  curItems.forEach((element) => {
-    if (!savedIds.includes(element.getAttribute("data-itemid"))) {
-      newItems.push(element);
-    }
-  });
+  var list = document.createElement("ol");
+  list.classList.add("dd-list");
 
-  if (newItems.length > 0) {
-    var addNewFolder = false;
-    var newFolder = createNewFolder(true);
-    var savedFolders = Array.from(savedData.querySelectorAll(".dd-item.dd-folder")).reduce((obj, element) => {
-      obj[element.getAttribute("data-globalfolderid")] = element;
-      return obj;
-    }, {});
+  var root = document.createElement("div");
+  root.appendChild(list);
 
-    // Put new items in existing folder if exists
-    // Otherwise put in new folder
-    for (var i = 0; i < newItems.length; i++) {
-      var folder = savedFolders[newItems[i].closest(".dd-item.dd-folder").getAttribute("data-globalfolderid")];
-      if (folder) {
-        folder.querySelector("ol").appendChild(newItems[i]);
+  var folders = savedData.reduce((obj, x) => {
+    if (x.id !== null) obj[x.id] = createNewFolder(x);
+    return obj;
+  }, {});
+
+  for (var i = 0; i < savedData.length; i++) {
+    const folderInfo = savedData[i];
+
+    //folder
+    var folder = folders[folderInfo.id];
+    if (folderInfo.id === null) folder = root;
+
+    //items in folder
+    for (var j = 0; j < folderInfo.items.length; j++) {
+      const itemInfo = folderInfo.items[j];
+
+      var item;
+      if (itemInfo.type === "item") {
+        item = document.querySelector(`#journalfolderroot [data-itemid="${itemInfo.id}"]`);
       } else {
-        addNewFolder = true;
-        newFolder.querySelector("ol").appendChild(newItems[i]);
+        item = folders[itemInfo.id];
       }
-    }
 
-    if (addNewFolder) savedData.querySelector("ol").appendChild(newFolder);
+      if (itemInfo.isHidden) item.classList.add("c20-hidden");
+
+      folder.querySelector("ol").appendChild(item);
+    }
   }
 
-  var root = document.querySelector("#journalfolderroot");
-  root.replaceChildren(savedData.querySelector("ol"));
+  var journalRoot = document.querySelector("#journalfolderroot");
+  journalRoot.replaceChildren(root.querySelector("ol"));
 
   nodes.folderCount = document.querySelectorAll("#journalfolderroot .dd-item.dd-folder").length;
   nodes.itemCount = document.querySelectorAll("#journalfolderroot .journalitem.dd-item").length;
 }
 
 // monitor folder changes for client or server side updates
-// client: add & remove folder
+// client: add & remove folder, collapse & expand folders
 // server: add & remove folders and items
 function changeHandler() {
+  const ignoreClass = ["folder-title"];
   const observer = new MutationObserver((mutationsList, observer) => {
     for (const mutation of mutationsList) {
-      if (mutation.type === "childList") {
+      if (mutation.type === "childList" && mutation.target.className !== "folder-title") {
+        //Item or Folder added/remove
         var isUpdate = false;
         var curFolders = document.querySelectorAll("#journalfolderroot .dd-item.dd-folder").length;
         var curItems = document.querySelectorAll("#journalfolderroot journalitem.dd-item").length;
@@ -498,6 +524,12 @@ function changeHandler() {
         }
 
         if (isUpdate) saveState();
+      } else if (mutation.type === "attributes" && mutationClassChange(mutation, "dd-collapsed")) {
+        // Collapse/Expand
+        saveState();
+      } else if (mutation.type === "attributes" && mutationClassChange(mutation, "c20-hidden")) {
+        // hide/show
+        saveState();
       }
     }
   });
@@ -506,9 +538,18 @@ function changeHandler() {
   const config = {
     childList: true, // Observe additions/removals of child nodes
     subtree: true, // Observe changes in descendants of the target node
+    attributes: true,
+    attributeFilter: ["class"], // Collapse/Expand attribute
+    attributeOldValue: true,
   };
 
   observer.observe(targetNode, config);
+}
+
+function mutationClassChange(mutation, value) {
+  if (mutation.target.className.includes(value) && !mutation.oldValue.includes(value)) return true;
+  if (!mutation.target.className.includes(value) && mutation.oldValue.includes(value)) return true;
+  return false;
 }
 
 // initialization
@@ -525,7 +566,7 @@ function waitForElement(selector) {
 }
 
 function init() {
-  settings.storageId = "c20-" + String(campaign_id);
+  settings.storageId = "c20-journal-" + String(campaign_id);
   if (nodes.journalSorts.length > 0) return; // already initialized
   if (document.querySelectorAll("#journal > .content > .superadd.btn").length !== 0) return; // don't load if owner
   loadState();
