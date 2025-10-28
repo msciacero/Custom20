@@ -456,6 +456,51 @@ function loadState() {
 
   var savedData = JSON.parse(LZString.decompressFromUTF16(storedData));
 
+  // check for missing items
+  var curItems = Array.from(document.querySelectorAll("#journalfolderroot .journalitem.dd-item")).map((x) =>
+    x.getAttribute("data-itemid")
+  );
+  var savedItems = savedData.flatMap((x) => x.items.filter((y) => y.type == "item").map((y) => y.id));
+  var newItems = curItems.filter((x) => !savedItems.includes(x));
+
+  if (newItems) {
+    // group new items by parent folder
+    newItems = newItems.map((item) => {
+      var elm = document.querySelector(`[data-itemid="${item}"]`).closest(".dd-item.dd-folder");
+      return {
+        id: item,
+        pf: elm?.getAttribute("data-globalfolderid") ?? null,
+        gf: elm.parentElement.closest(".dd-item.dd-folder")?.getAttribute("data-globalfolderid") ?? null,
+      };
+    });
+    newItems = Object.groupBy(newItems, ({ pf }) => pf);
+
+    Object.keys(newItems).forEach((folderId) => {
+      //check if folder is saved
+      var folderIndex = savedData.findIndex((x) => x.id === folderId);
+      if (folderIndex !== -1) {
+        newItems[folderId].forEach((item) => {
+          savedData[folderIndex].items.push({ type: "item", id: item.id, isHidden: false });
+        });
+      } else {
+        // check if this is sub folder to existing saved folder, otherwise point to root
+        folderIndex = savedData.findIndex((x) => x.id === newItems[folderId][0].gf);
+        if (folderIndex === -1) folderIndex = 0;
+
+        savedData[folderIndex].items.push({ type: "folder", id: folderId, isHidden: false });
+        savedData.push({
+          id: folderId,
+          name: document.querySelector(`[data-globalfolderid="${folderId}"] .folder-title`).textContent,
+          pf: newItems[folderId][0].gf,
+          isCollapsed: false,
+          items: newItems[folderId].map((item) => {
+            return { type: "item", id: item.id, isHidden: false };
+          }),
+        });
+      }
+    });
+  }
+
   var list = document.createElement("ol");
   list.classList.add("dd-list");
 
