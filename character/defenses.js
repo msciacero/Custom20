@@ -1,0 +1,150 @@
+//--Adds defenses and conditions to character sheet--
+
+var Defenses = (function () {
+  var storageKey;
+
+  var defenses = {
+    resistance: "",
+    immunity: "",
+    vulnerability: "",
+  };
+
+  function createInput(defenseType) {
+    var row = document.createElement("div");
+    row.className = `row c20-health-${defenseType}`;
+    row.style.display = "relative";
+
+    var label = document.createElement("img");
+    label.style.width = "20px";
+    label.src = chrome.runtime.getURL(`library/icons/resistance.svg`);
+    label.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
+
+    var labelText = document.createElement("span");
+    labelText.style.position = "absolute";
+    labelText.style.color = "white";
+    labelText.style.left = "5px";
+    labelText.style.top = "1px";
+    labelText.style.cursor = "default";
+    labelText.textContent = defenseType.charAt(0).toUpperCase();
+    labelText.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
+
+    var input = document.createElement("input");
+    input.type = "text";
+    input.name = `attr_class_defense_${defenseType}`;
+    input.value = defenses[defenseType];
+    input.style.width = "calc(100% - 28px)";
+    input.placeholder = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
+
+    input.addEventListener("change", function (event) {
+      document.querySelector(`.health-defense .c20-health-${defenseType} span`).textContent = event.target.value;
+      defenses[defenseType] = event.target.value;
+      saveDefenses();
+    });
+
+    row.appendChild(label);
+    row.appendChild(labelText);
+    row.appendChild(input);
+
+    return row;
+  }
+
+  function createDisplay(defenseType) {
+    var row = document.createElement("div");
+    row.className = `row c20-health-${defenseType}`;
+
+    var label = document.createElement("img");
+    label.style.display = "inline-block";
+    label.style.width = "20px";
+    label.src = chrome.runtime.getURL(`library/icons/${defenseType}.svg`);
+    label.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
+
+    var display = document.createElement("span");
+    display.name = `attr_class_defense_${defenseType}`;
+    display.textContent = defenses[defenseType];
+    display.style.display = "inline";
+    display.style.width = "initial";
+
+    row.appendChild(label);
+    row.appendChild(display);
+
+    return row;
+  }
+
+  function createUi() {
+    var div = document.createElement("div");
+    div.className = "health-defense";
+
+    var input = document.createElement("input");
+    input.className = "options-flag";
+    input.type = "checkbox";
+    input.name = "attr_options-flag-defenses";
+
+    var inputDisplay = document.createElement("span");
+    inputDisplay.style.top = "-10px";
+    inputDisplay.textContent = "y";
+
+    var display = document.createElement("div");
+    display.className = "display";
+    display.appendChild(createDisplay("resistance"));
+    display.appendChild(createDisplay("immunity"));
+    display.appendChild(createDisplay("vulnerability"));
+
+    var options = document.createElement("div");
+    options.className = "options";
+    options.style.display = "none";
+    options.appendChild(createInput("resistance"));
+    options.appendChild(createInput("immunity"));
+    options.appendChild(createInput("vulnerability"));
+
+    div.appendChild(input);
+    div.appendChild(inputDisplay);
+    div.appendChild(display);
+    div.appendChild(options);
+
+    document.querySelector(".hp").before(div);
+
+    input.addEventListener("change", function (event) {
+      if (event.target.checked) {
+        display.style.display = "none";
+        options.style.display = "block";
+      } else {
+        display.style.display = "block";
+        options.style.display = "none";
+      }
+    });
+  }
+
+  //save
+  function saveDefenses() {
+    chrome.storage.local.set({ [storageKey]: LZString.compressToUTF16(JSON.stringify(defenses)) });
+  }
+
+  //load
+  async function loadDefenses() {
+    var storedData = await chrome.storage.local.get([storageKey]);
+    if (storedData[storageKey] === undefined) return;
+
+    defenses = JSON.parse(LZString.decompressFromUTF16(storedData[storageKey]));
+  }
+
+  var Defenses = {
+    init: async function init() {
+      storageKey = window.character_id + "-defenses";
+      await loadDefenses();
+      createUi();
+    },
+  };
+  return Defenses;
+})();
+
+if (typeof define === "function" && define.amd) {
+  define(function () {
+    return Defenses;
+  });
+} else if (typeof module !== "undefined" && module != null) {
+  module.exports = Defenses;
+} else if (typeof angular !== "undefined" && angular != null) {
+  angular.module("Defenses", []).factory("Defenses", function () {
+    return Defenses;
+  });
+}

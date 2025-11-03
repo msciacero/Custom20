@@ -3,12 +3,37 @@
   "name": "Custom20",
   "version": "1.0",
   "description": "Adds custom folder options for players in roll20",
+  "permissions": ["storage", "unlimitedStorage"],
   "content_scripts": [
     {
       "matches": ["https://app.roll20.net/editor/"],
-      "js": ["library/sortable.js", "library/lzstring.js", "journal.js"],
-      "css": ["styles.css"],
-      "world": "MAIN"
+      "js": ["library/sortable.js", "library/lzstring.js", "app/journal.js", "app/main.js"],
+      "css": ["app/styles.css"],
+      "world": "ISOLATED"
+    },
+    {
+      "matches": ["https://app.roll20.net/editor/character/*"],
+      "js": [
+        "library/sortable.js",
+        "library/lzstring.js",
+        "character/conditions.js",
+        "character/defenses.js",
+        "character/main.js"
+      ],
+      "css": ["character/styles.css"],
+      "all_frames": true,
+      "world": "ISOLATED"
+    }
+  ],
+  "web_accessible_resources": [
+    {
+      "resources": [
+        "app/campaigninfo.js",
+        "library/icons/immunity.svg",
+        "library/icons/resistance.svg",
+        "library/icons/vulnerability.svg"
+      ],
+      "matches": ["https://app.roll20.net/*"]
     }
   ]
 }

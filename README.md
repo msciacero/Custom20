@@ -5,3 +5,8 @@ Currently modifies the players journal
 -Ability to reorganize journal. When unlocked can drag and drop items and folders.
 -Right click menu on folders and items for additional options
 -Saves & loads state from browsers local storage
+
+3rd Party Libraries
+-LZString by Pieroxy (http://pieroxy.net/blog/pages/lz-string/testing.html)
+-Sortable.js by RubaXa & owenm (https://github.com/SortableJS/Sortable)
+-Intrinsical's D&D 5e Icon Set by David Kor Kian Wei (https://github.com/intrinsical/tw-dnd/tree/main/icons)
