@@ -680,7 +680,3 @@ if (typeof define === "function" && define.amd) {
     return Journal;
   });
 }
-
-// TODO
-// Load/Unload
-// Add folders to search filter

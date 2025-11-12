@@ -41,11 +41,11 @@ var ConditionsEditor = (function () {
 
     selectWrapper.appendChild(createGameInput());
     selectWrapper.appendChild(createConditionsInput());
+    selectWrapper.appendChild(createDeleteButton());
 
     conditionContent.appendChild(selectWrapper);
     conditionContent.appendChild(createTextInput());
     conditionContent.appendChild(createErrorWrapper());
-    conditionContent.appendChild(createDeleteButton());
     conditionContent.appendChild(createSaveButton());
 
     modalHeader.appendChild(modalTitle);
@@ -107,6 +107,7 @@ var ConditionsEditor = (function () {
         selectedCondition = conditionsData[Number(settings.gameIndex)].items[Number(settings.conditionIndex)];
         var deleteBtn = document.getElementById("delete-condition-button");
         deleteBtn.disabled = false;
+        deleteBtn.classList.add("btn-danger");
       }
 
       var conditionTextArea = document.getElementById("condition-textarea");
@@ -133,12 +134,18 @@ var ConditionsEditor = (function () {
     conditionSelect.appendChild(option);
 
     if (settings.gameIndex !== "") {
-      conditionsData[Number(settings.gameIndex)].items.forEach((c, i) => {
-        var option = document.createElement("option");
-        option.value = i;
-        option.textContent = c.groupName ? `${c.groupName} ${c.name}` : c.name;
-        conditionSelect.appendChild(option);
-      });
+      conditionsData[Number(settings.gameIndex)].items
+        .sort((a, b) => {
+          var nameA = a.groupName ? `${a.groupName}-${a.name}` : a.name;
+          var nameB = b.groupName ? `${b.groupName}-${b.name}` : b.name;
+          return nameA.localeCompare(nameB);
+        })
+        .forEach((c, i) => {
+          var option = document.createElement("option");
+          option.value = i;
+          option.textContent = c.groupName ? `${c.groupName} ${c.name}` : c.name;
+          conditionSelect.appendChild(option);
+        });
     }
   }
 
@@ -250,11 +257,18 @@ var ConditionsEditor = (function () {
   function createDeleteButton() {
     var deleteButton = document.createElement("button");
     deleteButton.id = "delete-condition-button";
-    deleteButton.textContent = "Delete Condition";
+    deleteButton.title = "Delete Condition";
+    deleteButton.textContent = "#";
     deleteButton.className = "btn";
     deleteButton.disabled = true;
 
-    deleteButton.addEventListener("click", function () {});
+    deleteButton.addEventListener("click", function () {
+      conditionsData[Number(settings.gameIndex)].items.splice([Number(settings.conditionIndex)], 1);
+
+      chrome.storage.local.set({ [storageKey]: JSON.stringify(conditionsData) });
+      updateButtons(false);
+      updateConditionsInput();
+    });
     return deleteButton;
   }
 
@@ -269,6 +283,7 @@ var ConditionsEditor = (function () {
       deleteBtn.disabled = true;
       saveBtn.disabled = true;
       saveBtn.classList.remove("btn-primary");
+      deleteBtn.classList.remove("btn-danger");
     }
   }
 

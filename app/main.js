@@ -48,11 +48,11 @@ function injectScript(file, node) {
 // Usage
 waitForElement("#settings-accordion").then(() => {
   injectScript(chrome.runtime.getURL("app/components/shared/campaignInfo.js"), "body");
-  waitForElement("#c20-campaignInfo").then(() => {
+  waitForElement("#c20-campaignInfo").then(async () => {
     window.campaign_id = document.querySelector("#c20-campaignInfo").getAttribute("c20-campaign-id");
 
     Data.initConditions();
-    Settings.init();
-    Journal.init();
+    await Settings.init();
+    if (Settings.isEnabled("journal")) Journal.init();
   });
 });

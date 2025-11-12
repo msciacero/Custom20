@@ -83,6 +83,8 @@ var Conditions = (function () {
 
     // group settings
     var groupContainer = document.createElement("div");
+    groupContainer.className = "c20-condition-group";
+
     var groups = Object.groupBy(
       settings.conditions.filter((i) => i.groupName),
       ({ groupName }) => groupName
@@ -92,7 +94,6 @@ var Conditions = (function () {
       var radioContainer = document.createElement("div");
       radioContainer.className = `c20-${key} c20-radio-container`;
       radioContainer.style.display = "flex";
-      radioContainer.style.margin = "10px 0 0 20px";
       radioContainer.style.fontSize = "9px";
       radioContainer.style.fontWeight = 700;
 

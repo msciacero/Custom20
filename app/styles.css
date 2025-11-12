@@ -107,3 +107,9 @@
   text-decoration: none;
   cursor: pointer;
 }
+
+#delete-condition-button {
+  font-family: "pictos";
+  height: 18px;
+  margin-top: 23px;
+}
