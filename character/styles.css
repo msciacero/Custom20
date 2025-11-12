@@ -1,3 +1,4 @@
+/* DEFENSES */
 .health-defense {
   position: relative;
   margin-top: 5px;
@@ -46,10 +47,53 @@
   display: none;
 }
 
-.health-defense img {
-  filter: brightness(0) saturate(100%) invert(39%) sepia(6%) saturate(5%) hue-rotate(5deg) brightness(94%) contrast(85%);
+.health-defense .c20-health-resistance img,
+.health-defense .c20-health-immunity img {
+  filter: brightness(0) saturate(100%) invert(69%) sepia(42%) saturate(5044%) hue-rotate(116deg) brightness(92%)
+    contrast(101%);
+  width: 15px;
 }
 
+.health-defense .c20-health-vulnerability img {
+  /* filter: brightness(0) saturate(100%) invert(39%) sepia(6%) saturate(5%) hue-rotate(5deg) brightness(94%) contrast(85%); */
+  filter: brightness(0) saturate(100%) invert(36%) sepia(97%) saturate(3163%) hue-rotate(335deg) brightness(78%)
+    contrast(145%);
+  width: 15px;
+}
+
+.health-defense .row > .c20-imageText {
+  position: absolute;
+  color: white;
+  width: 15px;
+  left: 0px;
+  cursor: default;
+  text-align: center !important;
+  font-size: 10px;
+}
+
+.sheet-darkmode .health-defense .row > .c20-imageText {
+  color: black;
+  top: -2px;
+  font-weight: 700;
+}
+
+.health-defense .options .row > .c20-imageText {
+  top: 7px;
+}
+
+.sheet-darkmode .health-defense .options .row > .c20-imageText {
+  top: 5px;
+}
+
+.health-defense .row {
+  position: relative;
+}
+
+.health-defense .options input {
+  width: calc(100% - 28px);
+}
+
+/* CONDITIONS */
 .conditions {
   box-sizing: border-box;
   width: 100%;
@@ -65,7 +109,19 @@
   position: relative;
 }
 
-.conditions .c20-exhaustion input[type="radio"] {
+.conditions .options .c20-checkbox-container {
+  margin-left: 15px;
+  column-count: 2;
+}
+
+.conditions .options .c20-label {
+  font-size: 9px;
+  font-weight: 700;
+  display: inline;
+  margin-left: 2px;
+}
+
+.conditions .c20-radio-container input[type="radio"] {
   border: none;
   appearance: none; /* Hides the default radio button */
   -webkit-appearance: none; /* For older WebKit browsers */
@@ -76,7 +132,7 @@
   /* height: 0; */
 }
 
-.conditions .c20-exhaustion label {
+.conditions .c20-radio-container label {
   display: inline-flex; /* Allows for easy alignment with text */
   align-items: center;
   cursor: pointer;
@@ -89,9 +145,33 @@
   padding-left: 7px;
 }
 
-.conditions .c20-exhaustion input[type="radio"]:checked + label {
+.conditions .c20-radio-container input[type="radio"]:checked + label {
   background-color: rgb(37, 130, 146);
   color: white;
+}
+
+.conditions .c20-display {
+  margin-left: 20px;
+}
+
+.conditions .c20-display-list {
+  column-count: 2;
+  width: 100%;
+}
+
+.conditions .c20-effects-list {
+  font-size: 10px;
+}
+
+.conditions .label {
+  text-align: center !important;
+  display: inline-block;
+  width: 100%;
+}
+
+.conditions hr {
+  margin: 1px 0 5px;
+  width: 92%;
 }
 
 .modal {
@@ -114,6 +194,10 @@
   padding: 20px;
   border: 1px solid #888;
   width: 80%;
+}
+
+.sheet-darkmode .modal-content {
+  background-color: rgb(51, 51, 51);
 }
 
 .modal-content .close {

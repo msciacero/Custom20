@@ -12,19 +12,13 @@ var Defenses = (function () {
   function createInput(defenseType) {
     var row = document.createElement("div");
     row.className = `row c20-health-${defenseType}`;
-    row.style.display = "relative";
 
     var label = document.createElement("img");
-    label.style.width = "20px";
     label.src = chrome.runtime.getURL(`library/icons/resistance.svg`);
     label.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
     var labelText = document.createElement("span");
-    labelText.style.position = "absolute";
-    labelText.style.color = "white";
-    labelText.style.left = "5px";
-    labelText.style.top = "1px";
-    labelText.style.cursor = "default";
+    labelText.className = "c20-imageText";
     labelText.textContent = defenseType.charAt(0).toUpperCase();
     labelText.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
@@ -32,11 +26,11 @@ var Defenses = (function () {
     input.type = "text";
     input.name = `attr_class_defense_${defenseType}`;
     input.value = defenses[defenseType];
-    input.style.width = "calc(100% - 28px)";
     input.placeholder = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
     input.addEventListener("change", function (event) {
-      document.querySelector(`.health-defense .c20-health-${defenseType} span`).textContent = event.target.value;
+      document.querySelector(`.health-defense .c20-health-${defenseType} .c20-defenseText`).textContent =
+        event.target.value;
       defenses[defenseType] = event.target.value;
       saveDefenses();
     });
@@ -53,18 +47,23 @@ var Defenses = (function () {
     row.className = `row c20-health-${defenseType}`;
 
     var label = document.createElement("img");
-    label.style.display = "inline-block";
-    label.style.width = "20px";
-    label.src = chrome.runtime.getURL(`library/icons/${defenseType}.svg`);
+    label.src = chrome.runtime.getURL(`library/icons/resistance.svg`);
     label.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
+
+    var labelText = document.createElement("span");
+    labelText.className = "c20-imageText";
+    labelText.textContent = defenseType.charAt(0).toUpperCase();
+    labelText.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
     var display = document.createElement("span");
     display.name = `attr_class_defense_${defenseType}`;
+    display.className = "c20-defenseText";
     display.textContent = defenses[defenseType];
     display.style.display = "inline";
     display.style.width = "initial";
 
     row.appendChild(label);
+    row.appendChild(labelText);
     row.appendChild(display);
 
     return row;
@@ -116,7 +115,7 @@ var Defenses = (function () {
 
   //save
   function saveDefenses() {
-    chrome.storage.local.set({ [storageKey]: LZString.compressToUTF16(JSON.stringify(defenses)) });
+    chrome.storage.local.set({ [storageKey]: JSON.stringify(defenses) });
   }
 
   //load
@@ -124,7 +123,7 @@ var Defenses = (function () {
     var storedData = await chrome.storage.local.get([storageKey]);
     if (storedData[storageKey] === undefined) return;
 
-    defenses = JSON.parse(LZString.decompressFromUTF16(storedData[storageKey]));
+    defenses = JSON.parse(storedData[storageKey]);
   }
 
   var Defenses = {

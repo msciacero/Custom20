@@ -1,6 +1,6 @@
 //--Adds additional functionality to Roll20 Journal UI--
 //create, rename, and delete folders
-//reogranize items and folders
+//reorganize items and folders
 //hide/show folders and items
 //search for an item with the option to include hidden items in the search
 //loads/saves state
@@ -9,7 +9,7 @@ var Journal = (function () {
   var settings = {
     searchHidden: false,
     isLocked: true,
-    storageId: "",
+    storageKey: "",
   };
 
   var context = {
@@ -34,19 +34,19 @@ var Journal = (function () {
     // Add lock control
     var lockControl = document.createElement("button");
     lockControl.title = "Unlock to enable drag-and-drop sorting";
-    lockControl.className = "el-button";
-    lockControl.style.position = "absolute";
-    lockControl.style.right = "10px";
+    lockControl.className = "btn c20-lock-control";
 
     nodes.lockControlIcon = document.createElement("span");
     nodes.lockControlIcon.className = "pictos";
     nodes.lockControlIcon.textContent = "(";
     lockControl.appendChild(nodes.lockControlIcon);
 
-    var header = document.querySelector("#journal-creation-controls");
+    var header = document.querySelector("#journalfolderroot").parentElement;
     if (header) {
-      header.appendChild(lockControl);
+      header.prepend(lockControl);
     }
+
+    document.querySelector("#journalfolderroot").classList.add("c20-locked");
 
     return lockControl;
   }
@@ -58,15 +58,12 @@ var Journal = (function () {
     let searchBar = document.createElement("input");
     searchBar.type = "text";
     searchBar.placeholder = "Search by name...";
-    searchBar.style.width = "calc(100% - 60px)";
-    searchBar.style.paddingRight = "20px";
     searchBar.className = "ui-autocomplete-input";
     searchBar.autocomplete = "off";
 
     let hiddenToggle = document.createElement("a");
-    hiddenToggle.className = "btn pictos";
+    hiddenToggle.className = "btn pictos c20-hiddenToggle";
     hiddenToggle.href = "#hiddenSearch";
-    hiddenToggle.style.float = "right";
     hiddenToggle.style.opacity = settings.searchHidden ? "1.0" : "0.4";
     hiddenToggle.textContent = "E";
     hiddenToggle.title = "Ignore Hidden";
@@ -125,38 +122,29 @@ var Journal = (function () {
     }
   }
 
-  //sorting
   function addJournalSort() {
-    var el = document.querySelectorAll("#journalfolderroot .dd-list");
+    var el = Array.from(document.querySelectorAll("#journalfolderroot .dd-handle.dd-unsortable"));
 
-    for (let i = 0; i < el.length; i++) {
-      var s = Sortable.create(el[i], {
-        group: "nested",
-        animation: 150,
-        fallbackOnBody: true,
-        swapThreshold: 0.65,
-        disabled: settings.isLocked,
-        store: {
-          set: function () {
-            saveState();
-          },
-        },
-      });
-      nodes.journalSorts.push(s);
-    }
-  }
+    el.forEach((o) => {
+      o.classList.remove("dd-unsortable");
+      o.classList.add("dd-sortablehandle");
+    });
 
-  function removeJournalSort() {
-    for (let i = 0; i < nodes.journalSorts.length; i++) {
-      nodes.journalSorts[i].destroy();
-    }
-    nodes.journalSorts = [];
+    el = Array.from(document.querySelectorAll("#journalfolderroot .dd-item.dd-folder"));
+
+    el.forEach((o) => {
+      // these tend to fall off and I don't know why
+      var handle = o.querySelector(".dd-handle");
+      handle.classList.add("dd-sortablehandle");
+      handle.classList.add("dd-html5-sortablehandle");
+      handle.classList.add("html5-sortable");
+    });
   }
 
   // context menus
   function createFolderContextMenu() {
     context.folderMenu = document.createElement("div");
-    context.folderMenu.className = "d20contextmenu";
+    context.folderMenu.className = "d20contextmenu c20-contextmenu";
     context.folderMenu.style.display = "none";
     context.folderMenu.innerHTML = `<ul>
   <li data-action-type="add">Add Folder</li>
@@ -185,6 +173,7 @@ var Journal = (function () {
     context.folderMenu.addEventListener("click", function (e) {
       var actionType = e.target.getAttribute("data-action-type");
       if (actionType === "add") {
+        nodes.folderCount = nodes.folderCount + 1;
         var newFolder = createNewFolder({
           id: generateUUID(),
           pf: undefined,
@@ -197,13 +186,14 @@ var Journal = (function () {
       } else if (actionType === "rename") {
         renameFolder();
       } else if (actionType === "remove") {
+        nodes.folderCount = nodes.folderCount - 1;
         context.curEl.remove();
       } else if (actionType === "hide") {
         context.curEl.classList.add("c20-hidden");
       } else if (actionType === "show") {
         var hiddenParents = context.curEl.parentElement.closest(".c20-hidden");
         if (hiddenParents) {
-          if (confirm("Item is inside a hidden folder. Unhidding this item will also unhide all parent folders.")) {
+          if (confirm("Item is inside a hidden folder. Showing this item will also unhide all parent folders.")) {
             while (hiddenParents) {
               hiddenParents.classList.remove("c20-hidden");
               hiddenParents = hiddenParents.closest(".c20-hidden");
@@ -285,6 +275,7 @@ var Journal = (function () {
     context.itemMenu.addEventListener("click", function (e) {
       var actionType = e.target.getAttribute("data-action-type");
       if (actionType === "add") {
+        nodes.folderCount = nodes.folderCount + 1;
         var newFolder = createNewFolder({
           id: generateUUID(),
           pf: undefined,
@@ -301,7 +292,7 @@ var Journal = (function () {
       } else if (actionType === "show") {
         var hiddenParents = context.curEl.parentElement.closest(".c20-hidden");
         if (hiddenParents) {
-          if (confirm("Item is inside a hidden folder. Unhidding this item will also unhide all parent folders.")) {
+          if (confirm("Item is inside a hidden folder. Showing this item will also unhide all parent folders.")) {
             while (hiddenParents) {
               hiddenParents.classList.remove("c20-hidden");
               hiddenParents = hiddenParents.closest(".c20-hidden");
@@ -373,6 +364,7 @@ var Journal = (function () {
     var newFolder = document.createElement("li");
     newFolder.className = "dd-item dd-folder";
     newFolder.setAttribute("data-globalfolderid", data.id);
+    newFolder.setAttribute("draggable", true);
     if (data.isCollapsed) newFolder.classList.add("dd-collapsed");
 
     content.appendChild(contentTitle);
@@ -422,34 +414,33 @@ var Journal = (function () {
     });
   }
 
-  //This method is from roll20
-  //Could use whatever but keeping things similar
   function generateUUID() {
-    var i = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".split(""),
-      e = new Array(36),
-      n = 0,
-      o;
-    return function () {
-      for (var l = 0; l < 36; l++)
-        l == 8 || l == 13 || l == 18 || l == 23
-          ? (e[l] = "-")
-          : l == 14
-          ? (e[l] = "4")
-          : (n <= 2 && (n = (33554432 + Math.random() * 16777216) | 0),
-            (o = n & 15),
-            (n = n >> 4),
-            (e[l] = i[l == 19 ? (o & 3) | 8 : o]));
-      return e.join("");
-    };
+    var i = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".split("");
+    var e = new Array(36);
+    var n = 0;
+    var o;
+
+    for (var l = 0; l < 36; l++)
+      l == 8 || l == 13 || l == 18 || l == 23
+        ? (e[l] = "-")
+        : l == 14
+        ? (e[l] = "4")
+        : (n <= 2 && (n = (33554432 + Math.random() * 16777216) | 0),
+          (o = n & 15),
+          (n = n >> 4),
+          (e[l] = i[l == 19 ? (o & 3) | 8 : o]));
+    return e.join("");
   }
 
   // saving
-  function saveState() {
+  async function saveState() {
     var folders = Array.from(document.querySelectorAll("#journalfolderroot"));
     folders = folders.concat(Array.from(document.querySelectorAll("#journalfolderroot .dd-item.dd-folder")));
 
     //create directory structure with important data elements
-    const saveData = Array.from(folders).map((folder) => {
+    const saveData = Array.from(folders)?.map((folder) => {
+      if (folder.children.length === 0) return;
+
       return {
         id: folder.getAttribute("data-globalfolderid"),
         name: folder.querySelector(".folder-title").textContent,
@@ -471,21 +462,28 @@ var Journal = (function () {
       };
     });
 
-    chrome.storage.local.set({ [settings.storageId]: LZString.compressToUTF16(JSON.stringify(saveData)) });
+    if (saveData[0] === undefined) await chrome.storage.local.remove([settings.storageKey]);
+    else await chrome.storage.local.set({ [settings.storageKey]: JSON.stringify(saveData) });
   }
 
   // loading
   async function loadState() {
-    var storedData = await chrome.storage.local.get([settings.storageId]);
-    if (storedData[settings.storageId] === undefined) return;
+    var storedData = await chrome.storage.local.get([settings.storageKey]);
+    if (storedData[settings.storageKey] === undefined) return;
 
-    var savedData = JSON.parse(LZString.decompressFromUTF16(storedData[settings.storageId]));
+    var savedData = JSON.parse(storedData[settings.storageKey]);
     // check for missing items
     var curItems = Array.from(document.querySelectorAll("#journalfolderroot .journalitem.dd-item")).map((x) =>
       x.getAttribute("data-itemid")
     );
     var savedItems = savedData.flatMap((x) => x.items.filter((y) => y.type == "item").map((y) => y.id));
     var newItems = curItems.filter((x) => !savedItems.includes(x));
+
+    // check for deleted items
+    var delItems = savedItems.filter((x) => !curItems.includes(x));
+    for (var i = 0; i < savedData.length; i++) {
+      savedData[i].items = savedData[i].items.filter((x) => !delItems.includes(x.id));
+    }
 
     if (newItems) {
       // group new items by parent folder
@@ -507,19 +505,42 @@ var Journal = (function () {
             savedData[folderIndex].items.push({ type: "item", id: item.id, isHidden: false });
           });
         } else {
-          // check if this is sub folder to existing saved folder, otherwise point to root
-          folderIndex = savedData.findIndex((x) => x.id === newItems[folderId][0].gf);
-          if (folderIndex === -1) folderIndex = 0;
+          // Build chain of folders from current to existing parent
+          var folderChain = [];
+          var currentFolderId = folderId;
+          var currentGF = newItems[folderId][0].gf;
 
-          savedData[folderIndex].items.push({ type: "folder", id: folderId, isHidden: false });
-          savedData.push({
-            id: folderId,
-            name: document.querySelector(`[data-globalfolderid="${folderId}"] .folder-title`).textContent,
-            pf: newItems[folderId][0].gf,
-            isCollapsed: false,
-            items: newItems[folderId].map((item) => {
-              return { type: "item", id: item.id, isHidden: false };
-            }),
+          while (currentFolderId !== null && !savedData.find((x) => x.id === currentFolderId)) {
+            var folderEl = document.querySelector(`#journalfolderroot [data-globalfolderid="${currentFolderId}"]`);
+            folderChain.unshift({
+              id: currentFolderId,
+              name: folderEl?.querySelector(".folder-title")?.textContent || "Untitled",
+              pf: currentGF,
+            });
+            currentFolderId = currentGF;
+            currentGF =
+              folderEl?.parentElement.closest(".dd-item.dd-folder")?.getAttribute("data-globalfolderid") ?? null;
+          }
+
+          // Find attachment point
+          var attachIndex = savedData.findIndex((x) => x.id === currentFolderId);
+          if (attachIndex === -1) attachIndex = 0;
+
+          // Add folders to savedData and create items array for last folder
+          folderChain.forEach((folder, idx) => {
+            var parentFolder = idx === 0 ? savedData[attachIndex] : savedData[savedData.length - 1];
+            parentFolder.items.push({ type: "folder", id: folder.id, isHidden: false });
+
+            savedData.push({
+              id: folder.id,
+              name: folder.name,
+              pf: folder.pf,
+              isCollapsed: false,
+              items:
+                idx === folderChain.length - 1
+                  ? newItems[folderId].map((item) => ({ type: "item", id: item.id, isHidden: false }))
+                  : [],
+            });
           });
         }
       });
@@ -569,42 +590,41 @@ var Journal = (function () {
     nodes.itemCount = document.querySelectorAll("#journalfolderroot .journalitem.dd-item").length;
   }
 
-  // monitor folder changes for client or server side updates
   // client: add & remove folder, collapse & expand folders
-  // server: add & remove folders and items
   function changeHandler() {
-    const observer = new MutationObserver((mutationsList, observer) => {
+    const observer = new MutationObserver(async (mutationsList, observer) => {
       for (const mutation of mutationsList) {
-        if (mutation.type === "childList" && mutation.target.className !== "folder-title") {
+        if (
+          document.querySelector("#journalfolderroot .dd-placeholder") ||
+          document.querySelector("#journalfolderroot .dd-invisplaceholder")
+        ) {
+          // do nothing - sort inprogress
+        } else if (mutation.type === "childList" && mutation.target.className !== "folder-title") {
           //Item or Folder added/remove
-          var isUpdate = false;
           var curFolders = document.querySelectorAll("#journalfolderroot .dd-item.dd-folder").length;
-          var curItems = document.querySelectorAll("#journalfolderroot journalitem.dd-item").length;
+          var curItems = document.querySelectorAll("#journalfolderroot .journalitem.dd-item").length;
 
-          if (curFolders != nodes.folderCount) {
-            removeJournalSort();
+          if (curFolders != nodes.folderCount || curItems != nodes.itemCount) {
+            await loadState();
             addJournalSort();
+            await saveState();
             nodes.folderCount = curFolders;
-            isUpdate = true;
-          }
-
-          if (curItems != nodes.itemCount) {
             nodes.itemCount = curItems;
-            isUpdate = true;
           }
-
-          if (isUpdate) saveState();
         } else if (mutation.type === "attributes" && mutationClassChange(mutation, "dd-collapsed")) {
           // Collapse/Expand
-          saveState();
+          await saveState();
         } else if (mutation.type === "attributes" && mutationClassChange(mutation, "c20-hidden")) {
           // hide/show
-          saveState();
+          await saveState();
+        } else if (mutation.type === "attributes" && mutation.oldValue === "dd folderroot dd-dragging") {
+          // sort
+          await saveState();
         }
       }
     });
 
-    const targetNode = document.getElementById("journalfolderroot"); // Or any other DOM element
+    const targetNode = document.querySelector("#journalfolderroot"); // Or any other DOM element
     const config = {
       childList: true, // Observe additions/removals of child nodes
       subtree: true, // Observe changes in descendants of the target node
@@ -625,10 +645,9 @@ var Journal = (function () {
   var Journal = {
     // initialization
     init: async function init() {
-      settings.storageId = window.campaign_id + "-journal";
+      settings.storageKey = window.campaign_id + "-journal";
       if (nodes.journalSorts.length > 0) return; // already initialized
       if (document.querySelector("#journal > .content > .superadd.btn") !== null) return; // don't load if owner
-      if (document.querySelector("#journalfolderroot").length == 0) return; // no journal (pop out)
       await loadState();
 
       // Add controls
@@ -641,8 +660,8 @@ var Journal = (function () {
 
       // lock/unlock event listener
       lockControl.addEventListener("click", function () {
-        settings.isLocked = !nodes.journalSorts[0].option("disabled");
-        nodes.journalSorts.forEach((s) => s.option("disabled", settings.isLocked));
+        settings.isLocked = !settings.isLocked;
+        document.querySelector("#journalfolderroot").classList.toggle("c20-locked");
         nodes.lockControlIcon.textContent = settings.isLocked ? "(" : ")";
       });
     },
@@ -661,3 +680,7 @@ if (typeof define === "function" && define.amd) {
     return Journal;
   });
 }
+
+// TODO
+// Load/Unload
+// Add folders to search filter
