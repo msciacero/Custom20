@@ -194,11 +194,13 @@ var Journal = (function () {
           isHidden: false,
         });
         context.curEl.closest("li").after(newFolder);
+        saveState();
       } else if (actionType === "rename") {
         renameFolder();
       } else if (actionType === "remove") {
         nodes.folderCount = nodes.folderCount - 1;
         context.curEl.remove();
+        saveState();
       } else if (actionType === "hide") {
         context.curEl.classList.add("c20-hidden");
       } else if (actionType === "show") {
@@ -296,6 +298,7 @@ var Journal = (function () {
           isHidden: false,
         });
         context.curEl.after(newFolder);
+        saveState();
       } else if (actionType === "notes") {
         // Future functionality??
       } else if (actionType === "hide") {
