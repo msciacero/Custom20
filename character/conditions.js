@@ -354,6 +354,10 @@ var Conditions = (function () {
       createUi();
       updateEffectLabels();
     },
+    reset: function destroy() {
+      document.querySelector(".conditions").remove();
+      this.init();
+    },
   };
   return Conditions;
 })();
