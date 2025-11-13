@@ -59,15 +59,6 @@
   float: right;
 }
 
-#journal .c20-locked .dd-handle {
-  display: none;
-}
-
-#journalfolderroot.c20-locked .dd-handle.dd-html5-sortablehandle,
-#journalfolderroot .dd-item.dd-folder:hover > .dd-html5-sortablehandle:has(~ .dd-list:hover) {
-  opacity: 0 !important;
-}
-
 .modal {
   display: none; /* Hidden by default */
   position: fixed; /* Stay in place */

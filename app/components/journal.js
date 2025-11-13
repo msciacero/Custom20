@@ -122,23 +122,34 @@ var Journal = (function () {
     }
   }
 
-  function addJournalSort() {
-    var el = Array.from(document.querySelectorAll("#journalfolderroot .dd-handle.dd-unsortable"));
+  function updateJournalSort() {
+    if (settings.isLocked) {
+      // items
+      var el = Array.from(document.querySelectorAll("#journalfolderroot .journalitem.dd-item"));
+      el.forEach((o) => {
+        o.classList.remove("html5-sortable");
+        if (!o.classList.contains("character")) o.setAttribute("draggable", "false");
+      });
 
-    el.forEach((o) => {
-      o.classList.remove("dd-unsortable");
-      o.classList.add("dd-sortablehandle");
-    });
+      // folders
+      el = Array.from(document.querySelectorAll("#journalfolderroot .dd-item.dd-folder > .dd-handle"));
+      el.forEach((o) => {
+        o.setAttribute("draggable", "false");
+      });
+    } else {
+      // items
+      var el = Array.from(document.querySelectorAll("#journalfolderroot .journalitem.dd-item"));
+      el.forEach((o) => {
+        o.classList.add("html5-sortable");
+        o.setAttribute("draggable", "true");
+      });
 
-    el = Array.from(document.querySelectorAll("#journalfolderroot .dd-item.dd-folder"));
-
-    el.forEach((o) => {
-      // these tend to fall off and I don't know why
-      var handle = o.querySelector(".dd-handle");
-      handle.classList.add("dd-sortablehandle");
-      handle.classList.add("dd-html5-sortablehandle");
-      handle.classList.add("html5-sortable");
-    });
+      // folders
+      el = Array.from(document.querySelectorAll("#journalfolderroot .dd-item.dd-folder > .dd-handle"));
+      el.forEach((o) => {
+        o.setAttribute("draggable", "true");
+      });
+    }
   }
 
   // context menus
@@ -325,6 +336,7 @@ var Journal = (function () {
     }
 
     context.itemMenu.style.display = "block";
+    context.folderMenu.style.display = "none";
   }
 
   // folders
@@ -606,7 +618,7 @@ var Journal = (function () {
 
           if (curFolders != nodes.folderCount || curItems != nodes.itemCount) {
             await loadState();
-            addJournalSort();
+            updateJournalSort();
             await saveState();
             nodes.folderCount = curFolders;
             nodes.itemCount = curItems;
@@ -651,7 +663,6 @@ var Journal = (function () {
       await loadState();
 
       // Add controls
-      addJournalSort();
       createSearchControl();
       createFolderContextMenu();
       createItemContextMenu();
@@ -663,6 +674,7 @@ var Journal = (function () {
         settings.isLocked = !settings.isLocked;
         document.querySelector("#journalfolderroot").classList.toggle("c20-locked");
         nodes.lockControlIcon.textContent = settings.isLocked ? "(" : ")";
+        updateJournalSort();
       });
     },
   };

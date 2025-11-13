@@ -10,10 +10,10 @@ var Settings = (function () {
     var panel = getSettingsPanel();
     var panelBody = panel.querySelector(".panel-body div");
     var journalCheckBox = getSettingsCheckbox({ value: "Enable Journal", isChecked: settings.journal });
-    var conditionsLink = getSettingsModalLink({ value: "Edit Conditions", event: ConditionsEditor.show });
 
     panelBody.appendChild(journalCheckBox);
-    panelBody.appendChild(conditionsLink);
+    panelBody.appendChild(getSettingsModalLink({ value: "Edit Conditions", event: ConditionsEditor.show }));
+    panelBody.appendChild(getSettingsModalLink({ value: "Reset Data", event: DataReset.show }));
     document.querySelector("#settings-accordion").appendChild(panel);
 
     journalCheckBox.querySelector("input").addEventListener("click", function (event) {
@@ -37,7 +37,7 @@ var Settings = (function () {
     var input = document.createElement("input");
     input.className = "el-checkbox__original";
     input.type = "checkbox";
-    input.value = data.value;
+    input.value = data.isChecked;
 
     var inputSpan = document.createElement("span");
     inputSpan.className = "el-checkbox__inner";

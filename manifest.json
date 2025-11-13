@@ -12,6 +12,7 @@
         "app/components/settings.js",
         "app/components/journal.js",
         "app/components/conditionsEditor.js",
+        "app/components/dataReset.js",
         "app/components/shared/data.js"
       ],
       "css": ["app/styles.css"],
