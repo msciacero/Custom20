@@ -150,7 +150,7 @@ var Data = (function () {
           short: [
             "No actions or reactions",
             "Speed reduced to 0",
-            "Attack rolls against you have disadvantage",
+            "Attack rolls against you have advantage",
             "Fail strength and dexterity saving throws",
             "Resistance to all damage, immune to poison and disease",
           ],

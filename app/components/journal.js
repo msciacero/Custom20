@@ -66,7 +66,7 @@ var Journal = (function () {
     hiddenToggle.href = "#hiddenSearch";
     hiddenToggle.style.opacity = settings.searchHidden ? "1.0" : "0.4";
     hiddenToggle.textContent = "E";
-    hiddenToggle.title = "Ignore Hidden";
+    hiddenToggle.title = "Search hidden items";
 
     wrapper.appendChild(hiddenToggle);
     wrapper.appendChild(searchBar);

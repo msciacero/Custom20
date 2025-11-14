@@ -44,11 +44,13 @@ var ConditionsEditor = (function () {
     selectWrapper.appendChild(createDeleteButton());
 
     conditionContent.appendChild(selectWrapper);
+    conditionContent.appendChild(createHelpDisplay());
     conditionContent.appendChild(createTextInput());
     conditionContent.appendChild(createErrorWrapper());
     conditionContent.appendChild(createSaveButton());
 
     modalHeader.appendChild(modalTitle);
+    modalHeader.appendChild(createHelpButton());
     modalHeader.appendChild(modalClose);
     modalContent.appendChild(modalHeader);
     modalContent.appendChild(conditionContent);
@@ -60,6 +62,7 @@ var ConditionsEditor = (function () {
 
     document.body.appendChild(modal);
     modal.style.display = "block";
+    updateGameInput();
   }
 
   function createGameInput() {
@@ -129,7 +132,7 @@ var ConditionsEditor = (function () {
     conditionSelect.querySelectorAll("option:not(:first-child)").forEach((o) => o.remove());
     var option = document.createElement("option");
     option.value = "-1";
-    option.textContent = "-- New Item --";
+    option.textContent = "-- New Condition --";
     option.style.fontStyle = "";
     conditionSelect.appendChild(option);
 
@@ -214,7 +217,7 @@ var ConditionsEditor = (function () {
         conditionsData[Number(settings.gameIndex)].items.find(
           (c, i) =>
             c.name === conditionUpdate.name &&
-            c?.groupName === conditionUpdate?.groupName &&
+            getGroupname(c?.groupName) === getGroupname(conditionUpdate?.groupName) &&
             i.toString() !== settings.conditionIndex
         )
       )
@@ -227,6 +230,8 @@ var ConditionsEditor = (function () {
           if (typeof d !== "string")
             errors.push(createErrorMessage(`The 'desc' property at index ${i} must be a string.`));
         });
+      } else if (!conditionUpdate.desc) {
+        errors.push(createErrorMessage(`Missing 'desc' property.`));
       }
 
       if (conditionUpdate.short && !Array.isArray(conditionUpdate.short))
@@ -236,12 +241,16 @@ var ConditionsEditor = (function () {
           if (typeof d !== "string")
             errors.push(createErrorMessage(`The 'short' property at index ${i} must be a string.`));
         });
+      } else if (!conditionUpdate.short) {
+        errors.push(createErrorMessage(`Missing 'short' property.`));
       }
 
       errorWrapper.replaceChildren(...errors);
       if (errors.length > 0) return;
 
       // save condition data
+      if (conditionUpdate.groupName === "" || conditionUpdate.groupName === null) conditionUpdate.groupName = undefined;
+
       if (settings.conditionIndex !== "-1")
         conditionsData[Number(settings.gameIndex)].items[Number(settings.conditionIndex)] = conditionUpdate;
       else conditionsData[Number(settings.gameIndex)].items.push(conditionUpdate);
@@ -316,6 +325,49 @@ var ConditionsEditor = (function () {
     group.appendChild(select);
 
     return group;
+  }
+
+  function createHelpDisplay() {
+    var div = document.createElement("div");
+    div.style.display = "none";
+    div.id = "c20-conditions-editor-help";
+
+    var o1 = document.createElement("ul");
+    o1.appendChild(createHelpLi("GroupName: Optional field. Name of condition when condition has levels."));
+    o1.appendChild(createHelpLi("Name: Condition name or level."));
+    o1.appendChild(createHelpLi("Desc: Descriptions that are displayed in condition dialog."));
+    o1.appendChild(createHelpLi("Short: Descriptions that are displayed on character sheet. "));
+    div.appendChild(o1);
+
+    return div;
+  }
+
+  function createHelpLi(text) {
+    var el = document.createElement("li");
+    el.textContent = text;
+    return el;
+  }
+
+  function createHelpButton() {
+    var helpButton = document.createElement("span");
+    helpButton.style.fontFamily = "pictos";
+    helpButton.style.marginLeft = "5px";
+    helpButton.style.cursor = "pointer";
+    helpButton.style.position = "absolute";
+    helpButton.textContent = "?";
+
+    helpButton.addEventListener("click", function () {
+      var helpDisplay = document.querySelector("#c20-conditions-editor-help");
+      if (helpDisplay.style.display === "block") helpDisplay.style.display = "none";
+      else helpDisplay.style.display = "block";
+    });
+
+    return helpButton;
+  }
+
+  function getGroupname(groupName) {
+    if (typeof groupName === "string" && groupName !== "") return groupName;
+    return undefined;
   }
 
   var ConditionsEditor = {

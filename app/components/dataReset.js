@@ -118,7 +118,11 @@ var DataReset = (function () {
     deleteButton.disabled = true;
 
     deleteButton.addEventListener("click", async function () {
-      await chrome.storage.local.remove([resetOptions.find((x) => x.value === settings.selected).value]);
+      var option = resetOptions.find((x) => x.value === settings.selected);
+      await chrome.storage.local.remove([option.value]);
+
+      // custom
+      if (option.name === "Global - Conditions") Data.resetConditions();
 
       var deleteBtn = document.getElementById("delete-data-button");
       deleteBtn.disabled = true;
