@@ -18,30 +18,30 @@
   content: "\f078";
 }
 
-#journalfolderroot .c20-hidden {
+#c20-journalfolderroot .c20-hidden {
   display: none;
 }
 
-#journalfolderroot.c20-toggle .c20-hidden {
+#c20-journalfolderroot.c20-toggle .c20-hidden {
   opacity: 0.5;
   display: block;
 }
 
-#journalfolderroot.c20-toggle .c20-hidden .c20-hidden {
+#c20-journalfolderroot.c20-toggle .c20-hidden .c20-hidden {
   opacity: 1;
   display: block;
 }
 
-#journalfolderroot.c20-search-all .c20-hidden {
+#c20-journalfolderroot.c20-search-all .c20-hidden {
   display: block;
   opacity: 0.5;
 }
 
-#journalfolderroot.c20-search-all .c20-hidden .c20-hidden {
+#c20-journalfolderroot.c20-search-all .c20-hidden .c20-hidden {
   opacity: 1;
 }
 
-#journalfolderroot .c20-search-hidden {
+#c20-journalfolderroot .c20-search-hidden {
   display: none;
 }
 

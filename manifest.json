@@ -13,14 +13,15 @@
         "app/components/journal.js",
         "app/components/conditionsEditor.js",
         "app/components/dataReset.js",
-        "app/components/shared/data.js"
+        "app/components/shared/data.js",
+        "library/sortable.js"
       ],
       "css": ["app/styles.css"],
       "world": "ISOLATED"
     },
     {
       "matches": ["https://app.roll20.net/editor/character/*"],
-      "js": ["character/conditions.js", "character/defenses.js", "character/main.js"],
+      "js": ["character/conditions.js", "character/defenses.js", "character/miniNotes.js", "character/main.js"],
       "css": ["character/styles.css"],
       "all_frames": true,
       "world": "ISOLATED"

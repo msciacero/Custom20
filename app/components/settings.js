@@ -20,6 +20,8 @@ var Settings = (function () {
       settings.journal = !settings.journal;
       journalCheckBox.classList.toggle("is-checked");
       journalCheckBox.children[0].classList.toggle("is-checked");
+      if (settings.journal) Journal.init();
+      else Journal.remove();
       saveSettings();
     });
   }
