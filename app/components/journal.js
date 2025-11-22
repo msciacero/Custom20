@@ -371,7 +371,7 @@ var Journal = (function () {
 
     var newList = document.createElement("ol");
     newList.className = "dd-list";
-    if (data.isCollapsed) newList.style.display = "none";
+    newList.style.display = data.isCollapsed ? "none" : "block";
 
     var newFolder = document.createElement("li");
     newFolder.className = "dd-item dd-folder";
@@ -574,15 +574,17 @@ var Journal = (function () {
           var folderChain = [];
           var currentFolderId = folderId;
           var currentGF = newItems[folderId][0].gf;
+          var folderEl = document.querySelector(`#journalfolderroot [data-globalfolderid="${currentFolderId}"]`);
 
           while (currentFolderId !== null && !savedData.find((x) => x.id === currentFolderId)) {
-            var folderEl = document.querySelector(`#journalfolderroot [data-globalfolderid="${currentFolderId}"]`);
             folderChain.unshift({
               id: currentFolderId,
               name: folderEl?.querySelector(".folder-title")?.textContent || "Untitled",
               pf: currentGF,
             });
+
             currentFolderId = currentGF;
+            folderEl = document.querySelector(`#journalfolderroot [data-globalfolderid="${currentFolderId}"]`);
             currentGF =
               folderEl?.parentElement.closest(".dd-item.dd-folder")?.getAttribute("data-globalfolderid") ?? null;
           }
@@ -673,7 +675,7 @@ var Journal = (function () {
     // deleted items (assume roll20 does full load)
     var delItems = clientItems.filter((x) => !serverItems.includes(x));
     delItems.forEach((item) => {
-      document.querySelectorAll(`#c20-journalfolderroot [data-itemid="${item}"]`).remove();
+      document.querySelectorAll(`#c20-journalfolderroot [data-itemid="${item}"]`).forEach((i) => i.remove());
     });
 
     // new items
@@ -686,35 +688,37 @@ var Journal = (function () {
       var existingFolder =
         folder !== null
           ? document.querySelector(
-              `#c20-journalfolderroot [data-globalfolderid="${folder.getAttribute("data-globalfolderid")}"]`
+              `#c20-journalfolderroot [data-globalfolderid="${folder.getAttribute("data-globalfolderid")}"] > ol`
             )
-          : document.querySelector("#c20-journalfolderroot ");
+          : document.querySelector("#c20-journalfolderroot > ol");
 
       while (existingFolder == null) {
         var newFolder = createNewFolder({
           isCollapsed: true,
-          name: "",
+          name: folder.querySelector(".folder-title")?.textContent,
           id: folder.getAttribute("data-globalfolderid"),
         });
 
         if (controller.searchFilter !== "") newFolder.classList.add("c20-search-hidden");
         folderChain.push(newFolder);
 
-        folder = folder.closest(".dd-item.dd-folder");
+        folder = folder.parentElement.closest(".dd-item.dd-folder");
         existingFolder =
           folder !== null
             ? document.querySelector(
-                `#c20-journalfolderroot [data-globalfolderid="${folder.getAttribute("data-globalfolderid")}"]`
+                `#c20-journalfolderroot [data-globalfolderid="${folder.getAttribute("data-globalfolderid")}"] > ol`
               )
-            : document.querySelector("#c20-journalfolderroot ");
+            : document.querySelector("#c20-journalfolderroot > ol");
       }
       if (controller.searchFilter !== "") item.classList.add("c20-search-hidden");
 
       if (folderChain.length > 0) {
-        folderChain[folderChain.length - 1].appendChild(item);
-        folderChain.forEach((f) => {
-          existingFolder.appendChild(f);
+        folderChain.reverse().forEach((f, i) => {
+          if (i == 0) existingFolder.appendChild(f);
+          else folderChain[i - 1].querySelector("ol").appendChild(f);
         });
+
+        folderChain[folderChain.length - 1].querySelector("ol").appendChild(item);
       } else {
         existingFolder.appendChild(item);
       }
