@@ -564,7 +564,7 @@ var Journal = (function () {
 
       Object.keys(newItems).forEach((folderId) => {
         //check if folder is saved
-        var folderIndex = savedData.findIndex((x) => x.id === folderId);
+        var folderIndex = savedData.findIndex((x) => x.id === folderId || (x.id === null && folderId === "null"));
         if (folderIndex !== -1) {
           newItems[folderId].forEach((item) => {
             savedData[folderIndex].items.push({ type: "item", id: item.id, isHidden: false });

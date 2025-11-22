@@ -23,6 +23,7 @@ function init() {
   window.character_id = window.location.href.split("/")[6];
   Defenses.init();
   Conditions.init();
+  MiniNotes.init();
 
   chrome.storage.onChanged.addListener(function (changes, _) {
     if (Object.keys(changes).includes("global-conditions")) {

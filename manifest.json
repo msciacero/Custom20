@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Custom20",
+  "name": "C20",
   "version": "1.0",
-  "description": "Adds custom folder options for players in roll20",
+  "description": "Adds additional UI features in Roll20.",
   "permissions": ["storage", "unlimitedStorage"],
   "content_scripts": [
     {
@@ -21,7 +21,13 @@
     },
     {
       "matches": ["https://app.roll20.net/editor/character/*"],
-      "js": ["character/conditions.js", "character/defenses.js", "character/miniNotes.js", "character/main.js"],
+      "js": [
+        "character/conditions.js",
+        "character/defenses.js",
+        "character/miniNotes.js",
+        "character/main.js",
+        "library/sortable.js"
+      ],
       "css": ["character/styles.css"],
       "all_frames": true,
       "world": "ISOLATED"

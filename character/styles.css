@@ -11,12 +11,14 @@
 }
 
 .health-defense:hover .options-flag + span,
-.conditions:hover .options-flag + span {
+.conditions:hover .options-flag + span,
+.miniNote-item:hover .options-flag + span {
   display: flex;
 }
 
 .health-defense .options-flag,
-.conditions .options-flag {
+.conditions .options-flag,
+.miniNote-item .options-flag {
   opacity: 0;
   position: absolute;
   top: 0;
@@ -37,7 +39,8 @@
 }
 
 .health-defense .options-flag:hover + span,
-.conditions .options-flag:hover + span {
+.conditions .options-flag:hover + span,
+.miniNote-item .options-flag:hover + span {
   color: black;
 }
 
@@ -91,6 +94,11 @@
 
 .health-defense .options input {
   width: calc(100% - 28px);
+  border: none;
+  border-bottom: 1px solid black;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
 }
 
 /* CONDITIONS */
@@ -222,18 +230,16 @@
   cursor: pointer;
 }
 
-.c20-note {
+.miniNote-container {
   position: relative;
   padding: 8px;
-  margin-top: 8px;
-  display: none;
 }
 
-.c20-note.active {
-  display: block;
+.miniNote-container * {
+  z-index: 1;
 }
 
-.c20-note::after {
+.miniNote-container::after {
   content: "";
   border: 10px solid;
   border-image-source: url(https://app.roll20.net/images/dndstyling/vitals.svg);
@@ -248,14 +254,18 @@
   border-image-width: 25px 100px;
 }
 
-.c20-note-title {
+.sheet-darkmode .miniNote-container::after {
+  border-image-source: url(https://storage.googleapis.com/char-sheet-app-images-6e101411/D%26D5e/images/darkmode/vitals_dm.svg);
+}
+
+.miniNote-title {
   position: relative;
-  z-index: 1;
   text-align: center;
+  padding-bottom: 5px;
   cursor: pointer;
 }
 
-.c20-note-title span {
+.miniNote-title span {
   font-family: "Times New Roman", Times, serif;
   font-size: 16px;
   text-transform: capitalize;
@@ -264,19 +274,190 @@
   color: #7e2d40;
 }
 
-.c20-note-dropdown {
-  position: relative;
+.sheet-darkmode .miniNote-title span {
+  color: rgb(225, 117, 123);
 }
 
-.c20-note-dropdown-content {
+.miniNote-body {
+  position: relative;
+  z-index: 1;
+  margin-top: 5px;
+}
+
+.miniNote-dropdown {
+  position: absolute;
+  z-index: 2;
+  right: 50px;
+}
+
+.miniNote-dropdown select {
+  opacity: 0;
+  width: 150px;
+  cursor: pointer;
+  text-align: center;
+  text-align-last: center;
+}
+
+.miniNote-dropdown option {
+  text-transform: capitalize;
+}
+
+.miniNote-container .options span {
+  width: initial;
+  display: inline-block;
+  font-size: 9px;
+  margin-top: 0;
+  line-height: 12px;
+  font-weight: bold;
+}
+
+.miniNote-container .options input[type="text"] {
+  display: inline-block;
+  text-align: left;
+  font-size: 12px;
+  border: none;
+  border-bottom: 1px solid #3d3d3d;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+  border-radius: 0;
+  color: black;
+}
+
+.sheet-darkmode .miniNote-container .options input[type="text"] {
+  border-bottom: 1px solid #d3d3d3;
+}
+
+.miniNote-container .options textarea {
+  border: none;
+}
+
+.miniNote-controls {
+  position: relative;
+  z-index: 2;
+  min-height: 27px;
+}
+
+.miniNote-controls-add,
+.miniNote-controls-edit {
+  visibility: hidden;
+  border: medium none;
+  color: white;
+  background: none;
+  box-shadow: none;
+}
+
+.miniNote-controls-add::before,
+.miniNote-controls-edit::after {
+  content: "&";
+  visibility: visible;
+  font-family: pictos;
+  background-color: #fff;
+  border: 1px solid black;
+  border-radius: 2px;
+  font-size: 12px;
+  height: 12px;
+  width: 12px;
+  padding: 2px 4px 2px 4px;
+  color: black;
+}
+
+.miniNote-controls-add:hover::before,
+.miniNote-controls-edit:hover::after {
+  background-color: #efefef;
+}
+.sheet-darkmode .miniNote-controls-add::before,
+.sheet-darkmode .miniNote-controls-edit::after,
+.sheet-darkmode .miniNote-controls-add:hover::before,
+.sheet-darkmode .miniNote-controls-edit:hover::after {
+  background: rgb(198, 171, 211);
+  color: rgb(31, 31, 31);
+  text-shadow: none;
+}
+
+.miniNote-controls-edit {
+  float: right;
+}
+
+.miniNote-controls-edit::after {
+  content: "(";
+}
+
+.miniNote-container.edit-mode .miniNote-controls-edit::after {
+  content: ")";
+}
+
+.miniNote-folder {
+  box-sizing: border-box;
+  background-color: white;
+  left: -5px;
+  width: 104%;
+  margin-top: 5px;
+  margin-bottom: 5px;
+  border: 5px solid black;
+  border-image-source: url(https://app.roll20.net/images/dndstyling/5eBorder.svg);
+  border-image-slice: 6% 8% 12% 8%;
+  border-image-width: 16px 19px 35px 19px;
+  border-image-repeat: round;
+  border-radius: 16px;
+  padding: 2px 5px 0;
+  position: relative;
+  min-height: 22px;
+}
+
+.miniNote-folder:empty {
+  display: none;
+}
+
+.miniNote-item {
+  position: relative;
+  border-top: 1px solid;
+  min-height: 20px;
+}
+
+.miniNote-item:first-child {
+  border-top: none;
+}
+
+.miniNote-item-name {
+  cursor: pointer;
+  text-overflow: ellipsis;
+  text-wrap: nowrap;
+  font-weight: 700;
+  font-size: 12px;
+  line-height: 12px;
+  padding: 4px;
+}
+
+.miniNote-item-desc {
+  padding: 5px 2px 0;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: pre-line;
+}
+
+.miniNote-container .itemcontrol {
   display: none;
   position: absolute;
-  background-color: #f9f9f9;
-  min-width: 130px;
-  box-shadow: 0px 8px 16px 0px rgba(0, 0, 0, 0.2);
-  padding: 12px 16px;
+  top: -3px;
 }
 
-.c20-note-dropdown:hover .c20-note-dropdown-content {
+.miniNote-container .itemcontrol .repcontrol_del {
+  float: right;
+  margin-left: 180px;
+}
+
+.miniNote-container.edit-mode .itemcontrol {
   display: block;
+}
+
+.miniNote-container.edit-mode .miniNote-item options,
+.miniNote-container.edit-mode .miniNote-item details {
+  opacity: 0.6;
+}
+
+.miniNote-container.edit-mode .miniNote-item:hover options,
+.miniNote-container.edit-mode .miniNote-item:hover textarea,
+.miniNote-container.edit-mode .miniNote-item:hover details {
+  background-color: rgba(241, 255, 92, 0.6);
 }
