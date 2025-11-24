@@ -25,6 +25,7 @@
         "character/conditions.js",
         "character/defenses.js",
         "character/miniNotes.js",
+        "character/spells.js",
         "character/main.js",
         "library/sortable.js"
       ],

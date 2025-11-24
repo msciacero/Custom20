@@ -24,6 +24,7 @@ function init() {
   Defenses.init();
   Conditions.init();
   MiniNotes.init();
+  Spells.init();
 
   chrome.storage.onChanged.addListener(function (changes, _) {
     if (Object.keys(changes).includes("global-conditions")) {

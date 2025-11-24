@@ -44,6 +44,12 @@
   color: black;
 }
 
+.sheet-darkmode .health-defense .options-flag:hover + span,
+.sheet-darkmode .conditions .options-flag:hover + span,
+.sheet-darkmode .miniNote-item .options-flag:hover + span {
+  color: #c6abd3;
+}
+
 .health-defense .c20-health-resistance:has(span:empty),
 .health-defense .c20-health-immunity:has(span:empty),
 .health-defense .c20-health-vulnerability:has(span:empty) {
@@ -115,6 +121,11 @@
   border-image-repeat: round;
   border-radius: 10px;
   position: relative;
+}
+
+.sheet-darkmode .conditions {
+  border-image-source: url(https://storage.googleapis.com/char-sheet-app-images-6e101411/D%26D5e/images/darkmode/5eBorder_dm.svg);
+  min-height: 50px;
 }
 
 .conditions .options .c20-checkbox-container {
@@ -230,6 +241,11 @@
   cursor: pointer;
 }
 
+.sheet-darkmode .modal-content .close:hover,
+.sheet-darkmode .modal-content .close:focus {
+  color: #c6abd3;
+}
+
 .miniNote-container {
   position: relative;
   padding: 8px;
@@ -326,6 +342,7 @@
 
 .sheet-darkmode .miniNote-container .options input[type="text"] {
   border-bottom: 1px solid #d3d3d3;
+  color: rgb(179, 179, 179);
 }
 
 .miniNote-container .options textarea {
@@ -405,6 +422,11 @@
   min-height: 22px;
 }
 
+.sheet-darkmode .miniNote-folder {
+  background-color: rgb(31, 31, 31);
+  border-image-source: url(https://storage.googleapis.com/char-sheet-app-images-6e101411/D%26D5e/images/darkmode/5eBorder_dm.svg);
+}
+
 .miniNote-folder:empty {
   display: none;
 }
@@ -460,4 +482,102 @@
 .miniNote-container.edit-mode .miniNote-item:hover textarea,
 .miniNote-container.edit-mode .miniNote-item:hover details {
   background-color: rgba(241, 255, 92, 0.6);
+}
+
+.page.spells.c20-v2 .col {
+  width: 100%;
+}
+
+.page.spells.c20-v2 .spell-level,
+.page.spells.c20-v2 .spell-labels {
+  width: 32.97%;
+}
+
+.page.spells.c20-v2 .spell-container .spellHeader {
+  width: calc(93% - 18px);
+  border-bottom: 1px solid rgb(211, 211, 211);
+}
+
+.page.spells.c20-v2 .spell-container:has(.repcontainer:empty) .spellHeader {
+  display: none;
+}
+
+.page.spells.c20-v2 .spell-container .spellHeader .spellName,
+.page.spells.c20-v2 .spell-container .spellHeader .spellTime,
+.page.spells.c20-v2 .spell-container .spellHeader .spellRange,
+.page.spells.c20-v2 .spell-container .spellHeader .spellTarget,
+.page.spells.c20-v2 .spell-container .spellHeader .spellDC,
+.page.spells.c20-v2 .spell-container .spellHeader .spellDuration,
+.page.spells.c20-v2 .spell-container .spellHeader .spellComponents {
+  display: inline-block;
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  padding-left: 5px;
+}
+
+.page.spells.c20-v2 .spell-container .spell {
+  width: 100%;
+}
+
+.page.spells.c20-v2 .spell-container .spell .display .spellname,
+.page.spells.c20-v2 .spell-container .spell .display .spellTime,
+.page.spells.c20-v2 .spell-container .spell .display .spellRange,
+.page.spells.c20-v2 .spell-container .spell .display .spellTarget,
+.page.spells.c20-v2 .spell-container .spell .display .spellDC,
+.page.spells.c20-v2 .spell-container .spell .display .spellDuration {
+  display: inline-block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  font-size: 12px;
+  font-weight: 400;
+  padding-left: 5px;
+}
+
+.page.spells.c20-v2 .spell-container .spell .display .spellname,
+.page.spells.c20-v2 .spell-container .spellHeader .spellName {
+  display: inline-block;
+  width: 200px;
+  max-width: 200px;
+  padding-left: 5px;
+}
+
+.page.spells.c20-v2 .spell-container .spellHeader .spellName {
+  padding-left: 10px;
+  width: 195px;
+  max-width: 195px;
+}
+
+.page.spells.c20-v2 .spell-container .spell .display .innate {
+  display: none;
+}
+
+.page.spells.c20-v2 .spell-container .spell .display .spellTime,
+.page.spells.c20-v2 .spell-container .spellHeader .spellTime {
+  min-width: 60px;
+  max-width: 60px;
+}
+
+.page.spells.c20-v2 .spell-container .spell .display .spellRange,
+.page.spells.c20-v2 .spell-container .spellHeader .spellRange {
+  min-width: 60px;
+  max-width: 60px;
+}
+
+.page.spells.c20-v2 .spell-container .spell .display .spellTarget,
+.page.spells.c20-v2 .spell-container .spellHeader .spellTarget {
+  min-width: 150px;
+  max-width: 150px;
+}
+
+.page.spells.c20-v2 .spell-container .spell .display .spellDC,
+.page.spells.c20-v2 .spell-container .spellHeader .spellDC {
+  min-width: 60px;
+  max-width: 60px;
+}
+
+.page.spells.c20-v2 .spell-container .spell .display .spellDuration,
+.page.spells.c20-v2 .spell-container .spellHeader .spellDuration {
+  width: 110px;
+  max-width: 110px;
 }
