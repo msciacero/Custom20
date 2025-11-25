@@ -36,7 +36,11 @@
   ],
   "web_accessible_resources": [
     {
-      "resources": ["app/components/shared/campaignInfo.js", "library/icons/resistance.svg"],
+      "resources": [
+        "app/components/shared/campaignInfo.js",
+        "library/icons/resistance.svg",
+        "library/icons/filter-solid-full.svg"
+      ],
       "matches": ["https://app.roll20.net/*"]
     }
   ]

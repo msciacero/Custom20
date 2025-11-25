@@ -1,13 +1,33 @@
-//Start with viewer
-//Table view
-//Name (C/R Tags) | Time | Range | Target | DC | Duration | VSM
-//Accordion for each spell level
-//Filter (Prepared/Ritual/VSM/Concentration)
+//TODO
+//Save DC option??
+//Save/Load
 
 var Spells = (function () {
+  var defaultFilter = JSON.stringify({
+    prepared: false,
+    ritual: false,
+    verbal: true,
+    somatic: true,
+    material: true,
+    concentration: true,
+  });
+
+  var spellData = {
+    filter: {
+      prepared: false,
+      ritual: false,
+      verbal: true,
+      somatic: true,
+      material: true,
+      concentration: true,
+    },
+  };
+
   function createUi() {
     var page = document.querySelector(".page.spells");
     page.classList.add("c20-v2");
+
+    createSpellFilter();
 
     document.querySelectorAll(".spell-container").forEach((s, i) => createSpellHeader(s, i));
     document.querySelectorAll(".spell-container .spell > .display > button").forEach((s) => createSpellRow(s));
@@ -18,12 +38,97 @@ var Spells = (function () {
     flag.click();
   }
 
-  function createSpellFilter() {}
+  function createSpellFilter() {
+    var container = document.createElement("div");
+    container.className = "c20-spellFilter";
+
+    var btn = document.createElement("div");
+    btn.className = "filterBtn";
+
+    var btnImg = document.createElement("img");
+    btnImg.src = chrome.runtime.getURL(`library/icons/filter-solid-full.svg`);
+    btn.appendChild(btnImg);
+
+    btn.addEventListener("click", function () {
+      btn.classList.toggle("open");
+    });
+    container.appendChild(btn);
+
+    var inputContainer = document.createElement("div");
+    inputContainer.className = "inputContainer";
+
+    var exclusiveContainer = document.createElement("div");
+    exclusiveContainer.appendChild(createSpellFilterCheckbox("prepared"));
+    exclusiveContainer.appendChild(createSpellFilterCheckbox("ritual"));
+
+    var inclusiveFilter = document.createElement("div");
+    inclusiveFilter.style.display = "inline-block";
+    inclusiveFilter.appendChild(createSpellFilterCheckbox("verbal"));
+    inclusiveFilter.appendChild(createSpellFilterCheckbox("somatic"));
+    inclusiveFilter.appendChild(createSpellFilterCheckbox("material"));
+    inclusiveFilter.appendChild(createSpellFilterCheckbox("concentration"));
+
+    inputContainer.appendChild(exclusiveContainer);
+    inputContainer.appendChild(inclusiveFilter);
+    container.appendChild(inputContainer);
+    document.querySelector(".page.spells .col.col1").before(container);
+  }
+
+  function createSpellFilterCheckbox(key) {
+    var group = document.createElement("div");
+
+    var input = document.createElement("input");
+    input.type = "checkbox";
+    input.name = `c20-spellFilter-${key}`;
+    input.id = `c20-spellFilter-${key}`;
+    input.checked = spellData.filter[key];
+
+    var label = document.createElement("label");
+    label.textContent = key;
+    label.setAttribute("for", `c20-spellFilter-${key}`);
+    label.className = "c20-label";
+
+    input.addEventListener("change", function (event) {
+      spellData.filter[key] = event.target.checked;
+      updateFilter();
+    });
+
+    group.appendChild(input);
+    group.appendChild(label);
+
+    return group;
+  }
+
+  function updateFilter() {
+    document.querySelectorAll(".spell-container > .repcontainer .spell").forEach((spell) => {
+      if (spellData.filter.prepared === true && spell.querySelector(".display .prep-box:not(:checked)")) {
+        spell.classList.add("hidden");
+      } else if (spellData.filter.verbal === false && spell.querySelector(".display input.v").value !== "0") {
+        spell.classList.add("hidden");
+      } else if (spellData.filter.somatic === false && spell.querySelector(".display input.s").value !== "0") {
+        spell.classList.add("hidden");
+      } else if (spellData.filter.material === false && spell.querySelector(".display input.m").value !== "0") {
+        spell.classList.add("hidden");
+      } else if (
+        spellData.filter.concentration === false &&
+        spell.querySelector(".display input.spellconcentration").value !== "0"
+      ) {
+        spell.classList.add("hidden");
+      } else if (spellData.filter.ritual === true && spell.querySelector(".display input.spellritual").value === "0") {
+        spell.classList.add("hidden");
+      } else {
+        spell.classList.remove("hidden");
+      }
+    });
+
+    if (defaultFilter === JSON.stringify(spellData.filter))
+      document.querySelector(".c20-spellFilter .filterBtn").classList.remove("active");
+    else document.querySelector(".c20-spellFilter .filterBtn").classList.add("active");
+  }
 
   function createSpellHeader(container, index) {
     var header = document.createElement("div");
     header.className = "spellHeader";
-    if (index !== 0) header.style.paddingLeft = "15px";
 
     var name = document.createElement("div");
     name.className = "spellName";
