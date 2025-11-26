@@ -217,6 +217,13 @@ var Data = (function () {
     },
   ];
 
+  var spellCompendium = [
+    {
+      game: "DnD2014",
+      spells: [{}],
+    },
+  ];
+
   var Data = {
     initConditions: async function initConditions() {
       const storageKey = "global-conditions";

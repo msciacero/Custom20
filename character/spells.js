@@ -3,24 +3,26 @@
 //Save/Load
 
 var Spells = (function () {
+  var storageKey = "";
   var defaultFilter = JSON.stringify({
+    concentration: true,
+    material: true,
     prepared: false,
     ritual: false,
-    verbal: true,
     somatic: true,
-    material: true,
-    concentration: true,
+    verbal: true,
   });
 
   var spellData = {
     filter: {
+      concentration: true,
+      material: true,
       prepared: false,
       ritual: false,
-      verbal: true,
       somatic: true,
-      material: true,
-      concentration: true,
+      verbal: true,
     },
+    additionalInfo: [],
   };
 
   function createUi() {
@@ -32,10 +34,38 @@ var Spells = (function () {
     document.querySelectorAll(".spell-container").forEach((s, i) => createSpellHeader(s, i));
     document.querySelectorAll(".spell-container .spell > .display > button").forEach((s) => createSpellRow(s));
 
+    document
+      .querySelectorAll(".spell-container .spell .options .row:has(input[name='attr_spelltarget']")
+      .forEach((s) => {
+        s.after(createSpellOption({ text: "HIT/SAVE DC:", attr: "attr_spelldc" }));
+      });
+
+    document
+      .querySelectorAll(".spell-container .spell .details .row:has(span[name='attr_spelltarget']")
+      .forEach((s) => {
+        s.after(createSpellDisplay({ text: "Hit/Save DC:", attr: "attr_spelldc" }));
+      });
+
     //refresh ui
     var flag = document.querySelector(".spell-container .repcontainer .spell .details-flag");
     flag.click();
     flag.click();
+
+    // load filters
+    updateFilter();
+
+    // load custom data
+    spellData.additionalInfo.forEach((r) => {
+      var row = document.querySelector(`.spell-container [data-reprowid='${r.id}']`);
+      if (row !== undefined) {
+        Object.keys(r).forEach((attr) => {
+          if (attr !== "id") {
+            row.querySelector(`input[name="${attr}"`).value = r[attr];
+            row.querySelectorAll(`span[name="${attr}"`).forEach((t) => (t.textContent = r[attr]));
+          }
+        });
+      }
+    });
   }
 
   function createSpellFilter() {
@@ -124,6 +154,7 @@ var Spells = (function () {
     if (defaultFilter === JSON.stringify(spellData.filter))
       document.querySelector(".c20-spellFilter .filterBtn").classList.remove("active");
     else document.querySelector(".c20-spellFilter .filterBtn").classList.add("active");
+    saveState();
   }
 
   function createSpellHeader(container, index) {
@@ -157,7 +188,7 @@ var Spells = (function () {
 
     var dc = document.createElement("div");
     dc.className = "spellDC";
-    dc.textContent = "Save";
+    dc.textContent = "DC";
     header.appendChild(dc);
 
     container.insertBefore(header, container.firstChild);
@@ -191,9 +222,64 @@ var Spells = (function () {
     container.appendChild(dc);
   }
 
+  function createSpellOption(data) {
+    var row = document.createElement("div");
+    row.className = " row";
+
+    var span = document.createElement("span");
+    span.textContent = data.text;
+    span.style.paddingRight = "4px";
+
+    var input = document.createElement("input");
+    input.type = "text";
+    input.name = data.attr;
+
+    if (spellData.additionalInfo)
+      input.addEventListener("change", function (event) {
+        var repEl = row.parentElement.parentElement.parentElement.parentElement;
+        var id = repEl.getAttribute("data-reprowid");
+        var index = spellData.additionalInfo.findIndex((x) => x.id === id && x[data.attr] !== undefined);
+
+        repEl.querySelectorAll(`span[name="${data.attr}"]`).forEach((s) => (s.textContent = event.target.value));
+        if (index !== -1) spellData.additionalInfo[index][data.attr] = event.target.value;
+        else spellData.additionalInfo.push({ id: id, [data.attr]: event.target.value });
+        saveState();
+      });
+
+    row.appendChild(span);
+    row.appendChild(input);
+    return row;
+  }
+
+  function createSpellDisplay(data) {
+    var row = document.createElement("div");
+    row.className = " row";
+
+    var label = document.createElement("span");
+    label.textContent = data.text;
+    label.className = "bold";
+
+    var value = document.createElement("span");
+    value.setAttribute("name", data.attr);
+
+    row.appendChild(label);
+    row.appendChild(value);
+    return row;
+  }
+
+  async function saveState() {
+    await chrome.storage.local.set({ [storageKey]: spellData });
+  }
+
+  async function loadState() {
+    var storedData = await chrome.storage.local.get([storageKey]);
+    if (storedData[storageKey] !== undefined) spellData = storedData[storageKey];
+  }
+
   var Spells = {
     init: async function init() {
-      settings.storageKey = window.character_id + "-spells";
+      storageKey = window.character_id + "-spells";
+      await loadState();
       createUi();
     },
   };
