@@ -11,10 +11,14 @@
         "app/main.js",
         "app/components/settings.js",
         "app/components/journal.js",
-        "app/components/conditionsEditor.js",
+        "app/components/compendium.js",
+        "app/components/compendiumEditor.js",
         "app/components/dataReset.js",
-        "app/components/shared/data.js",
-        "library/sortable.js"
+        "library/sortable.js",
+        "library/idb.js",
+        "library/pluralize.js",
+        "library/modal.js",
+        "library/storage.js"
       ],
       "css": ["app/styles.css"],
       "world": "ISOLATED"
@@ -26,8 +30,11 @@
         "character/defenses.js",
         "character/miniNotes.js",
         "character/spells.js",
+        "character/compendiumImport.js",
         "character/main.js",
-        "library/sortable.js"
+        "library/sortable.js",
+        "library/idb.js",
+        "library/storage.js"
       ],
       "css": ["character/styles.css"],
       "all_frames": true,
@@ -39,7 +46,8 @@
       "resources": [
         "app/components/shared/campaignInfo.js",
         "library/icons/resistance.svg",
-        "library/icons/filter-solid-full.svg"
+        "library/icons/filter-solid-full.svg",
+        "library/data/dnd2014/conditions.json"
       ],
       "matches": ["https://app.roll20.net/*"]
     }

@@ -12,7 +12,7 @@ var Settings = (function () {
     var journalCheckBox = getSettingsCheckbox({ value: "Enable Journal", isChecked: settings.journal });
 
     panelBody.appendChild(journalCheckBox);
-    panelBody.appendChild(getSettingsModalLink({ value: "Edit Conditions", event: ConditionsEditor.show }));
+    panelBody.appendChild(getSettingsModalLink({ value: "Edit Compendium", event: CompendiumEditor.show }));
     panelBody.appendChild(getSettingsModalLink({ value: "Reset Data", event: DataReset.show }));
     document.querySelector("#settings-accordion").appendChild(panel);
 

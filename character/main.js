@@ -19,18 +19,16 @@ function waitForElement(selector) {
   });
 }
 
-function init() {
+async function init() {
+  window.campaign_id = window.location.href.split("/")[5];
   window.character_id = window.location.href.split("/")[6];
+  await StorageHelper.initCharacter();
+
   Defenses.init();
   Conditions.init();
   MiniNotes.init();
   Spells.init();
-
-  chrome.storage.onChanged.addListener(function (changes, _) {
-    if (Object.keys(changes).includes("global-conditions")) {
-      Conditions.reset();
-    }
-  });
+  CompendiumImport.init();
 }
 
 waitForElement(".sheetform").then(() => {

@@ -8,3 +8,5 @@ Currently modifies the players journal
 
 3rd Party Libraries
 -Intrinsical's D&D 5e Icon Set by David Kor Kian Wei (https://github.com/intrinsical/tw-dnd/tree/main/icons)
+-Sortable.js by RubaXa & owenm (https://github.com/SortableJS/Sortable)
+-FontAwesome Icons

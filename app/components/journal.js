@@ -9,7 +9,6 @@ var Journal = (function () {
   var settings = {
     searchHidden: false,
     isLocked: true,
-    storageKey: "",
   };
 
   var context = {
@@ -528,15 +527,16 @@ var Journal = (function () {
       };
     });
 
-    if (saveData[0] === undefined) await chrome.storage.local.remove([settings.storageKey]);
-    else await chrome.storage.local.set({ [settings.storageKey]: JSON.stringify(saveData) });
+    if (saveData[0] === undefined)
+      await StorageHelper.deleteItem(StorageHelper.dbNames.campaigns, window.campaign_id, "journal");
+    else await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, window.campaign_id, saveData, "journal");
   }
 
   // loading
   async function loadState() {
-    var storedData = await chrome.storage.local.get([settings.storageKey]);
+    var storedData = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, window.campaign_id, "journal");
     var savedData = [{ id: null, isCollapsed: false, items: [], name: "root" }];
-    if (storedData[settings.storageKey] !== undefined) savedData = JSON.parse(storedData[settings.storageKey]);
+    if (storedData !== undefined) savedData = storedData;
     // check for missing items
     var curItems = Array.from(document.querySelectorAll("#journalfolderroot .journalitem.dd-item")).map((x) =>
       x.getAttribute("data-itemid")
@@ -756,7 +756,6 @@ var Journal = (function () {
   var Journal = {
     // initialization
     init: async function init() {
-      settings.storageKey = window.campaign_id + "-journal";
       if (nodes.journalSorts.length > 0) return; // already initialized
       if (document.querySelector("#journal > .content > .superadd.btn") !== null) return; // don't load if owner
       await loadState();
