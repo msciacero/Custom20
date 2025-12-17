@@ -431,8 +431,3 @@ if (typeof define === "function" && define.amd) {
     return MiniNotes;
   });
 }
-
-//TODO
-// Save on change
-// Load data on start
-// Hide

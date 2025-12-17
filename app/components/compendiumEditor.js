@@ -1,9 +1,3 @@
-// TODO:
-// Add new entires
-// Add spell UI
-// Add spell validation
-// Add autocomplete select
-
 var CompendiumEditor = (function () {
   var settings = {
     game: "",
@@ -396,7 +390,8 @@ var CompendiumEditor = (function () {
       })
     );
     editor.appendChild(createTextInput({ name: "time", title: "Casting Time", value: data.time, required: true }));
-    editor.appendChild(createTextInput({ name: "range", title: "Range/Area", value: data.range, required: true }));
+    editor.appendChild(createTextInput({ name: "range", title: "Range/Area", value: data.range, required: false }));
+    editor.appendChild(createTextInput({ name: "duration", title: "Duration", value: data.duration, required: false }));
     editor.appendChild(
       createTextInput({ name: "savingThrow", title: "Saving Throw", value: data.savingThrow, required: true })
     );
@@ -418,8 +413,24 @@ var CompendiumEditor = (function () {
       createTextInput({ name: "materials", title: "Materials", value: data.materials, required: false })
     );
 
-    editor.appendChild(createTextInput({ name: "roll", title: "Roll", value: data.roll, required: false }));
-    editor.appendChild(createTextInput({ name: "effect", title: "Effect", value: data.effect, required: false }));
+    editor.appendChild(
+      createSelectInput({
+        name: "attack",
+        title: "Attack",
+        value: data.attack,
+        required: true,
+        options: [
+          { name: "None", value: "None" },
+          { name: "Melee", value: "Melee" },
+          { name: "Ranged", value: "Ranged" },
+        ],
+      })
+    );
+    editor.appendChild(createTextInput({ name: "healing", title: "Healing", value: data.healing, required: false }));
+    editor.appendChild(createTextInput({ name: "damage", title: "Damage", value: data.damage, required: false }));
+    editor.appendChild(
+      createTextInput({ name: "damageType", title: "Damage Type/Effect", value: data.damageType, required: false })
+    );
 
     editor.appendChild(
       createTextAreaInput({ name: "description", title: "Description", value: data.description, required: false })

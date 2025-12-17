@@ -493,28 +493,32 @@
   width: 32.97%;
 }
 
-.page.spells.c20-v2 .spell-container .spellHeader {
+.page.spells.c20-v2 .spell-container .c20-spellHeader {
   width: calc(93% - 18px);
   border-bottom: 1px solid rgb(211, 211, 211);
 }
 
-.page.spells.c20-v2 .spell-container:has(.display .prep-box) .spellHeader {
+.page.spells.c20-v2 .spell-container .c20-spellRow {
+  display: inline;
+}
+
+.page.spells.c20-v2 .spell-container:has(.display .prep-box) .c20-spellHeader {
   width: calc(93% - 3px);
 }
 
-.page.spells.c20-v2 .spell-container:has(.repcontainer:empty) .spellHeader {
+.page.spells.c20-v2 .spell-container:has(.repcontainer:empty) .c20-spellHeader {
   display: none;
 }
 
-.page.spells.c20-v2 .spell-container .spellHeader .spellName,
-.page.spells.c20-v2 .spell-container .spellHeader .spellTime,
-.page.spells.c20-v2 .spell-container .spellHeader .spellRange,
-.page.spells.c20-v2 .spell-container .spellHeader .spellTarget,
-.page.spells.c20-v2 .spell-container .spellHeader .spellSavingThrow,
-.page.spells.c20-v2 .spell-container .spellHeader .spellRoll,
-.page.spells.c20-v2 .spell-container .spellHeader .spellEffect,
-.page.spells.c20-v2 .spell-container .spellHeader .spellDuration,
-.page.spells.c20-v2 .spell-container .spellHeader .spellComponents {
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellName,
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellTime,
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellRange,
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellTarget,
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellSavingThrow,
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellRoll,
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellEffect,
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellDuration,
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellComponents {
   display: inline-block;
   font-size: 12px;
   font-weight: 700;
@@ -543,7 +547,7 @@
 }
 
 .page.spells.c20-v2 .spell-container .spell .display .spellname,
-.page.spells.c20-v2 .spell-container .spellHeader .spellName {
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellName {
   display: inline-block;
   width: 200px;
   max-width: 200px;
@@ -551,16 +555,16 @@
 }
 
 .page.spells.c20-v2 .spell-container:has(.display .prep-box) .spell .display .spellname,
-.page.spells.c20-v2 .spell-container:has(.display .prep-box) .spellHeader .spellName {
+.page.spells.c20-v2 .spell-container:has(.display .prep-box) .c20-spellHeader .spellName {
   width: 184px;
   max-width: 184px;
 }
 
-.page.spells.c20-v2 .spell-container:has(.display .prep-box) .spellHeader .spellName {
+.page.spells.c20-v2 .spell-container:has(.display .prep-box) .c20-spellHeader .spellName {
   padding-left: 21px;
 }
 
-.page.spells.c20-v2 .spell-container .spellHeader .spellName {
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellName {
   padding-left: 10px;
   width: 195px;
   max-width: 195px;
@@ -571,58 +575,63 @@
 }
 
 .page.spells.c20-v2 .spell-container .spell .display .spellTime,
-.page.spells.c20-v2 .spell-container .spellHeader .spellTime {
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellTime {
   min-width: 60px;
   max-width: 60px;
 }
 
 .page.spells.c20-v2 .spell-container .spell .display .spellRange,
-.page.spells.c20-v2 .spell-container .spellHeader .spellRange {
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellRange {
   min-width: 100px;
   max-width: 100px;
 }
 
 .page.spells.c20-v2 .spell-container .spell .display .spellTarget,
-.page.spells.c20-v2 .spell-container .spellHeader .spellTarget {
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellTarget {
   min-width: 150px;
   max-width: 150px;
 }
 
 .page.spells.c20-v2 .spell-container .spell .display .spellSavingThrow,
-.page.spells.c20-v2 .spell-container .spellHeader .spellSavingThrow {
-  min-width: 60px;
-  max-width: 60px;
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellSavingThrow {
+  min-width: 40px;
+  max-width: 40px;
 }
 
-.page.spells.c20-v2 .spell-container .spell .display .spellRoll,
-.page.spells.c20-v2 .spell-container .spellHeader .spellRoll {
-  min-width: 30px;
-  max-width: 30px;
+.page.spells.c20-v2 .spell-container .spell .display .spellSavingThrow {
+  text-transform: uppercase;
+}
+
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellRoll,
+.page.spells.c20-v2 .spell-container .spell .display .spellRoll {
+  min-width: 40px;
+  max-width: 40px;
 }
 
 .page.spells.c20-v2 .spell-container .spell .display .spellEffect,
-.page.spells.c20-v2 .spell-container .spellHeader .spellEffect {
-  min-width: 104px;
-  max-width: 104px;
-}
-
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellEffect,
 .page.spells.c20-v2 .spell-container .spell .display .spellcard .spellEffect {
-  min-width: 74px;
-  max-width: 74px;
+  min-width: 84px;
+  max-width: 84px;
 }
 
-.page.spells.c20-v2 .spell-container:has(.display .prep-box) .spellHeader .spellEffect {
-  min-width: 120px;
-  max-width: 120px;
+.page.spells.c20-v2 .spell-container:has(.display .prep-box) .c20-spellHeader .spellEffect {
+  min-width: 90px;
+  max-width: 90px;
 }
 
 .page.spells.c20-v2 .spell-container .spell .display .spellDuration,
-.page.spells.c20-v2 .spell-container .spellHeader .spellDuration {
+.page.spells.c20-v2 .spell-container .c20-spellHeader .spellDuration {
   width: 110px;
   max-width: 110px;
 }
 
-.c20-spellFilter .filterBtn {
+.c20-spellFilter {
+  display: flow-root;
+}
+
+.c20-spellFilter .filterBtn,
+.c20-spellFilter .resetBtn {
   background-color: rgb(245, 245, 245);
   border: 1px solid rgb(85, 85, 85);
   border-radius: 5px;
@@ -643,6 +652,18 @@
 .c20-spellFilter .filterBtn.active img {
   filter: brightness(0) saturate(100%) invert(100%) sepia(14%) saturate(0%) hue-rotate(313deg) brightness(101%)
     contrast(101%);
+}
+
+.c20-spellFilter .resetBtn {
+  font-family: pictos;
+  position: absolute;
+  right: -23px;
+  padding: 0;
+  display: none;
+}
+
+.c20-spellFilter:has(.filterBtn.active) .resetBtn {
+  display: block;
 }
 
 .c20-spellFilter .inputContainer {
@@ -708,4 +729,12 @@
   height: 100px;
   margin: -70px 0 0 -170px;
   pointer-events: none;
+}
+
+#c20-character-settings {
+  border: 1px solid #666;
+  border-radius: 5px;
+  padding: 5px;
+  margin-bottom: 5px;
+  position: relative;
 }

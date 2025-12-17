@@ -10,3 +10,14 @@ Currently modifies the players journal
 -Intrinsical's D&D 5e Icon Set by David Kor Kian Wei (https://github.com/intrinsical/tw-dnd/tree/main/icons)
 -Sortable.js by RubaXa & owenm (https://github.com/SortableJS/Sortable)
 -FontAwesome Icons
+
+// TODO List
+Compendium Editor: add new entires
+Compendium Editor: Add spell validation/json
+Compendium Editor: Add autocomplete select
+Mini Notes: rebuild with nested accordion groups (parent/child)
+Mini Notes: move to indexeddb
+Settings: move to indexeddb
+Settings: rebuild data reset
+
+Review Spell data

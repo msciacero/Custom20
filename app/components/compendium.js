@@ -1,6 +1,3 @@
-// TODO
-// reload compendium on add/update/delete
-
 var Compendium = (function () {
   var dragList = ["spell"];
   var settings = {

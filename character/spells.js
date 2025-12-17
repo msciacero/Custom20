@@ -1,7 +1,3 @@
-//TODO
-// prefill import spell casting ability with spell
-// new spell updates w/filter
-
 var Spells = (function () {
   var defaultFilter = {
     concentration: true,
@@ -28,11 +24,14 @@ var Spells = (function () {
   function createUi() {
     var page = document.querySelector(".page.spells");
     page.classList.add("c20-v2");
-
-    createSpellFilter();
+    page.addEventListener("change", function (event) {
+      if (event.target.parentElement.parentElement.className !== "spellattackinfo") return;
+      updateSpellRow(event.target.closes(".spell"));
+    });
 
     document.querySelectorAll(".spell-container").forEach((s, i) => createSpellHeader(s, i));
     document.querySelectorAll(".spell-container .spell > .display > button").forEach((s) => createSpellRow(s));
+    document.querySelectorAll(".spell-container .repcontainer .spell").forEach((s) => updateSpellRow(s));
 
     //refresh ui
     var flag = document.querySelector(".spell-container .repcontainer .spell .details-flag");
@@ -40,9 +39,6 @@ var Spells = (function () {
       flag.click();
       flag.click();
     }
-
-    // load filters
-    updateFilter();
   }
 
   function createSpellFilter() {
@@ -59,10 +55,21 @@ var Spells = (function () {
     btn.addEventListener("click", function () {
       btn.classList.toggle("open");
     });
+
     container.appendChild(btn);
 
     var inputContainer = document.createElement("div");
     inputContainer.className = "inputContainer";
+
+    var resetButton = document.createElement("button");
+    resetButton.title = "Reset Filters";
+    resetButton.textContent = "1";
+    resetButton.className = "resetBtn";
+    resetButton.addEventListener("click", function () {
+      resetFilter(true);
+    });
+
+    inputContainer.appendChild(resetButton);
 
     var selectContainer = document.createElement("div");
     selectContainer.className = "selectContainer";
@@ -86,8 +93,8 @@ var Spells = (function () {
     checkBoxContainer.appendChild(inclusiveFilter);
     inputContainer.appendChild(checkBoxContainer);
     inputContainer.appendChild(selectContainer);
-
     container.appendChild(inputContainer);
+
     document.querySelector(".page.spells .col.col1").before(container);
   }
 
@@ -202,9 +209,25 @@ var Spells = (function () {
     else document.querySelector(".c20-spellFilter .filterBtn").classList.add("active");
   }
 
+  function resetFilter(save) {
+    spellData.filter = { ...defaultFilter };
+    updateFilter();
+    if (save === true) {
+      document.querySelector('.c20-spellFilter [name="c20-spellFilter-time"]').value = spellData.filter.time;
+      document.querySelector('.c20-spellFilter [name="c20-spellFilter-prepared"]').checked = spellData.filter.prepared;
+      document.querySelector('.c20-spellFilter [name="c20-spellFilter-ritual"]').checked = spellData.filter.ritual;
+      document.querySelector('.c20-spellFilter [name="c20-spellFilter-verbal"]').checked = spellData.filter.verbal;
+      document.querySelector('.c20-spellFilter [name="c20-spellFilter-somatic"]').checked = spellData.filter.somatic;
+      document.querySelector('.c20-spellFilter [name="c20-spellFilter-material"]').checked = spellData.filter.material;
+      document.querySelector('.c20-spellFilter [name="c20-spellFilter-concentration"]').checked =
+        spellData.filter.concentration;
+      saveState();
+    }
+  }
+
   function createSpellHeader(container) {
     var header = document.createElement("div");
-    header.className = "spellHeader";
+    header.className = "c20-spellHeader";
 
     var name = document.createElement("div");
     name.className = "spellName";
@@ -231,6 +254,11 @@ var Spells = (function () {
     dc.textContent = "Save";
     header.appendChild(dc);
 
+    var roll = document.createElement("div");
+    roll.className = "spellRoll";
+    roll.textContent = "Roll";
+    header.appendChild(roll);
+
     var effect = document.createElement("div");
     effect.className = "spellEffect";
     effect.textContent = "Effect";
@@ -240,6 +268,9 @@ var Spells = (function () {
   }
 
   function createSpellRow(container) {
+    var row = document.createElement("div");
+    row.className = "c20-spellRow";
+
     var time = document.createElement("span");
     time.className = "spellTime";
     time.setAttribute("name", "attr_spellcastingtime");
@@ -254,22 +285,50 @@ var Spells = (function () {
 
     var dc = document.createElement("span");
     dc.className = "spellSavingThrow";
-    dc.setAttribute("name", "attr_spellsave");
 
     var roll = document.createElement("span");
     roll.className = "spellRoll";
-    roll.setAttribute("name", "attr_spelldamage");
 
     var effect = document.createElement("span");
     effect.className = "spellEffect";
     effect.setAttribute("name", "attr_spelldamagetype");
 
-    container.appendChild(time);
-    container.appendChild(range);
-    container.appendChild(duration);
-    container.appendChild(dc);
-    container.appendChild(roll);
-    container.appendChild(effect);
+    row.appendChild(time);
+    row.appendChild(range);
+    row.appendChild(duration);
+    row.appendChild(dc);
+    row.appendChild(roll);
+    row.appendChild(effect);
+
+    container.appendChild(row);
+  }
+
+  function updateSpellRow(spell, data) {
+    var row = spell.querySelector(".display .c20-spellRow");
+    var info = spell.querySelector(".wrapper > .options > .spellattackinfo");
+
+    var data = {
+      damageRoll: info.querySelector("[name='attr_spelldamage']").value,
+      healingRoll: info.querySelector("[name='attr_spellhealing']").value,
+      savingThrow: info.querySelector("[name='attr_spellsave']").value,
+      spellAttack: info.querySelector("[name='attr_spellattack']").value,
+    };
+
+    if (data.damageRoll) {
+      row.querySelector(".spellRoll").textContent = data.damageRoll;
+    } else if (data.healingRoll) {
+      row.querySelector(".spellRoll").textContent = data.healingRoll;
+    } else {
+      row.querySelector(".spellRoll").textContent = "";
+    }
+
+    if (data.savingThrow) {
+      row.querySelector(".spellSavingThrow").textContent = data.savingThrow.substring(0, 3);
+    } else if (data.spellAttack !== "None") {
+      row.querySelector(".spellSavingThrow").textContent = "AC";
+    } else {
+      row.querySelector(".spellSavingThrow").textContent = "";
+    }
   }
 
   async function saveState() {
@@ -288,9 +347,22 @@ var Spells = (function () {
   }
 
   var Spells = {
-    init: async function init() {
+    initFilter: async function initFilter() {
       await loadState();
+      createSpellFilter();
+      updateFilter();
+    },
+    initUi: async function initUi() {
       createUi();
+    },
+    removeFilter: function removeFilter() {
+      resetFilter(false);
+      document.querySelector(".c20-spellFilter")?.remove();
+    },
+    removeUi: function removeUi() {
+      document.querySelector(".page.spells").classList.remove("c20-v2");
+      document.querySelectorAll(".c20-spellHeader").forEach((el) => el.remove());
+      document.querySelectorAll(".c20-spellRow").forEach((el) => el.remove());
     },
   };
   return Spells;

@@ -22,12 +22,17 @@ function waitForElement(selector) {
 async function init() {
   window.campaign_id = window.location.href.split("/")[5];
   window.character_id = window.location.href.split("/")[6];
-  await StorageHelper.initCharacter();
 
-  Defenses.init();
-  Conditions.init();
+  await StorageHelper.initCharacter();
+  await CharacterSettings.init();
+
+  var settings = await StorageHelper.getItem(StorageHelper.dbNames.characters, window.character_id, "settings");
+
+  if (settings.defenses) Defenses.init();
+  if (settings.conditionCompendium !== "off") Conditions.init();
+  if (settings.spellFilter) Spells.initFilter();
+  if (settings.spellView) Spells.initUi();
   MiniNotes.init();
-  Spells.init();
   CompendiumImport.init();
 }
 

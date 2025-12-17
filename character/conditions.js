@@ -1,7 +1,6 @@
 var Conditions = (function () {
   var storageKey;
   var settings = {
-    game: "DnD2014",
     conditions: null,
     playerConditions: [],
   };
@@ -69,7 +68,7 @@ var Conditions = (function () {
         label.setAttribute("for", `c20-conditions-${key}`);
         label.className = "c20-label";
 
-        input.addEventListener("change", function (event) {
+        input.addEventListener("change", async function (event) {
           updatePlayerConditions(null, key, this.checked);
           updateDisplay();
           updateEffectLabels();
@@ -124,7 +123,7 @@ var Conditions = (function () {
           updateDisplay();
 
           updateEffectLabels();
-          saveConditions();
+          saveCharacterConditions();
         });
 
         radioContainer.appendChild(input);
@@ -178,7 +177,7 @@ var Conditions = (function () {
     conditionLabel.style.display = "list-item";
     conditionLabel.style.cursor = "pointer";
 
-    conditionLabel.addEventListener("click", function () {
+    conditionLabel.addEventListener("click", async function () {
       var modal = document.querySelector("#c20-conditions-modal");
       var title = modal.querySelector("#c20-conditions-modal-title");
       title.textContent = condition.groupName ? `${condition.groupName} ${condition.name}` : condition.name;
@@ -186,7 +185,9 @@ var Conditions = (function () {
       var content = modal.querySelector("#c20-conditions-modal-content");
       content.replaceChildren();
 
-      condition.desc.forEach((desc) => {
+      var compendiumCondition = await getCompendiumItem(condition.key);
+
+      compendiumCondition.desc.forEach((desc) => {
         var item = document.createElement("div");
         item.style.display = "list-item";
         item.textContent = desc;
@@ -238,7 +239,21 @@ var Conditions = (function () {
     return modal;
   }
 
-  function updatePlayerConditions(groupName, key, isChecked) {
+  async function updateConditionsList() {
+    settings.compendium = await getConditionCompendium();
+    if (settings.compendium === "off") return;
+
+    var conditions = await loadCompendiumConditions(settings.compendium);
+    settings.conditions = conditions
+      .sort((a, b) => {
+        var nameA = a.groupName ? `${a.groupName}-${a.name}` : a.name;
+        var nameB = b.groupName ? `${b.groupName}-${b.name}` : b.name;
+        return nameA.localeCompare(nameB);
+      })
+      .map((x) => ({ key: x.id, name: x.name, groupName: x.groupName }));
+  }
+
+  async function updatePlayerConditions(groupName, key, isChecked) {
     const isActive = settings.playerConditions.includes(key);
     if (!isActive && isChecked) {
       settings.playerConditions.push(key);
@@ -261,7 +276,7 @@ var Conditions = (function () {
         });
     }
 
-    chrome.storage.local.set({ [storageKey]: JSON.stringify(settings.playerConditions) });
+    await saveCharacterConditions();
   }
 
   function updateDisplay() {
@@ -288,16 +303,18 @@ var Conditions = (function () {
     }
   }
 
-  function updateEffectLabels() {
+  async function updateEffectLabels() {
     var enabledEffects = [];
 
-    settings.playerConditions.forEach((key) => {
+    for (var i = 0; i < settings.playerConditions.length; i++) {
       var condition = settings.conditions.find((condition) => {
         var conditionKey = condition.groupName ? `${condition.groupName}-${condition.name}` : condition.name;
-        return conditionKey === key;
+        return conditionKey === settings.playerConditions[i];
       });
-      enabledEffects.push(...condition.short);
-    });
+      var compendiumCondition = await getCompendiumItem(condition.key);
+
+      enabledEffects.push(...compendiumCondition.short);
+    }
 
     enabledEffects = enabledEffects.sort();
     enabledEffects = [...new Set(enabledEffects)];
@@ -316,32 +333,45 @@ var Conditions = (function () {
   }
 
   //save
-  function saveConditions() {}
+  async function saveCharacterConditions() {
+    await StorageHelper.addOrUpdateItem(
+      StorageHelper.dbNames.characters,
+      window.character_id,
+      settings.playerConditions,
+      "conditions"
+    );
+  }
 
   //load
-  async function loadConditions(key) {
-    var storedData = await chrome.storage.local.get([key]);
-    if (storedData[key] === undefined) return;
+  async function loadCharacterConditions() {
+    return await StorageHelper.getItem(StorageHelper.dbNames.characters, window.character_id, "conditions");
+  }
 
-    return JSON.parse(storedData[key]);
+  async function loadCompendiumConditions() {
+    return await StorageHelper.listItemsByType(StorageHelper.dbNames.compendiums, settings.compendium, "condition");
+  }
+
+  async function getConditionCompendium() {
+    var characterSettings = await StorageHelper.getItem(
+      StorageHelper.dbNames.characters,
+      window.character_id,
+      "settings"
+    );
+    return characterSettings.conditionCompendium;
+  }
+
+  async function getCompendiumItem(itemKey) {
+    return await StorageHelper.getItem(StorageHelper.dbNames.compendiums, settings.compendium, itemKey);
   }
 
   var Conditions = {
     init: async function init() {
-      storageKey = window.character_id + "-conditions";
-
-      // get condition list
-      settings.conditions = await loadConditions("global-conditions");
-      settings.conditions = settings.conditions
-        .find((x) => x.name === settings.game)
-        .items.sort((a, b) => {
-          var nameA = a.groupName ? `${a.groupName}-${a.name}` : a.name;
-          var nameB = b.groupName ? `${b.groupName}-${b.name}` : b.name;
-          return nameA.localeCompare(nameB);
-        });
+      document.querySelector(".conditions")?.remove();
+      await updateConditionsList();
+      if (settings.compendium === "off") return;
 
       // get existing player conditions
-      settings.playerConditions = (await loadConditions(storageKey)) ?? [];
+      settings.playerConditions = (await loadCharacterConditions()) ?? [];
 
       // remove any existing player conditions that are no longer in conditions list
       settings.playerConditions = settings.playerConditions.filter((key) =>
@@ -354,9 +384,8 @@ var Conditions = (function () {
       createUi();
       updateEffectLabels();
     },
-    reset: function destroy() {
+    remove: function remove() {
       document.querySelector(".conditions").remove();
-      this.init();
     },
   };
   return Conditions;

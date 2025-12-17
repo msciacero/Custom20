@@ -14,11 +14,11 @@
         "app/components/compendium.js",
         "app/components/compendiumEditor.js",
         "app/components/dataReset.js",
-        "library/sortable.js",
-        "library/idb.js",
-        "library/pluralize.js",
-        "library/modal.js",
-        "library/storage.js"
+        "library/external/sortable.js",
+        "library/external/idb.js",
+        "library/external/pluralize.js",
+        "library/helper/modal.js",
+        "library/helper/storage.js"
       ],
       "css": ["app/styles.css"],
       "world": "ISOLATED"
@@ -31,10 +31,11 @@
         "character/miniNotes.js",
         "character/spells.js",
         "character/compendiumImport.js",
+        "character/characterSettings.js",
         "character/main.js",
-        "library/sortable.js",
-        "library/idb.js",
-        "library/storage.js"
+        "library/external/sortable.js",
+        "library/external/idb.js",
+        "library/helper/storage.js"
       ],
       "css": ["character/styles.css"],
       "all_frames": true,

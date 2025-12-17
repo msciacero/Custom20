@@ -536,7 +536,14 @@ var Journal = (function () {
   async function loadState() {
     var storedData = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, window.campaign_id, "journal");
     var savedData = [{ id: null, isCollapsed: false, items: [], name: "root" }];
-    if (storedData !== undefined) savedData = storedData;
+    if (storedData !== undefined) {
+      savedData = storedData;
+    } else {
+      // If still using old storage
+      var key = window.campaign_id + "-journal";
+      storedData = await chrome.storage.local.get([key]);
+      if (storedData[key] !== undefined) savedData = JSON.parse(storedData[key]);
+    }
     // check for missing items
     var curItems = Array.from(document.querySelectorAll("#journalfolderroot .journalitem.dd-item")).map((x) =>
       x.getAttribute("data-itemid")

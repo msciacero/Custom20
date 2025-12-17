@@ -28,11 +28,11 @@ var Defenses = (function () {
     input.value = defenses[defenseType];
     input.placeholder = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
-    input.addEventListener("change", function (event) {
+    input.addEventListener("change", async function (event) {
       document.querySelector(`.health-defense .c20-health-${defenseType} .c20-defenseText`).textContent =
         event.target.value;
       defenses[defenseType] = event.target.value;
-      saveDefenses();
+      await saveDefenses();
     });
 
     row.appendChild(label);
@@ -114,16 +114,23 @@ var Defenses = (function () {
   }
 
   //save
-  function saveDefenses() {
-    chrome.storage.local.set({ [storageKey]: JSON.stringify(defenses) });
+  async function saveDefenses() {
+    await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.characters, window.character_id, defenses, "defenses");
   }
 
   //load
   async function loadDefenses() {
-    var storedData = await chrome.storage.local.get([storageKey]);
+    var storedData = await StorageHelper.getItem(StorageHelper.dbNames.characters, window.character_id, "defenses");
+    if (storedData !== undefined) {
+      defenses = storedData;
+      return;
+    }
+
+    storedData = await chrome.storage.local.get([storageKey]);
     if (storedData[storageKey] === undefined) return;
 
     defenses = JSON.parse(storedData[storageKey]);
+    saveDefenses();
   }
 
   var Defenses = {
@@ -131,6 +138,9 @@ var Defenses = (function () {
       storageKey = window.character_id + "-defenses";
       await loadDefenses();
       createUi();
+    },
+    remove: function remove() {
+      document.querySelector(".health-defense").remove();
     },
   };
   return Defenses;

@@ -59,11 +59,14 @@ var CompendiumImport = (function () {
   }
 
   function importSpell(spellData) {
-    var groupName = `repeating_spell-${spellData.level.replace(/\D/g, "")}`;
+    var groupName =
+      spellData.level === "cantrip"
+        ? `repeating_spell-cantrip`
+        : `repeating_spell-${spellData.level.replace(/\D/g, "")}`;
     document.querySelector(`.spell-container .repcontrol[data-groupName="${groupName}"] .repcontrol_add`).click();
 
-    var roll20Spell = document.querySelector(`.spell-container .repcontainer[data-groupName="${groupName}"] .options`);
-
+    var spellItem = document.querySelector(`.spell-container .repcontainer[data-groupName="${groupName}"]`).lastChild;
+    var roll20Spell = spellItem.querySelector(".options");
     updateInput(roll20Spell, 'input[name="attr_spellname"]', spellData.name);
     updateSelect(roll20Spell, 'select[name="attr_spellschool"]', spellData.school);
     updateCheckbox(roll20Spell, 'input[name="attr_spellritual"]', spellData.ritual);
@@ -80,17 +83,16 @@ var CompendiumImport = (function () {
     updateSelect(roll20Spell, 'select[name="attr_spellsave"]', spellData.savingThrow);
     updateSelect(roll20Spell, 'select[name="attr_spellattack"]', spellData.attack);
     updateSelect(roll20Spell, 'select[name="attr_spell_ability"]', "spell");
+    updateInput(roll20Spell, 'input[name="attr_spellhealing"]', spellData.healing);
+    updateInput(roll20Spell, 'input[name="attr_spelldamage"]', spellData.damage);
+    updateInput(roll20Spell, 'input[name="attr_spelldamagetype"]', spellData.damageType);
 
-    if (spellData.effect.toLowerCase().startsWith("heal")) {
-      updateInput(roll20Spell, 'input[name="attr_spellhealing"]', spellData.roll);
-    } else {
-      updateInput(roll20Spell, 'input[name="attr_spelldamage"]', spellData.roll);
-      updateInput(roll20Spell, 'input[name="attr_spelldamagetype"]', spellData.effect);
-    }
-
-    if (spellData.level === "cantrip" && (spellData.roll || spellData.effect || spellData.savingThrow)) {
+    if (spellData.level === "cantrip" && spellData.damage)
       updateSelect(roll20Spell, 'select[name="attr_spelloutput"]', "ATTACK");
-    }
+
+    // uncheck spell option and info to minimize
+    spellItem.querySelector(".spell .wrapper .options-flag").click();
+    spellItem.querySelector(".spell .details-flag").click();
   }
 
   function updateInput(element, query, value) {
