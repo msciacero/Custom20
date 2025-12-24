@@ -19,6 +19,22 @@ function waitForElement(selector) {
   });
 }
 
+function levelEvent() {
+  var observer = new MutationObserver(async (mutationsList, _) => {
+    var settings = await StorageHelper.getItem(StorageHelper.dbNames.characters, window.character_id, "settings");
+    if (settings.spellView) {
+      document.querySelectorAll(".spell-container .repcontainer .spell").forEach((s) => Spells.updateSpellRow(s));
+    }
+  });
+
+  const targetNode = document.querySelector(".charactersheet > input[name='attr_level']"); // Or any other DOM element
+  const config = {
+    attributes: true, // Observe additions/removals of child nodes
+  };
+
+  observer.observe(targetNode, config);
+}
+
 async function init() {
   window.campaign_id = window.location.href.split("/")[5];
   window.character_id = window.location.href.split("/")[6];
@@ -34,6 +50,7 @@ async function init() {
   if (settings.spellView) Spells.initUi();
   MiniNotes.init();
   CompendiumImport.init();
+  levelEvent();
 }
 
 waitForElement(".sheetform").then(() => {

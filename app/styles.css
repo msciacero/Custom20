@@ -157,13 +157,97 @@
 }
 
 #c20-compendium-modal-content input:disabled {
-  opacity: 0.4;
+  cursor: not-allowed;
 }
 
 .c20-modal-card .c20-card-header {
   padding: 5px 20px 0px;
   border-bottom: 2px solid;
   font-size: 25px;
+}
+
+.c20-combobox {
+  position: relative;
+}
+
+.c20-combobox input:focus-visible {
+  outline: none;
+}
+
+.c20-combobox input:disabled {
+  outline: #555;
+}
+
+.c20-combobox span::after {
+  content: "";
+  position: absolute;
+  right: 7px; /* Position to the right of the select */
+  top: 35px;
+  transform: translateY(-50%) rotate(45deg); /* Create the chevron shape */
+  /* Chevron size and color */
+  width: 5px;
+  height: 5px;
+  border-right: 2px solid #555;
+  border-bottom: 2px solid #555;
+  pointer-events: none; /* Allows clicks to pass through the chevron to the select element */
+}
+
+.c20-combobox > div {
+  display: none;
+  position: absolute;
+  width: 100%;
+  box-sizing: border-box;
+  z-index: 99;
+  padding: 0;
+  margin: 0;
+  overflow-y: auto;
+  max-height: 200px;
+}
+
+.c20-combobox:has(input:focus) > div {
+  display: block;
+  border: 1px solid black;
+  background-color: white;
+}
+
+.c20-combobox > div > div {
+  padding: 4px 8px;
+  cursor: pointer;
+}
+
+.c20-combobox > div > div.active {
+  background-color: #1967d2;
+  color: white;
+}
+
+.c20-combobox > div > div:hover {
+  background-color: #1967d2;
+  color: white;
+}
+
+.c20-combobox .c20-noResults {
+  font-style: italic;
+  pointer-events: none;
+}
+
+.c20-combobox .c20-newResults {
+  opacity: 70%;
+}
+
+html.dark .c20-combobox input:disabled {
+  outline: #555;
+  background-color: rgb(31, 31, 31);
+  border-color: #868686;
+}
+
+html.dark .c20-combobox input::placeholder:disabled {
+  color: rgb(179, 179, 179);
+}
+
+html.dark .c20-combobox > div {
+  background-color: #353535;
+  border: 1px solid #b3b3b3;
+  color: #b3b3b3;
 }
 
 html.dark .c20-modal-card .c20-card-header {

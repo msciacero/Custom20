@@ -486,6 +486,7 @@
 
 .page.spells.c20-v2 .col {
   width: 100%;
+  max-width: 100% !important;
 }
 
 .page.spells.c20-v2 .spell-level,
@@ -493,12 +494,12 @@
   width: 32.97%;
 }
 
-.page.spells.c20-v2 .spell-container .c20-spellHeader {
+.c20-spellHeader {
   width: calc(93% - 18px);
   border-bottom: 1px solid rgb(211, 211, 211);
 }
 
-.page.spells.c20-v2 .spell-container .c20-spellRow {
+.c20-spellRow {
   display: inline;
 }
 
@@ -510,15 +511,15 @@
   display: none;
 }
 
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellName,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellTime,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellRange,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellTarget,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellSavingThrow,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellRoll,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellEffect,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellDuration,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellComponents {
+.c20-spellHeader .spellName,
+.c20-spellHeader .spellTime,
+.c20-spellHeader .spellRange,
+.c20-spellHeader .spellTarget,
+.c20-spellHeader .spellSavingThrow,
+.c20-spellHeader .spellRoll,
+.c20-spellHeader .spellEffect,
+.c20-spellHeader .spellDuration,
+.c20-spellHeader .spellComponents {
   display: inline-block;
   font-size: 12px;
   font-weight: 700;
@@ -531,13 +532,13 @@
 }
 
 .page.spells.c20-v2 .spell-container .spell .display .spellname,
-.page.spells.c20-v2 .spell-container .spell .display .spellTime,
-.page.spells.c20-v2 .spell-container .spell .display .spellRange,
-.page.spells.c20-v2 .spell-container .spell .display .spellTarget,
-.page.spells.c20-v2 .spell-container .spell .display .spellSavingThrow,
-.page.spells.c20-v2 .spell-container .spell .display .spellRoll,
-.page.spells.c20-v2 .spell-container .spell .display .spellEffect,
-.page.spells.c20-v2 .spell-container .spell .display .spellDuration {
+.c20-spellRow .spellTime,
+.c20-spellRow .spellRange,
+.c20-spellRow .spellTarget,
+.c20-spellRow .spellSavingThrow,
+.c20-spellRow .spellRoll,
+.c20-spellRow .spellEffect,
+.c20-spellRow .spellDuration {
   display: inline-block;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -547,87 +548,87 @@
 }
 
 .page.spells.c20-v2 .spell-container .spell .display .spellname,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellName {
+.c20-spellHeader .spellName {
   display: inline-block;
-  width: 200px;
-  max-width: 200px;
+  width: 200px !important;
+  max-width: 200px !important;
   padding-left: 5px;
 }
 
 .page.spells.c20-v2 .spell-container:has(.display .prep-box) .spell .display .spellname,
-.page.spells.c20-v2 .spell-container:has(.display .prep-box) .c20-spellHeader .spellName {
-  width: 184px;
-  max-width: 184px;
+.c20-spellHeader .spellName {
+  width: 184px !important;
+  max-width: 184px !important;
 }
 
-.page.spells.c20-v2 .spell-container:has(.display .prep-box) .c20-spellHeader .spellName {
+.c20-spellHeader .spellName {
   padding-left: 21px;
 }
 
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellName {
+.c20-spellHeader .spellName {
   padding-left: 10px;
-  width: 195px;
-  max-width: 195px;
+  width: 195px !important;
+  max-width: 195px !important;
 }
 
 .page.spells.c20-v2 .spell-container .spell .display .innate {
   display: none;
 }
 
-.page.spells.c20-v2 .spell-container .spell .display .spellTime,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellTime {
-  min-width: 60px;
-  max-width: 60px;
+.c20-spellRow .spellTime,
+.c20-spellHeader .spellTime {
+  min-width: 60px !important;
+  max-width: 60px !important;
 }
 
-.page.spells.c20-v2 .spell-container .spell .display .spellRange,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellRange {
-  min-width: 100px;
-  max-width: 100px;
+.c20-spellRow .spellRange,
+.c20-spellHeader .spellRange {
+  min-width: 100px !important;
+  max-width: 100px !important;
 }
 
-.page.spells.c20-v2 .spell-container .spell .display .spellTarget,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellTarget {
-  min-width: 150px;
-  max-width: 150px;
+.c20-spellRow .spellTarget,
+.c20-spellHeader .spellTarget {
+  min-width: 150px !important;
+  max-width: 150px !important;
 }
 
-.page.spells.c20-v2 .spell-container .spell .display .spellSavingThrow,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellSavingThrow {
-  min-width: 40px;
-  max-width: 40px;
+.c20-spellRow .spellSavingThrow,
+.c20-spellHeader .spellSavingThrow {
+  min-width: 40px !important;
+  max-width: 40px !important;
 }
 
-.page.spells.c20-v2 .spell-container .spell .display .spellSavingThrow {
+.c20-spellRow .spellSavingThrow {
   text-transform: uppercase;
 }
 
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellRoll,
-.page.spells.c20-v2 .spell-container .spell .display .spellRoll {
-  min-width: 40px;
-  max-width: 40px;
+.c20-spellHeader .spellRoll,
+.c20-spellRow .spellRoll {
+  min-width: 40px !important;
+  max-width: 40px !important;
 }
 
-.page.spells.c20-v2 .spell-container .spell .display .spellEffect,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellEffect,
-.page.spells.c20-v2 .spell-container .spell .display .spellcard .spellEffect {
-  min-width: 84px;
-  max-width: 84px;
+.c20-spellRow .spellEffect,
+.c20-spellHeader .spellEffect {
+  min-width: 84px !important;
+  max-width: 84px !important;
 }
 
-.page.spells.c20-v2 .spell-container:has(.display .prep-box) .c20-spellHeader .spellEffect {
-  min-width: 90px;
-  max-width: 90px;
+.c20-spellHeader .spellEffect {
+  min-width: 90px !important;
+  max-width: 90px !important;
 }
 
-.page.spells.c20-v2 .spell-container .spell .display .spellDuration,
-.page.spells.c20-v2 .spell-container .c20-spellHeader .spellDuration {
-  width: 110px;
-  max-width: 110px;
+.c20-spellRow .spellDuration,
+.c20-spellHeader .spellDuration {
+  width: 110px !important;
+  max-width: 110px !important;
 }
 
 .c20-spellFilter {
   display: flow-root;
+  flex: auto;
 }
 
 .c20-spellFilter .filterBtn,

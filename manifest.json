@@ -18,7 +18,8 @@
         "library/external/idb.js",
         "library/external/pluralize.js",
         "library/helper/modal.js",
-        "library/helper/storage.js"
+        "library/helper/storage.js",
+        "library/helper/formFields.js"
       ],
       "css": ["app/styles.css"],
       "world": "ISOLATED"
@@ -35,6 +36,7 @@
         "character/main.js",
         "library/external/sortable.js",
         "library/external/idb.js",
+        "library/external/expr-eval.js",
         "library/helper/storage.js"
       ],
       "css": ["character/styles.css"],

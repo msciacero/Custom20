@@ -87,12 +87,13 @@ var CompendiumImport = (function () {
     updateInput(roll20Spell, 'input[name="attr_spelldamage"]', spellData.damage);
     updateInput(roll20Spell, 'input[name="attr_spelldamagetype"]', spellData.damageType);
 
-    if (spellData.level === "cantrip" && spellData.damage)
-      updateSelect(roll20Spell, 'select[name="attr_spelloutput"]', "ATTACK");
+    if (spellData.damage || spellData.healing) updateSelect(roll20Spell, 'select[name="attr_spelloutput"]', "ATTACK");
 
     // uncheck spell option and info to minimize
     spellItem.querySelector(".spell .wrapper .options-flag").click();
     spellItem.querySelector(".spell .details-flag").click();
+
+    Spells.updateSpellRow(spellItem.querySelector(".spell"));
   }
 
   function updateInput(element, query, value) {

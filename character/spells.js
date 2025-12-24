@@ -1,4 +1,5 @@
 var Spells = (function () {
+  var mathParser;
   var defaultFilter = {
     concentration: true,
     material: true,
@@ -21,12 +22,15 @@ var Spells = (function () {
     },
   };
 
+  var observer;
+
   function createUi() {
     var page = document.querySelector(".page.spells");
     page.classList.add("c20-v2");
+
     page.addEventListener("change", function (event) {
       if (event.target.parentElement.parentElement.className !== "spellattackinfo") return;
-      updateSpellRow(event.target.closes(".spell"));
+      updateSpellRow(event.target.closest(".spell"));
     });
 
     document.querySelectorAll(".spell-container").forEach((s, i) => createSpellHeader(s, i));
@@ -39,6 +43,8 @@ var Spells = (function () {
       flag.click();
       flag.click();
     }
+
+    serverChangeHandler();
   }
 
   function createSpellFilter() {
@@ -303,7 +309,7 @@ var Spells = (function () {
     container.appendChild(row);
   }
 
-  function updateSpellRow(spell, data) {
+  function updateSpellRow(spell) {
     var row = spell.querySelector(".display .c20-spellRow");
     var info = spell.querySelector(".wrapper > .options > .spellattackinfo");
 
@@ -315,9 +321,9 @@ var Spells = (function () {
     };
 
     if (data.damageRoll) {
-      row.querySelector(".spellRoll").textContent = data.damageRoll;
+      row.querySelector(".spellRoll").textContent = getDiceRoll(data.damageRoll);
     } else if (data.healingRoll) {
-      row.querySelector(".spellRoll").textContent = data.healingRoll;
+      row.querySelector(".spellRoll").textContent = getDiceRoll(data.healingRoll);
     } else {
       row.querySelector(".spellRoll").textContent = "";
     }
@@ -329,6 +335,38 @@ var Spells = (function () {
     } else {
       row.querySelector(".spellSavingThrow").textContent = "";
     }
+  }
+
+  function getDiceRoll(value) {
+    value = value.replace(/\@\{(.*?)\}/g, (_, expression) => {
+      return document.querySelector(`.charactersheet > input[name='attr_${expression}']`)?.value;
+    });
+
+    return value.replace(/\[\[(.*?)\]\]/g, (match, expression) => {
+      const result = mathParser.evaluate(expression);
+      return result !== null ? String(result) : match; // If error, leave original match
+    });
+  }
+
+  function serverChangeHandler() {
+    observer = new MutationObserver(async (mutationsList, _) => {
+      for (const mutation of mutationsList) {
+        if (
+          mutation.target.classList.contains("repcontainer") &&
+          mutation.target.classList.contains("ui-sortable") &&
+          mutation.addedNodes?.[0]?.classList.contains("repitem")
+        )
+          updateSpellRow(mutation.addedNodes[0].querySelector(".spell"));
+      }
+    });
+
+    const targetNode = document.querySelector(".page.spells.c20-v2"); // Or any other DOM element
+    const config = {
+      childList: true, // Observe additions/removals of child nodes
+      subtree: true, // Observe changes in descendants of the target node
+    };
+
+    observer.observe(targetNode, config);
   }
 
   async function saveState() {
@@ -353,6 +391,7 @@ var Spells = (function () {
       updateFilter();
     },
     initUi: async function initUi() {
+      mathParser = new exprEval.Parser();
       createUi();
     },
     removeFilter: function removeFilter() {
@@ -363,7 +402,9 @@ var Spells = (function () {
       document.querySelector(".page.spells").classList.remove("c20-v2");
       document.querySelectorAll(".c20-spellHeader").forEach((el) => el.remove());
       document.querySelectorAll(".c20-spellRow").forEach((el) => el.remove());
+      observer.disconnect();
     },
+    updateSpellRow: updateSpellRow,
   };
   return Spells;
 })();
