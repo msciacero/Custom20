@@ -81,13 +81,28 @@ var CompendiumImport = (function () {
     updateTextArea(roll20Spell, 'textarea[name="attr_spelldescription"]', spellData.description);
     updateTextArea(roll20Spell, 'textarea[name="attr_spellathigherlevels"]', spellData.higherLevels);
     updateSelect(roll20Spell, 'select[name="attr_spellsave"]', spellData.savingThrow);
+    updateInput(roll20Spell, 'input[name="attr_spellsavesuccess"]', spellData.savingEffect);
     updateSelect(roll20Spell, 'select[name="attr_spellattack"]', spellData.attack);
     updateSelect(roll20Spell, 'select[name="attr_spell_ability"]', "spell");
     updateInput(roll20Spell, 'input[name="attr_spellhealing"]', spellData.healing);
-    updateInput(roll20Spell, 'input[name="attr_spelldamage"]', spellData.damage);
+    updateInput(roll20Spell, 'input[name="attr_spelldamage"]', spellData.damageRoll);
     updateInput(roll20Spell, 'input[name="attr_spelldamagetype"]', spellData.damageType);
+    updateCheckbox(roll20Spell, 'input[name="attr_spelldmgmod"]', spellData.abilityModifier);
 
-    if (spellData.damage || spellData.healing) updateSelect(roll20Spell, 'select[name="attr_spelloutput"]', "ATTACK");
+    updateInput(roll20Spell, 'input[name="attr_spellhldie"]', /(^(\d*))/.exec(spellData.higherRoll)?.[0] ?? "");
+    updateSelect(
+      roll20Spell,
+      'select[name="attr_spellhldietype"]',
+      /d(\d+)/.exec(spellData.higherRoll)?.[0]?.toLowerCase() ?? ""
+    );
+    updateInput(
+      roll20Spell,
+      'input[name="attr_spellhlbonus"]',
+      /([+-]\s?\d+)?$/.exec(spellData.higherRoll)?.[0]?.replaceAll(" ", "") ?? ""
+    );
+
+    if (spellData.damageRoll || spellData.healing)
+      updateSelect(roll20Spell, 'select[name="attr_spelloutput"]', "ATTACK");
 
     // uncheck spell option and info to minimize
     spellItem.querySelector(".spell .wrapper .options-flag").click();

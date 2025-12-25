@@ -17,6 +17,7 @@
         "library/external/sortable.js",
         "library/external/idb.js",
         "library/external/pluralize.js",
+        "library/external/DOMPurify.js",
         "library/helper/modal.js",
         "library/helper/storage.js",
         "library/helper/formFields.js"

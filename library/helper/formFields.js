@@ -279,19 +279,21 @@ class c20FieldComboBox {
         newResultOption.classList.remove("hidden");
       } else {
         newResultOption.classList.add("hidden");
+        var noResultOption = this.optionsEl.querySelector(".c20-noResults");
+        if (!hasChoice) noResultOption.classList.remove("hidden");
+        else noResultOption.classList.add("hidden");
       }
-
-      var noResultOption = this.optionsEl.querySelector(".c20-noResults");
-      if (!hasChoice) noResultOption.classList.remove("hidden");
-      else noResultOption.classList.add("hidden");
     });
 
     this.inputEl.addEventListener("blur", (_) => {
-      this.optionsEl.querySelector(".hidden")?.classList?.remove("hidden");
+      this.optionsEl.querySelectorAll(".hidden")?.forEach((x) => x?.classList?.remove("hidden"));
       if (this.optionsEl.childElementCount > 1) this.optionsEl.querySelector(".c20-noResults").classList.add("hidden");
       this.optionsEl.querySelector(".active")?.classList?.remove("active");
       var option = Array.from(this.optionsEl.childNodes).find((o) => o.textContent === this.inputEl.value);
       var value = option?.getAttribute("data-c20-value") ?? "";
+
+      if (!this.addMissing) this.optionsEl.querySelector(".c20-newResults").classList.add("hidden");
+      else this.optionsEl.querySelector(".c20-newResults").textContent = "Add...";
 
       if (option) {
         this.inputEl.setAttribute("data-c20-value", value);
@@ -311,6 +313,10 @@ class c20FieldComboBox {
 
   getValue() {
     return this.inputEl.getAttribute("data-c20-value");
+  }
+
+  getTextValue() {
+    return this.inputEl.value;
   }
 
   updateOptions(options) {

@@ -156,6 +156,7 @@ var Spells = (function () {
       var option = document.createElement("option");
       option.value = optionData.value;
       option.textContent = optionData.text;
+      if (option.value === spellData.filter[key]) option.selected = true;
       select.appendChild(option);
     });
 
@@ -191,7 +192,8 @@ var Spells = (function () {
         spell.classList.add("hidden");
       } else if (
         spellData.filter.time !== "" &&
-        spell.querySelector(`.display button .spellTime`).textContent.toLowerCase() !== spellData.filter.time
+        spell.querySelector(`.details span[name="attr_spellcastingtime"]`).textContent.toLowerCase() !==
+          spellData.filter.time
       ) {
         spell.classList.add("hidden");
       } else {
@@ -202,7 +204,7 @@ var Spells = (function () {
     // core attacks & spell casting
     document.querySelectorAll(".attacks > .repcontainer > .repitem").forEach((attack) => {
       var spellId = attack.querySelector(`input[name="attr_spellid"]`).value;
-      if (document.querySelector(`.spell-container .repitem[data-reprowid="${spellId}"] .spell.hidden`)) {
+      if (document.querySelector(`.spell-container .repitem[data-reprowid="${spellId}" i] .spell.hidden`)) {
         attack.classList.add("hidden");
       } else {
         attack.classList.remove("hidden");

@@ -19,10 +19,7 @@ _3rd Party Libraries_
 -Sortable.js by RubaXa & owenm (https://github.com/SortableJS/Sortable) - Custom journal drag & drop
 
 // TODO List
-Compendium Editor: Add spell validation for json
 Compendium Editor: Custom spell descriptions (tables/html)
-Spells: Add Saving Throw Effect/Higher Level Cast/Ability Mod
-Spells: Move filter options off of spell row
 Mini Notes: rebuild with nested accordion groups (parent/child)
 Mini Notes: move to indexeddb
 Settings: move to indexeddb

@@ -12,6 +12,7 @@ var CompendiumEditor = (function () {
 
   var settings = {
     editor: "ui",
+    newCompendium: "",
   };
 
   // modal UI
@@ -114,7 +115,7 @@ var CompendiumEditor = (function () {
     stdEl.game = new c20FieldSelect();
     var gameSelect = stdEl.game.create({
       name: "game",
-      title: "Game",
+      title: "Compendium",
       options: Array.from(games).map((x, i) => ({ name: x, value: x })),
       changeHandler: async function () {
         stdEl.category.reset();
@@ -262,11 +263,18 @@ var CompendiumEditor = (function () {
         Number(stdEl.entry.getValue())
       );
     else if (stdEl.category.getValue() === "condition")
-      entry = { groupName: "", name: "", desc: [""], short: [""], type: "condition", source: "" };
+      entry = {
+        groupName: "",
+        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
+        desc: [""],
+        short: [""],
+        type: "condition",
+        source: "",
+      };
     else if (stdEl.category.getValue() === "spell")
       entry = {
         level: "",
-        name: "",
+        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
         school: "",
         ritual: false,
         time: "",
@@ -575,8 +583,9 @@ var CompendiumEditor = (function () {
       var jsonData = document.querySelector("#compendium-rawEditor-textarea").value;
 
       if (stdEl.category.getValue() === "condition") validateResponse = validateConditionJson(jsonData);
+      else validateResponse = validateDefaultJson(jsonData);
 
-      document.getElementById("compendium-error-wrapper").replaceChildren(...errors);
+      document.getElementById("compendium-error-wrapper").replaceChildren(...validateResponse.errors);
     } else {
       var form = document.querySelector("#c20-compendium-modal-content form");
       validateResponse.valid = form.reportValidity();
@@ -609,6 +618,11 @@ var CompendiumEditor = (function () {
       validateResponse.entry.names = [validateResponse.entry.name.toLowerCase()];
       if (validateResponse.entry.groupName !== "")
         validateResponse.entry.names.push(validateResponse.entry.groupName.toLowerCase());
+
+      if (validateResponse.entry.type === "spell") {
+        validateResponse.entry.description = DOMPurify.sanitize(validateResponse.entry.description);
+        validateResponse.entry.higherLevels = DOMPurify.sanitize(validateResponse.entry.higherLevels);
+      }
     }
     return validateResponse;
   }
@@ -621,7 +635,6 @@ var CompendiumEditor = (function () {
       conditionUpdate = JSON.parse(jsonData);
     } catch (e) {
       errors.push(createErrorMessage("Invalid JSON format. Please correct and try again."));
-      errorWrapper.replaceChildren(...errors);
       return { valid: errors.length === 0, errors: errors, entry: conditionUpdate };
     }
 
@@ -656,7 +669,25 @@ var CompendiumEditor = (function () {
       errors.push(createErrorMessage(`Missing 'short' property.`));
     }
 
-    return { valid: errors.length === 0, entry: conditionUpdate };
+    return { valid: errors.length === 0, errors: errors, entry: conditionUpdate };
+  }
+
+  function validateDefaultJson(jsonData) {
+    var errors = [];
+    var data;
+
+    try {
+      data = JSON.parse(jsonData);
+    } catch (e) {
+      errors.push(createErrorMessage("Invalid JSON format. Please correct and try again."));
+      return { valid: errors.length === 0, errors: errors, entry: data };
+    }
+
+    if (!data.name) errors.push(createErrorMessage("Missing property 'name'"));
+    else if (typeof data.name !== "string") errors.push(createErrorMessage("The 'name' property must be a string."));
+    else if (data.name.trim() === "") errors.push(createErrorMessage("The 'name' property cannot be empty."));
+
+    return { valid: errors.length === 0, errors: errors, entry: data };
   }
 
   // Error Helpers
@@ -681,6 +712,7 @@ var CompendiumEditor = (function () {
     group.style.margin = "10px 0 0 15px";
     group.appendChild(await createAdvancedTypeInput());
     group.appendChild(await createAdvancedGameInput());
+    group.appendChild(createAdvancedNewGameInput());
     group.appendChild(createAdvancedSubmitButton());
 
     return group;
@@ -693,6 +725,7 @@ var CompendiumEditor = (function () {
       name: "operation",
       title: "Operation",
       options: [
+        { name: "Create Compendium", value: "create" },
         { name: "Import Compendium", value: "import" },
         { name: "Export Compendium", value: "export" },
         {
@@ -701,6 +734,20 @@ var CompendiumEditor = (function () {
         },
       ],
       changeHandler: async function () {
+        var combobox = document.querySelector("#c20-advanced-modal-content .c20-combobox");
+        var inputBox = document.querySelector("#c20-advanced-modal-content input[name='advNewGame']").parentElement;
+
+        advEl.game.reset();
+        inputBox.childNodes[1].value = "";
+
+        if (advEl.operation.getValue() === "create") {
+          combobox.classList.add("hidden");
+          inputBox.classList.remove("hidden");
+        } else {
+          inputBox.classList.add("hidden");
+          combobox.classList.remove("hidden");
+        }
+
         await updateSubmitButton();
       },
     });
@@ -714,7 +761,7 @@ var CompendiumEditor = (function () {
 
     var input = advEl.game.create({
       name: "advGame",
-      title: "Game",
+      title: "Compendium Name",
       required: false,
       options: Array.from(games).map((x) => ({ text: x, value: x })),
       changeHandler: async function () {
@@ -723,6 +770,18 @@ var CompendiumEditor = (function () {
     });
 
     input.style.width = "220px";
+    return input;
+  }
+
+  function createAdvancedNewGameInput() {
+    var input = createTextInput({ name: "advNewGame", title: "Compendium Name" });
+    input.classList.add("hidden");
+    input.style.width = "230px";
+    input.addEventListener("input", async function (event) {
+      settings.newCompendium = event.target.value;
+      await updateSubmitButton();
+    });
+
     return input;
   }
 
@@ -743,7 +802,6 @@ var CompendiumEditor = (function () {
       progress.style.display = "block";
 
       try {
-        btn.disabled = true;
         if (advEl.operation.getValue() === "delete") {
           await StorageHelper.deleteObjectStore(StorageHelper.dbNames.compendiums, advEl.game.getValue());
           await updateGameSelect();
@@ -767,6 +825,10 @@ var CompendiumEditor = (function () {
             if (item.id !== undefined) delete item.id;
             if (item.source == undefined) item["source"] = "Unknown";
             if (item.type === "condition") if (item.groupName == undefined) item["groupName"] = "";
+            if (item.type === "spell") {
+              item.description = DOMPurify.sanitize(item.description);
+              item.higherLevels = DOMPurify.sanitize(item.higherLevels);
+            }
 
             if (item.names === undefined) {
               item["names"] = [item.name.toLowerCase()];
@@ -783,11 +845,16 @@ var CompendiumEditor = (function () {
             false
           );
           await updateGameSelect();
+        } else if (advEl.operation.getValue() === "create") {
+          await StorageHelper.createObjectStore(
+            StorageHelper.dbNames.compendiums,
+            document.querySelector("#c20-advanced-modal-content input[name='advNewGame']").value
+          );
+          await updateGameSelect();
         }
         helper.textContent = "";
       } catch (e) {
         helper.textContent = `Error: ${e}`;
-        btn.disabled = false;
       } finally {
         progress.style.display = "none";
       }
@@ -819,49 +886,63 @@ var CompendiumEditor = (function () {
     var btn = document.querySelector("#compendium-adv-submit");
     var helper = document.querySelector("#compendium-adv-help");
 
-    if (!advEl.game.getValue() || !advEl.operation.getValue()) {
-      btn.classList.add("hidden");
+    if (!advEl.operation.getValue()) {
+      resetAdvSubmitButton(btn, helper);
+      return;
+    }
+
+    if (advEl.operation.getValue() === "create") {
+      var inputBox = document.querySelector("#c20-advanced-modal-content input[name='advNewGame']");
+      if (
+        !inputBox.value ||
+        (await StorageHelper.objectStoreExists(StorageHelper.dbNames.compendiums, inputBox.value))
+      ) {
+        resetAdvSubmitButton(btn, helper);
+        return;
+      }
+
+      btn.classList.remove("hidden");
+      btn.textContent = "Create";
       helper.textContent = "";
+
+      return;
+    }
+
+    if (
+      !advEl.game.getValue() ||
+      !(await StorageHelper.objectStoreExists(StorageHelper.dbNames.compendiums, advEl.game.getValue()))
+    ) {
+      resetAdvSubmitButton(btn, helper);
       return;
     }
 
     btn.classList.remove("hidden");
-    var compendiumExists = await StorageHelper.objectStoreExists(
-      StorageHelper.dbNames.compendiums,
-      advEl.game.getValue()
-    );
 
     if (advEl.operation.getValue() === "delete") {
       btn.textContent = "Delete";
-
-      if (compendiumExists === true) {
-        btn.disabled = false;
-        helper.textContent = "*Compendium will be deleted from C20.";
-      } else {
-        btn.disabled = true;
-        helper.textContent = "";
-      }
+      btn.disabled = false;
+      helper.textContent = "*Compendium will be deleted from C20.";
       return;
     }
 
     if (advEl.operation.getValue() === "import") {
       btn.textContent = "Import";
       btn.disabled = false;
-
-      if (compendiumExists === true)
-        helper.textContent =
-          "*Import new entries into existing compendium\nWill not replace existing entries that match on category and name.";
-      else helper.textContent = "*Import into new compendium";
+      helper.textContent =
+        "*Import new entries into existing compendium\nWill not replace existing entries that match on category and name.";
       return;
     }
 
     if (advEl.operation.getValue() === "export") {
       btn.textContent = "Export";
       helper.textContent = "";
-
-      if (compendiumExists === true) btn.disabled = false;
-      else btn.disabled = true;
+      btn.disabled = false;
     }
+  }
+
+  function resetAdvSubmitButton(btn, helper) {
+    btn.classList.add("hidden");
+    helper.textContent = "";
   }
 
   var CompendiumEditor = {
