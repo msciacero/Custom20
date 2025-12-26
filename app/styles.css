@@ -164,6 +164,11 @@
   padding: 5px 20px 0px;
   border-bottom: 2px solid;
   font-size: 25px;
+  cursor: move;
+}
+
+.c20-modal-card > div > div:last-child {
+  user-select: text;
 }
 
 .c20-combobox {

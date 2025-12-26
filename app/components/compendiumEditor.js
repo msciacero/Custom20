@@ -620,8 +620,8 @@ var CompendiumEditor = (function () {
         validateResponse.entry.names.push(validateResponse.entry.groupName.toLowerCase());
 
       if (validateResponse.entry.type === "spell") {
-        validateResponse.entry.description = DOMPurify.sanitize(validateResponse.entry.description);
-        validateResponse.entry.higherLevels = DOMPurify.sanitize(validateResponse.entry.higherLevels);
+        validateResponse.entry.description = validateResponse.entry.description;
+        validateResponse.entry.higherLevels = validateResponse.entry.higherLevels;
       }
     }
     return validateResponse;
@@ -826,8 +826,8 @@ var CompendiumEditor = (function () {
             if (item.source == undefined) item["source"] = "Unknown";
             if (item.type === "condition") if (item.groupName == undefined) item["groupName"] = "";
             if (item.type === "spell") {
-              item.description = DOMPurify.sanitize(item.description);
-              item.higherLevels = DOMPurify.sanitize(item.higherLevels);
+              item.description = item.description;
+              item.higherLevels = item.higherLevels;
             }
 
             if (item.names === undefined) {
@@ -852,11 +852,12 @@ var CompendiumEditor = (function () {
           );
           await updateGameSelect();
         }
-        helper.textContent = "";
+        helper.textContent = "Operation Successfully Completed";
       } catch (e) {
         helper.textContent = `Error: ${e}`;
       } finally {
         progress.style.display = "none";
+        btn.disabled = true;
       }
     });
 
@@ -917,6 +918,7 @@ var CompendiumEditor = (function () {
     }
 
     btn.classList.remove("hidden");
+    btn.disabled = false;
 
     if (advEl.operation.getValue() === "delete") {
       btn.textContent = "Delete";

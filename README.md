@@ -10,7 +10,6 @@ _2014 Character Sheet Features_
 -Custom Spell filter
 
 _3rd Party Libraries_
--DOMPurify (https://github.com/cure53/DOMPurify) - Clean imported compendiums
 -expr-eval (https://github.com/silentmatt/expr-eval) - Calculate roll20 dice formulas
 -FontAwesome Icons (https://fontawesome.com/) - Filter icon on spell tab
 -idb (https://github.com/jakearchibald/idb) - async indexeddb helper
@@ -19,7 +18,7 @@ _3rd Party Libraries_
 -Sortable.js by RubaXa & owenm (https://github.com/SortableJS/Sortable) - Custom journal drag & drop
 
 // TODO List
-Compendium Editor: Custom spell descriptions (tables/html)
+Compendium: Basic markdown support (Bold, Italic)
 Mini Notes: rebuild with nested accordion groups (parent/child)
 Mini Notes: move to indexeddb
 Settings: move to indexeddb
@@ -27,6 +26,5 @@ Settings: rebuild data reset
 Character: Only load on 2014 Sheet
 Review Spell data
 
-Complex Spells (render tables)
--Animate Objects
--Summon Draconic Spirit
+Custom Spell Updates
+-Level up cantrips
