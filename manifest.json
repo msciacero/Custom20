@@ -19,7 +19,8 @@
         "library/external/pluralize.js",
         "library/helper/modal.js",
         "library/helper/storage.js",
-        "library/helper/formFields.js"
+        "library/helper/formFields.js",
+        "library/helper/markdown.js"
       ],
       "css": ["app/styles.css"],
       "world": "ISOLATED"

@@ -13,6 +13,7 @@ var CompendiumEditor = (function () {
   var settings = {
     editor: "ui",
     newCompendium: "",
+    update: false,
   };
 
   // modal UI
@@ -116,7 +117,7 @@ var CompendiumEditor = (function () {
     var gameSelect = stdEl.game.create({
       name: "game",
       title: "Compendium",
-      options: Array.from(games).map((x, i) => ({ name: x, value: x })),
+      options: Array.from(games).map((x, i) => ({ text: x, value: x })),
       changeHandler: async function () {
         stdEl.category.reset();
         stdEl.category.disabled(stdEl.game.getValue() === "");
@@ -137,10 +138,10 @@ var CompendiumEditor = (function () {
       title: "Category",
       options: [
         {
-          name: "Conditions",
+          text: "Conditions",
           value: "condition",
         },
-        { name: "Spells", value: "spell" },
+        { text: "Spells", value: "spell" },
       ],
       changeHandler: async function () {
         stdEl.entry.reset();
@@ -713,6 +714,7 @@ var CompendiumEditor = (function () {
     group.appendChild(await createAdvancedTypeInput());
     group.appendChild(await createAdvancedGameInput());
     group.appendChild(createAdvancedNewGameInput());
+    group.appendChild(createAdvancedImportUpdate());
     group.appendChild(createAdvancedSubmitButton());
 
     return group;
@@ -725,11 +727,11 @@ var CompendiumEditor = (function () {
       name: "operation",
       title: "Operation",
       options: [
-        { name: "Create Compendium", value: "create" },
-        { name: "Import Compendium", value: "import" },
-        { name: "Export Compendium", value: "export" },
+        { text: "Create Compendium", value: "create" },
+        { text: "Import Compendium", value: "import" },
+        { text: "Export Compendium", value: "export" },
         {
-          name: "Delete Compendium",
+          text: "Delete Compendium",
           value: "delete",
         },
       ],
@@ -740,6 +742,9 @@ var CompendiumEditor = (function () {
         advEl.game.reset();
         inputBox.childNodes[1].value = "";
 
+        if (advEl.operation.getValue() === "") advEl.game.disabled(true);
+        else advEl.game.disabled(false);
+
         if (advEl.operation.getValue() === "create") {
           combobox.classList.add("hidden");
           inputBox.classList.remove("hidden");
@@ -747,6 +752,10 @@ var CompendiumEditor = (function () {
           inputBox.classList.add("hidden");
           combobox.classList.remove("hidden");
         }
+
+        if (advEl.operation.getValue() === "import")
+          document.querySelector("#c20-import-update").classList.remove("hidden");
+        else document.querySelector("#c20-import-update").classList.add("hidden");
 
         await updateSubmitButton();
       },
@@ -769,6 +778,7 @@ var CompendiumEditor = (function () {
       },
     });
 
+    advEl.game.disabled(true);
     input.style.width = "220px";
     return input;
   }
@@ -783,6 +793,17 @@ var CompendiumEditor = (function () {
     });
 
     return input;
+  }
+
+  function createAdvancedImportUpdate() {
+    var group = createCheckboxInput({ name: "import-update", title: "Update", value: false });
+    group.classList.add("hidden");
+    group.id = "c20-import-update";
+    group.childNodes[0].addEventListener("change", async function (event) {
+      settings.update = event.target.checked;
+      updateSubmitButton();
+    });
+    return group;
   }
 
   function createAdvancedSubmitButton() {
@@ -842,7 +863,7 @@ var CompendiumEditor = (function () {
             StorageHelper.dbNames.compendiums,
             advEl.game.getValue(),
             jsonData,
-            false
+            settings.update
           );
           await updateGameSelect();
         } else if (advEl.operation.getValue() === "create") {
@@ -853,11 +874,11 @@ var CompendiumEditor = (function () {
           await updateGameSelect();
         }
         helper.textContent = "Operation Successfully Completed";
+        btn.disabled = true;
       } catch (e) {
         helper.textContent = `Error: ${e}`;
       } finally {
         progress.style.display = "none";
-        btn.disabled = true;
       }
     });
 
@@ -930,8 +951,9 @@ var CompendiumEditor = (function () {
     if (advEl.operation.getValue() === "import") {
       btn.textContent = "Import";
       btn.disabled = false;
-      helper.textContent =
-        "*Import new entries into existing compendium\nWill not replace existing entries that match on category and name.";
+
+      if (settings.update) helper.textContent = "*Will update existing records that match on category and name";
+      else helper.textContent = "*Will ignores imported records that already exist";
       return;
     }
 

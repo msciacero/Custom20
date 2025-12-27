@@ -234,7 +234,7 @@ class c20FieldSelect {
     options.forEach((o) => {
       var option = document.createElement("option");
       option.value = o.value;
-      option.textContent = o.name;
+      option.textContent = o.text;
       if (value === o.value) option.selected = true;
       this.selectEl.appendChild(option);
     });
@@ -359,7 +359,7 @@ class c20FieldComboBox {
     var noResultOption = document.createElement("div");
     noResultOption.textContent = "No results found";
     noResultOption.className = "c20-noResults";
-    if (optionsEl.childElementCount !== 0) noResultOption.classList.add("hidden");
+    if (optionsEl.childElementCount !== 1) noResultOption.classList.add("hidden");
     optionsEl.appendChild(noResultOption);
 
     return optionsEl;

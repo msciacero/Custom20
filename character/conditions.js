@@ -385,7 +385,7 @@ var Conditions = (function () {
       updateEffectLabels();
     },
     remove: function remove() {
-      document.querySelector(".conditions").remove();
+      document.querySelector(".conditions")?.remove();
     },
   };
   return Conditions;

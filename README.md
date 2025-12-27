@@ -18,13 +18,8 @@ _3rd Party Libraries_
 -Sortable.js by RubaXa & owenm (https://github.com/SortableJS/Sortable) - Custom journal drag & drop
 
 // TODO List
-Compendium: Basic markdown support (Bold, Italic)
 Mini Notes: rebuild with nested accordion groups (parent/child)
 Mini Notes: move to indexeddb
 Settings: move to indexeddb
 Settings: rebuild data reset
-Character: Only load on 2014 Sheet
-Review Spell data
-
-Custom Spell Updates
--Level up cantrips
+Sheet Settings: Sheet type

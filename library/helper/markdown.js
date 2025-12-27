@@ -1,7 +1,9 @@
-function createMardownDisplay(text) {
+function createMarkdownDisplay(text) {
   // Convert a text string that may contain markdown tables into a DocumentFragment
-  // without using innerHTML. Non-table text blocks are preserved as <div> with
-  // pre-wrapped whitespace so line breaks are visible.
+  // without using innerHTML. Supports bold (**text**), italic (*text* or _text_),
+  // and bold+italic (***text***). Non-table text blocks are preserved as <div>
+  // with pre-wrapped whitespace so line breaks are visible.
+
   function splitRow(line) {
     // remove leading/trailing pipe and split on |, trimming each cell
     if (line.trim().startsWith("|") && line.trim().endsWith("|")) line = line.trim().slice(1, -1);
@@ -20,6 +22,51 @@ function createMardownDisplay(text) {
     });
   }
 
+  // Parse inline markdown for bold/italic and return a DocumentFragment
+  function nodesFromInline(text) {
+    const frag = document.createDocumentFragment();
+    if (!text) return frag;
+
+    const regex = /(\*\*\*([\s\S]+?)\*\*\*)|(\*\*([\s\S]+?)\*\*)|(\*([^*]+?)\*)|(_([^_]+?)_)/g;
+    let lastIndex = 0;
+    let m;
+    while ((m = regex.exec(text)) !== null) {
+      const idx = m.index;
+      if (idx > lastIndex) {
+        frag.appendChild(document.createTextNode(text.slice(lastIndex, idx)));
+      }
+
+      if (m[2]) {
+        // ***bold+italic*** => <strong><em>...</em></strong>
+        const strong = document.createElement("strong");
+        const em = document.createElement("em");
+        em.appendChild(nodesFromInline(m[2]));
+        strong.appendChild(em);
+        frag.appendChild(strong);
+      } else if (m[4]) {
+        // **bold**
+        const strong = document.createElement("strong");
+        strong.appendChild(nodesFromInline(m[4]));
+        frag.appendChild(strong);
+      } else if (m[6]) {
+        // *italic*
+        const em = document.createElement("em");
+        em.appendChild(nodesFromInline(m[6]));
+        frag.appendChild(em);
+      } else if (m[8]) {
+        // _italic_
+        const em = document.createElement("em");
+        em.appendChild(nodesFromInline(m[8]));
+        frag.appendChild(em);
+      }
+
+      lastIndex = regex.lastIndex;
+    }
+
+    if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
+    return frag;
+  }
+
   function createTable(headerLine, dividerLine, rowLines) {
     const headers = splitRow(headerLine);
     const aligns = parseDivider(dividerLine);
@@ -33,10 +80,10 @@ function createMardownDisplay(text) {
     const headRow = document.createElement("tr");
     headers.forEach((h, idx) => {
       const th = document.createElement("th");
-      th.textContent = h;
       th.style.textAlign = aligns[idx] || "left";
       th.style.border = "1px solid var(--border-color, #ddd)";
       th.style.padding = "4px 6px";
+      th.appendChild(nodesFromInline(h));
       headRow.appendChild(th);
     });
     thead.appendChild(headRow);
@@ -48,10 +95,10 @@ function createMardownDisplay(text) {
       const tr = document.createElement("tr");
       headers.forEach((_, idx) => {
         const td = document.createElement("td");
-        td.textContent = cols[idx] ?? "";
         td.style.border = "1px solid var(--border-color, #ddd)";
         td.style.padding = "4px 6px";
         td.style.textAlign = aligns[idx] || "left";
+        td.appendChild(nodesFromInline(cols[idx] ?? ""));
         tr.appendChild(td);
       });
       tbody.appendChild(tr);
@@ -77,7 +124,10 @@ function createMardownDisplay(text) {
     if (buffer.length === 0) return;
     const div = document.createElement("div");
     div.style.whiteSpace = "pre-wrap"; // preserve line breaks
-    div.textContent = buffer.join("\n");
+    buffer.forEach((line, idx) => {
+      div.appendChild(nodesFromInline(line));
+      if (idx < buffer.length - 1) div.appendChild(document.createElement("br"));
+    });
     frag.appendChild(div);
     buffer = [];
   }

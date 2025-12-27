@@ -21,9 +21,7 @@ class ModalHelper {
     this.modal.style.display = "block";
     if (window.innerWidth > 790) this.modal.style.width = "500px";
     else this.modal.style.width = "calc(100vw - 10px)";
-    this.modal.style.left = "50%";
-    this.modal.style.top = "50%";
-    this.modal.style.transform = "translate(-50%, -50%)";
+    this.modal.style.maxHeight = "calc(100vh - 70px)";
     this.modal.style.zIndex = "11003";
 
     var container = document.createElement("div");
@@ -77,15 +75,15 @@ class ModalHelper {
     this.modal.className = `ui-dialog ui-widget ui-widget-content ui-corner-all ui-draggable ui-resizable c20-modal-card`;
     this.modal.style.display = "block";
     if (window.innerWidth > 790) this.modal.style.width = "500px";
-    else this.modal.style.width = "calc(100vw - 10px)";
-    this.modal.style.left = "50%";
-    this.modal.style.top = "50%";
-    this.modal.style.transform = "translate(-50%, -50%)";
+    else this.modal.style.width = "calc(100vw - 50px)";
+    if (window.innerHeight > 800) this.modal.style.height = "800px";
+    else this.modal.style.height = "calc(100vh - 100px)";
+    this.modal.style.left = `calc((100vw - ${this.modal.style.width}) / 2)`;
+    this.modal.style.top = `calc((100vh - ${this.modal.style.height}) / 2)`;
     this.modal.style.zIndex = "11003";
 
     var container = document.createElement("div");
     container.style.height = "100%";
-    container.style.overflowY = "auto";
 
     var header = document.createElement("div");
     header.className = "c20-card-header";
@@ -119,6 +117,11 @@ class ModalHelper {
       this.settings.initialX = e.clientX - this.modal.offsetLeft;
       this.settings.initialY = e.clientY - this.modal.offsetTop;
     });
+
+    body.style.fontSize = "16px";
+    body.style.height = "calc(100% - 75px)";
+    body.style.overflowY = "auto";
+    body.style.padding = "10px 20px";
 
     container.appendChild(header);
     container.appendChild(body);

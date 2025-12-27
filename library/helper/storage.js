@@ -88,20 +88,30 @@ var StorageHelper = (function () {
     } else {
       var duplicates = [];
       var db = await getDbConnection(dbName);
-      if (overwrite !== true) {
-        for (var i = data.length - 1; i >= 0; i--) {
-          var s = await db.getAllFromIndex(objName, "names", data[i].name);
-          if (s.some((x) => x.groupName === data[i].groupName && x.name === data[i].name)) duplicates.push(i);
+
+      for (var i = data.length - 1; i >= 0; i--) {
+        var s = await db.getAllFromIndex(objName, "names", data[i].name?.toLowerCase());
+        var id = s.find(
+          (x) =>
+            x.groupName?.toLowerCase() === data[i].groupName?.toLowerCase() &&
+            x.name?.toLowerCase() === data[i].name?.toLowerCase()
+        )?.id;
+
+        if (id) {
+          if (overwrite === true) data[i].id = id;
+          else duplicates.push(i);
+        } else if (data[i].id !== undefined) {
+          delete data[i].id;
         }
-        duplicates.forEach((x) => data.splice(x, 1));
       }
+
+      duplicates.forEach((x) => data.splice(x, 1));
     }
 
     var db = await getDbConnection(dbName);
     var tx = db.transaction(objName, "readwrite");
     await Promise.all([
       data.forEach((item) => {
-        if (item.id !== undefined) delete item.id;
         tx.store.put(item);
       }),
       tx.done,
