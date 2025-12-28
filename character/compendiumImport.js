@@ -51,11 +51,33 @@ var CompendiumImport = (function () {
 
     if (compendiumData != null) {
       switch (compendiumData.type) {
+        case "feat":
+          importTrain(compendiumData);
+          break;
         case "spell":
           importSpell(compendiumData);
           break;
       }
     }
+  }
+
+  function importTrain(data) {
+    document.querySelector(".traits .complex .repcontrol_add").click();
+
+    var traitItem = document.querySelector(".traits .complex .repcontainer").lastChild;
+    var roll20Trait = traitItem.querySelector(".options");
+    updateInput(roll20Trait, 'input[name="attr_name"]', data.name);
+    updateSelect(
+      roll20Trait,
+      'select[name="attr_source"]',
+      data.type.replace(/^./, (char) => char.toUpperCase())
+    );
+    updateInput(roll20Trait, 'input[name="attr_source_type"]', data.source);
+    updateTextArea(roll20Trait, 'textarea[name="attr_description"]', data.description);
+
+    // uncheck option and info to minimize
+    traitItem.querySelector(".trait .options-flag").click();
+    traitItem.querySelector(".trait .display-flag").click();
   }
 
   function importSpell(spellData) {
