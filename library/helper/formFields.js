@@ -289,7 +289,12 @@ class c20FieldComboBox {
       this.optionsEl.querySelectorAll(".hidden")?.forEach((x) => x?.classList?.remove("hidden"));
       if (this.optionsEl.childElementCount > 1) this.optionsEl.querySelector(".c20-noResults").classList.add("hidden");
       this.optionsEl.querySelector(".active")?.classList?.remove("active");
-      var option = Array.from(this.optionsEl.childNodes).find((o) => o.textContent === this.inputEl.value);
+      var option = Array.from(this.optionsEl.childNodes).find(
+        (o) =>
+          o.textContent === this.inputEl.value &&
+          o.getAttribute("data-c20-value") === this.inputEl.getAttribute("data-c20-value")
+      );
+      if (!option) option = Array.from(this.optionsEl.childNodes).find((o) => o.textContent === this.inputEl.value);
       var value = option?.getAttribute("data-c20-value") ?? "";
 
       if (!this.addMissing) this.optionsEl.querySelector(".c20-newResults").classList.add("hidden");
@@ -317,6 +322,15 @@ class c20FieldComboBox {
 
   getTextValue() {
     return this.inputEl.value;
+  }
+
+  setValue(value) {
+    var selected = this.optionsEl.querySelector(`[data-c20-value="${value}"]`);
+    if (selected) {
+      selected.classList.add("active");
+      this.inputEl.value = selected.textContent;
+      this.inputEl.setAttribute("data-c20-value", value);
+    }
   }
 
   updateOptions(options) {

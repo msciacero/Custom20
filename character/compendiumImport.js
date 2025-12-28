@@ -51,8 +51,12 @@ var CompendiumImport = (function () {
 
     if (compendiumData != null) {
       switch (compendiumData.type) {
+        case "background":
+          importBackground(compendiumData);
+          importTrait(compendiumData);
+          break;
         case "feat":
-          importTrain(compendiumData);
+          importTrait(compendiumData);
           break;
         case "spell":
           importSpell(compendiumData);
@@ -61,7 +65,12 @@ var CompendiumImport = (function () {
     }
   }
 
-  function importTrain(data) {
+  function importBackground(data) {
+    var header = document.querySelector(".page.core .header-info.display");
+    updateInput(header, 'input[name="attr_background"]', data.name);
+  }
+
+  function importTrait(data) {
     document.querySelector(".traits .complex .repcontrol_add").click();
 
     var traitItem = document.querySelector(".traits .complex .repcontainer").lastChild;

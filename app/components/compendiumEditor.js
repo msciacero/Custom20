@@ -137,10 +137,8 @@ var CompendiumEditor = (function () {
       name: "category",
       title: "Category",
       options: [
-        {
-          text: "Conditions",
-          value: "condition",
-        },
+        { text: "Backgrounds", value: "background" },
+        { text: "Conditions", value: "condition" },
         { text: "Feats", value: "feat" },
         { text: "Spells", value: "spell" },
       ],
@@ -264,11 +262,18 @@ var CompendiumEditor = (function () {
         stdEl.game.getValue(),
         Number(stdEl.entry.getValue())
       );
+    else if (stdEl.category.getValue() === "background")
+      entry = {
+        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
+        description: "",
+        type: "background",
+        source: "",
+      };
     else if (stdEl.category.getValue() === "condition")
       entry = {
         groupName: "",
         name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
-        desc: [""],
+        description: "",
         short: [""],
         type: "condition",
         source: "",
@@ -310,10 +315,12 @@ var CompendiumEditor = (function () {
     if (settings.editor === "json") {
       document.querySelector("#compendium-editor").replaceChildren(createJsonEditor(entry));
     } else if (settings.editor === "ui") {
+      if (stdEl.category.getValue() === "background")
+        document.querySelector("#compendium-editor").replaceChildren(createTraitEditor(entry));
       if (stdEl.category.getValue() === "condition")
         document.querySelector("#compendium-editor").replaceChildren(createConditionsEditor(entry));
       if (stdEl.category.getValue() === "feat")
-        document.querySelector("#compendium-editor").replaceChildren(createFeatEditor(entry));
+        document.querySelector("#compendium-editor").replaceChildren(createTraitEditor(entry));
       else if (stdEl.category.getValue() === "spell")
         document.querySelector("#compendium-editor").replaceChildren(createSpellEditor(entry));
     }
@@ -381,7 +388,7 @@ var CompendiumEditor = (function () {
     return editor;
   }
 
-  function createFeatEditor(data) {
+  function createTraitEditor(data) {
     var editor = document.createElement("form");
     editor.style.margin = "20px 0 30px 0";
 
@@ -398,7 +405,7 @@ var CompendiumEditor = (function () {
       })
     );
 
-    editor.appendChild(desc);
+    editor.appendChild(createHiddenInput({ name: "type", value: data.type }));
     if (data.id !== undefined) editor.appendChild(createHiddenInput({ name: "id", value: data.id }));
     return editor;
   }
@@ -572,13 +579,15 @@ var CompendiumEditor = (function () {
 
       var validateResponse = validateEntry();
       if (validateResponse.valid === true) {
-        await StorageHelper.addOrUpdateItem(
+        var itemId = await StorageHelper.addOrUpdateItem(
           StorageHelper.dbNames.compendiums,
           stdEl.game.getValue(),
           validateResponse.entry
         );
-        disableSaveButton();
+
         await updateCategorySelect();
+        stdEl.entry.setValue(itemId);
+        await updateEditor();
       }
     });
 

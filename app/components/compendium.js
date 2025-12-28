@@ -1,5 +1,5 @@
 var Compendium = (function () {
-  var dragList = ["feat", "spell"];
+  var dragList = ["background", "feat", "spell"];
   var settings = {
     origin: "",
     game: "",

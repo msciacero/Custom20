@@ -93,7 +93,7 @@ var StorageHelper = (function () {
         var s = await db.getAllFromIndex(objName, "names", data[i].name?.toLowerCase());
         var id = s.find(
           (x) =>
-            x.groupName?.toLowerCase() === data[i].groupName?.toLowerCase() &&
+            (x.groupName?.toLowerCase() ?? "") === (data[i].groupName?.toLowerCase() ?? "") &&
             x.name?.toLowerCase() === data[i].name?.toLowerCase()
         )?.id;
 
@@ -135,7 +135,7 @@ var StorageHelper = (function () {
 
   async function addOrUpdateItem(dbName, objName, item, key) {
     var db = await getDbConnection(dbName);
-    await db.put(objName, item, key);
+    return await db.put(objName, item, key);
   }
 
   async function addOrUpdateItems(dbName, objName, items) {
