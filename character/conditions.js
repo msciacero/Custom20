@@ -19,14 +19,12 @@ var Conditions = (function () {
 
     var display = createDisplay();
     var options = createOptions();
-    var modal = createDisplayModal();
 
     container.appendChild(input);
     container.appendChild(inputDisplay);
     container.appendChild(display);
     container.appendChild(options);
     document.querySelector(".vitals").after(container);
-    document.querySelector("body").appendChild(modal);
 
     updateDisplay();
     updateEffectLabels();
@@ -178,65 +176,16 @@ var Conditions = (function () {
     conditionLabel.style.cursor = "pointer";
 
     conditionLabel.addEventListener("click", async function () {
-      var modal = document.querySelector("#c20-conditions-modal");
-      var title = modal.querySelector("#c20-conditions-modal-title");
-      title.textContent = condition.groupName ? `${condition.groupName} ${condition.name}` : condition.name;
-
-      var content = modal.querySelector("#c20-conditions-modal-content");
-      content.replaceChildren();
-
       var compendiumCondition = await getCompendiumItem(condition.key);
-
-      compendiumCondition.desc.forEach((desc) => {
-        var item = document.createElement("div");
-        item.style.display = "list-item";
-        item.textContent = desc;
-        content.appendChild(item);
-      });
-
-      modal.style.display = "block";
+      var title = condition.groupName ? condition.groupName : condition.name;
+      var container = document.createElement("div");
+      var description = document.createElement("div");
+      description.appendChild(createMarkdownDisplay(compendiumCondition.description));
+      container.appendChild(description);
+      new ModalHelper(title, container);
     });
 
     return conditionLabel;
-  }
-
-  function createDisplayModal() {
-    var modal = document.createElement("div");
-    modal.className = `modal`;
-    modal.id = "c20-conditions-modal";
-
-    var modalContent = document.createElement("div");
-    modalContent.className = "modal-content";
-
-    var modalTitle = document.createElement("h3");
-    modalTitle.id = "c20-conditions-modal-title";
-    modalTitle.style.display = "inline-block";
-
-    var modalClose = document.createElement("span");
-    modalClose.className = "close";
-    modalClose.style.fontFamily = "pictos";
-    modalClose.textContent = "*";
-
-    var conditionContent = document.createElement("div");
-    conditionContent.id = "c20-conditions-modal-content";
-    conditionContent.style.marginLeft = "15px";
-
-    modalContent.appendChild(modalTitle);
-    modalContent.appendChild(modalClose);
-    modalContent.appendChild(conditionContent);
-    modal.appendChild(modalContent);
-
-    modalClose.onclick = function () {
-      modal.style.display = "none";
-    };
-
-    window.onclick = function (event) {
-      if (event.target == modal) {
-        modal.style.display = "none";
-      }
-    };
-
-    return modal;
   }
 
   async function updateConditionsList() {

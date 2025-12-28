@@ -115,6 +115,49 @@ function createMarkdownDisplay(text) {
     return /-/.test(cleaned) && (cleaned.includes("|") || cleaned.includes(":"));
   }
 
+  // Detect list item: leading optional spaces + (-|+|*) + space
+  function isListItem(line) {
+    return /^\s*([-+*])\s+/.test(line);
+  }
+
+  // Create a UL (with nested ULs) from lines starting at startIndex.
+  function createList(lines, startIndex) {
+    const root = document.createElement("ul");
+    root.style.margin = "20px 0 20px 20px";
+    // stack of {indent, el}
+    const stack = [{ indent: 0, el: root }];
+    let j = startIndex;
+    while (j < lines.length) {
+      const line = lines[j];
+      if (line.trim() === "") break;
+      const m = line.match(/^(\s*)([-+*])\s+(.+)$/);
+      if (!m) break;
+      const indent = m[1].length;
+      const content = m[3];
+
+      // if deeper indent, create nested UL under previous LI
+      let last = stack[stack.length - 1];
+      if (indent > last.indent) {
+        const parentLi = last.el.lastElementChild;
+        const ul = document.createElement("ul");
+        ul.style.margin = "0 0 0 16px";
+        if (parentLi) parentLi.appendChild(ul);
+        else last.el.appendChild(ul);
+        stack.push({ indent, el: ul });
+      } else {
+        // pop until parent indent < current indent
+        while (stack.length > 1 && indent <= stack[stack.length - 1].indent) stack.pop();
+      }
+
+      const parentUl = stack[stack.length - 1].el;
+      const li = document.createElement("li");
+      li.appendChild(nodesFromInline(content));
+      parentUl.appendChild(li);
+      j++;
+    }
+    return { el: root, nextIndex: j };
+  }
+
   const frag = document.createDocumentFragment();
   const lines = text.split(/\r?\n/);
   let i = 0;
@@ -134,6 +177,16 @@ function createMarkdownDisplay(text) {
 
   while (i < lines.length) {
     const line = lines[i];
+
+    // detect unordered list
+    if (isListItem(line)) {
+      flushBuffer();
+      const { el, nextIndex } = createList(lines, i);
+      frag.appendChild(el);
+      i = nextIndex;
+      continue;
+    }
+
     // detect potential table header (contains |) and next line is divider
     if (line.includes("|") && i + 1 < lines.length && isDividerLine(lines[i + 1])) {
       // collect table lines until a blank line or a line without |

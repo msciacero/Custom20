@@ -141,6 +141,7 @@ var CompendiumEditor = (function () {
           text: "Conditions",
           value: "condition",
         },
+        { text: "Feats", value: "feat" },
         { text: "Spells", value: "spell" },
       ],
       changeHandler: async function () {
@@ -272,6 +273,13 @@ var CompendiumEditor = (function () {
         type: "condition",
         source: "",
       };
+    else if (stdEl.category.getValue() === "feat")
+      entry = {
+        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
+        description: "",
+        type: "feat",
+        source: "",
+      };
     else if (stdEl.category.getValue() === "spell")
       entry = {
         level: "",
@@ -304,6 +312,8 @@ var CompendiumEditor = (function () {
     } else if (settings.editor === "ui") {
       if (stdEl.category.getValue() === "condition")
         document.querySelector("#compendium-editor").replaceChildren(createConditionsEditor(entry));
+      if (stdEl.category.getValue() === "feat")
+        document.querySelector("#compendium-editor").replaceChildren(createFeatEditor(entry));
       else if (stdEl.category.getValue() === "spell")
         document.querySelector("#compendium-editor").replaceChildren(createSpellEditor(entry));
     }
@@ -354,7 +364,13 @@ var CompendiumEditor = (function () {
     editor.appendChild(createTextInput({ name: "name", title: "Name", value: data.name, required: true }));
     editor.appendChild(createTextInput({ name: "source", title: "Source", value: data.source, required: false }));
     editor.appendChild(
-      createTextAreaArray({ name: "desc[]", title: "Description", values: data.desc, required: false })
+      createTextAreaInput({
+        name: "description",
+        title: "Description",
+        value: data.description,
+        required: false,
+        height: 320,
+      })
     );
     editor.appendChild(
       createTextArray({ name: "short[]", title: "Short Description", values: data.short, required: false })
@@ -362,6 +378,28 @@ var CompendiumEditor = (function () {
     editor.appendChild(createHiddenInput({ name: "type", value: data.type }));
     if (data.id !== undefined) editor.appendChild(createHiddenInput({ name: "id", value: data.id }));
 
+    return editor;
+  }
+
+  function createFeatEditor(data) {
+    var editor = document.createElement("form");
+    editor.style.margin = "20px 0 30px 0";
+
+    editor.appendChild(createTextInput({ name: "name", title: "Name", value: data.name, required: true }));
+    editor.appendChild(createTextInput({ name: "source", title: "Source", value: data.source, required: false }));
+
+    editor.appendChild(
+      createTextAreaInput({
+        name: "description",
+        title: "Description",
+        value: data.description,
+        required: false,
+        height: 320,
+      })
+    );
+
+    editor.appendChild(desc);
+    if (data.id !== undefined) editor.appendChild(createHiddenInput({ name: "id", value: data.id }));
     return editor;
   }
 
@@ -582,10 +620,7 @@ var CompendiumEditor = (function () {
     var validateResponse = { valid: false, entry: {} };
     if (settings.editor === "json") {
       var jsonData = document.querySelector("#compendium-rawEditor-textarea").value;
-
-      if (stdEl.category.getValue() === "condition") validateResponse = validateConditionJson(jsonData);
-      else validateResponse = validateDefaultJson(jsonData);
-
+      validateDefaultJson(jsonData);
       document.getElementById("compendium-error-wrapper").replaceChildren(...validateResponse.errors);
     } else {
       var form = document.querySelector("#c20-compendium-modal-content form");
@@ -626,51 +661,6 @@ var CompendiumEditor = (function () {
       }
     }
     return validateResponse;
-  }
-
-  function validateConditionJson(jsonData) {
-    var errors = [];
-    var conditionUpdate;
-
-    try {
-      conditionUpdate = JSON.parse(jsonData);
-    } catch (e) {
-      errors.push(createErrorMessage("Invalid JSON format. Please correct and try again."));
-      return { valid: errors.length === 0, errors: errors, entry: conditionUpdate };
-    }
-
-    if (conditionUpdate.groupName && typeof conditionUpdate.groupName !== "string")
-      errors.push(createErrorMessage("The 'groupName' property must be a string."));
-
-    if (!conditionUpdate.name) errors.push(createErrorMessage("Missing property 'name'"));
-    else if (typeof conditionUpdate.name !== "string")
-      errors.push(createErrorMessage("The 'name' property must be a string."));
-    else if (conditionUpdate.name.trim() === "")
-      errors.push(createErrorMessage("The 'name' property cannot be empty."));
-
-    if (conditionUpdate.desc && !Array.isArray(conditionUpdate.desc))
-      errors.push(createErrorMessage("The 'desc' property must be an array of strings."));
-    else if (conditionUpdate.desc) {
-      conditionUpdate.desc.forEach((d, i) => {
-        if (typeof d !== "string")
-          errors.push(createErrorMessage(`The 'desc' property at index ${i} must be a string.`));
-      });
-    } else if (!conditionUpdate.desc) {
-      errors.push(createErrorMessage(`Missing 'desc' property.`));
-    }
-
-    if (conditionUpdate.short && !Array.isArray(conditionUpdate.short))
-      errors.push(createErrorMessage("The 'short' property must be an array of strings."));
-    else if (conditionUpdate.short) {
-      conditionUpdate.short.forEach((d, i) => {
-        if (typeof d !== "string")
-          errors.push(createErrorMessage(`The 'short' property at index ${i} must be a string.`));
-      });
-    } else if (!conditionUpdate.short) {
-      errors.push(createErrorMessage(`Missing 'short' property.`));
-    }
-
-    return { valid: errors.length === 0, errors: errors, entry: conditionUpdate };
   }
 
   function validateDefaultJson(jsonData) {

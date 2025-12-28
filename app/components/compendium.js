@@ -8,6 +8,7 @@ var Compendium = (function () {
 
   async function createUi() {
     var connector = document.querySelector("#vm_compendium_panel");
+    connector.style.overflowY = "hidden";
 
     var header = document.createElement("div");
     header.className = "c20-compendium-menu";
@@ -346,15 +347,18 @@ var Compendium = (function () {
     var itemWrapper = document.createElement("div");
     itemWrapper.className = "compendium-pages__wrapper";
     itemWrapper.setAttribute("data-v-44ba3207", "");
-    items
+
+    var items = items
+      .map((x) => ({ id: x.id, name: x.groupName ? x.groupName : x.name, type: x.type, source: x.source }))
       .sort((a, b) => {
-        var nameA = a.groupName ? `${a.groupName}-${a.name}` : a.name;
-        var nameB = b.groupName ? `${b.groupName}-${b.name}` : b.name;
-        return nameA.localeCompare(nameB);
-      })
-      .forEach((x) => {
-        itemWrapper.appendChild(createCompendiumPageItem(x));
+        return a.name.localeCompare(b.name);
       });
+
+    items = [...new Map(items.map((v) => [v.name, v])).values()];
+
+    items.forEach((x) => {
+      itemWrapper.appendChild(createCompendiumPageItem(x));
+    });
     container.appendChild(itemWrapper);
     return container;
   }
@@ -425,26 +429,17 @@ var Compendium = (function () {
   async function createDisplayModal(id) {
     var data = await StorageHelper.getItem(StorageHelper.dbNames.compendiums, settings.game, id);
 
-    var title = document.createElement("span");
-    title.textContent = `${data.groupName ?? ""} ${data.name}`.trim();
-    title.className = "ui-dialog-title";
-
-    if (data.type === "condition")
-      new ModalHelper(`${data.groupName ?? ""} ${data.name}`.trim(), displayCondition(data), true);
-    else if (data.type === "spell") new ModalHelper(data.name, displaySpell(data), true);
-    else new ModalHelper(title, displayDefaultTable(data), false);
+    if (data.type === "condition") new ModalHelper(data.groupName ? data.groupName : data.name, displayStandard(data));
+    else if (data.type === "spell") new ModalHelper(data.name, displaySpell(data));
+    else new ModalHelper(data.name, displayStandard(data));
   }
 
-  function displayCondition(data) {
+  function displayStandard(data) {
     var container = document.createElement("div");
 
-    var ulContainer = document.createElement("ul");
-    data.desc.forEach((x) => {
-      var li = document.createElement("li");
-      li.textContent = x;
-      ulContainer.appendChild(li);
-    });
-    container.appendChild(ulContainer);
+    var description = document.createElement("div");
+    description.appendChild(createMarkdownDisplay(data.description));
+    container.appendChild(description);
 
     return container;
   }
@@ -491,56 +486,6 @@ var Compendium = (function () {
       container.appendChild(higherDescription);
     }
     return container;
-  }
-
-  function displayDefaultTable(data) {
-    var table = document.createElement("table");
-    table.style.margin = "10px";
-    var headerRow = document.createElement("tr");
-    var headerKey = document.createElement("th");
-    headerKey.textContent = "Key";
-    headerKey.style.border = "1px solid black";
-    headerKey.style.padding = "0px 5px";
-    headerRow.appendChild(headerKey);
-
-    var headerValue = document.createElement("th");
-    headerValue.textContent = "Value";
-    headerRow.appendChild(headerValue);
-    headerRow.style.border = "1px solid black";
-    headerRow.style.padding = "0px 5px";
-    table.appendChild(headerRow);
-
-    Object.keys(data)
-      .sort()
-      .forEach((key) => {
-        if (key != "id" && key != "names" && data[key] !== "") {
-          var row = document.createElement("tr");
-          var item1 = document.createElement("td");
-          item1.textContent = key;
-          item1.style.border = "1px solid black";
-          item1.style.padding = "0px 5px";
-          row.appendChild(item1);
-
-          var item2 = document.createElement("td");
-          item2.style.whiteSpace = "break-spaces";
-          item2.style.border = "1px solid black";
-          item2.style.padding = "0px 5px";
-          if (Array.isArray(data[key])) {
-            var ul = document.createElement("ul");
-            data[key].forEach((x) => {
-              var li = document.createElement("li");
-              li.textContent = x;
-              ul.appendChild(li);
-            });
-            item2.appendChild(ul);
-          } else item2.textContent = data[key];
-          row.appendChild(item2);
-
-          table.appendChild(row);
-        }
-      });
-
-    return table;
   }
 
   function createLabelDisplay(labelText, dataText) {

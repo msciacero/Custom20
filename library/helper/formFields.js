@@ -64,11 +64,11 @@ function createTextInput({ title, name, value, required }) {
   return group;
 }
 
-function createTextAreaInput({ title, name, value, required }) {
+function createTextAreaInput({ title, name, value, required, height }) {
   var group = document.createElement("div");
   group.style.marginBottom = "10px";
   group.appendChild(createLabel(name, title));
-  group.appendChild(createTextArea(name, value, required));
+  group.appendChild(createTextArea(name, value, required, height));
   return group;
 }
 
@@ -170,7 +170,7 @@ function createTextAreaArray({ title, name, values, required }) {
 function createTextAreaArrayInput(name, value, required) {
   var inputGroup = document.createElement("div");
 
-  var input = createTextArea(name, value, required);
+  var input = createTextArea(name, value, required, null);
   input.style.marginBottom = "5px";
   input.style.height = "50px";
   inputGroup.appendChild(input);
@@ -386,13 +386,13 @@ function createInput(name, value, required, placeHolder) {
   return input;
 }
 
-function createTextArea(name, value, required) {
+function createTextArea(name, value, required, height) {
   var input = document.createElement("textarea");
   input.name = name;
   input.required = required ?? false;
   input.value = value ?? "";
   input.style.width = "91%";
-  input.style.height = "100px";
+  input.style.height = height ? `${height}px` : "100px";
   return input;
 }
 

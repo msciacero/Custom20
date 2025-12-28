@@ -320,12 +320,13 @@ var Spells = (function () {
       healingRoll: info.querySelector("[name='attr_spellhealing']").value,
       savingThrow: info.querySelector("[name='attr_spellsave']").value,
       spellAttack: info.querySelector("[name='attr_spellattack']").value,
+      addModifier: info.querySelector("[name='attr_spelldmgmod']").checked,
     };
 
     if (data.damageRoll) {
-      row.querySelector(".spellRoll").textContent = getDiceRoll(data.damageRoll);
+      row.querySelector(".spellRoll").textContent = getDiceRoll(data.damageRoll, data.addModifier);
     } else if (data.healingRoll) {
-      row.querySelector(".spellRoll").textContent = getDiceRoll(data.healingRoll);
+      row.querySelector(".spellRoll").textContent = getDiceRoll(data.healingRoll, data.addModifier);
     } else {
       row.querySelector(".spellRoll").textContent = "";
     }
@@ -339,12 +340,15 @@ var Spells = (function () {
     }
   }
 
-  function getDiceRoll(value) {
+  function getDiceRoll(value, addModifier) {
+    if (addModifier)
+      value = `${value} + ${document.querySelector("[name='attr_spellcasting_ability']").value.slice(0, -1)}`;
+
     value = value.replace(/\@\{(.*?)\}/g, (_, expression) => {
       return document.querySelector(`.charactersheet > input[name='attr_${expression}']`)?.value;
     });
 
-    return value.replace(/\[\[(.*?)\]\]/g, (match, expression) => {
+    return value.replace(/\s/g, "").replace(/\[\[(.*?)\]\]/g, (match, expression) => {
       const result = mathParser.evaluate(expression);
       return result !== null ? String(result) : match; // If error, leave original match
     });
@@ -353,12 +357,12 @@ var Spells = (function () {
   function serverChangeHandler() {
     observer = new MutationObserver(async (mutationsList, _) => {
       for (const mutation of mutationsList) {
-        if (
-          mutation.target.classList.contains("repcontainer") &&
-          mutation.target.classList.contains("ui-sortable") &&
-          mutation.addedNodes?.[0]?.classList.contains("repitem")
-        )
-          updateSpellRow(mutation.addedNodes[0].querySelector(".spell"));
+        if (mutation.target.classList.contains("repcontainer") && mutation.target.classList.contains("ui-sortable")) {
+          if (mutation.addedNodes?.[0]?.classList.contains("repitem"))
+            updateSpellRow(mutation.addedNodes[0].querySelector(".spell"));
+          else if (mutation.removedNodes?.[0].classList.contains("repitem"))
+            mutation.target.querySelectorAll(".spell").forEach((x) => updateSpellRow(x));
+        }
       }
     });
 

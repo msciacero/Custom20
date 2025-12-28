@@ -258,3 +258,8 @@ html.dark .c20-combobox > div {
 html.dark .c20-modal-card .c20-card-header {
   padding: 10px 20px;
 }
+
+html.dark .c20-modal-card > div:last-of-type {
+  background-color: #1f1f1f;
+  background-blend-mode: screen;
+}

@@ -13,7 +13,7 @@
         "app/components/journal.js",
         "app/components/compendium.js",
         "app/components/compendiumEditor.js",
-        "app/components/dataReset.js",
+        "app/components/savedData.js",
         "library/external/sortable.js",
         "library/external/idb.js",
         "library/external/pluralize.js",
@@ -38,7 +38,9 @@
         "library/external/sortable.js",
         "library/external/idb.js",
         "library/external/expr-eval.js",
-        "library/helper/storage.js"
+        "library/helper/modal.js",
+        "library/helper/storage.js",
+        "library/helper/markdown.js"
       ],
       "css": ["character/styles.css"],
       "all_frames": true,

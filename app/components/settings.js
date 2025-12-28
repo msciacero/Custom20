@@ -13,7 +13,7 @@ var Settings = (function () {
 
     panelBody.appendChild(journalCheckBox);
     panelBody.appendChild(getSettingsModalLink({ value: "Edit Compendium", event: CompendiumEditor.show }));
-    panelBody.appendChild(getSettingsModalLink({ value: "Reset Data", event: DataReset.show }));
+    //panelBody.appendChild(getSettingsModalLink({ value: "Saved Data", event: SavedData.show }));
     document.querySelector("#settings-accordion").appendChild(panel);
 
     journalCheckBox.querySelector("input").addEventListener("click", function (event) {
