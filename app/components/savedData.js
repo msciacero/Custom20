@@ -47,15 +47,3 @@ var SavedData = (function () {
 
   return SavedData;
 })();
-
-if (typeof define === "function" && define.amd) {
-  define(function () {
-    return SavedData;
-  });
-} else if (typeof module !== "undefined" && module != null) {
-  module.exports = SavedData;
-} else if (typeof angular !== "undefined" && angular != null) {
-  angular.module("SavedData", []).factory("SavedData", function () {
-    return SavedData;
-  });
-}

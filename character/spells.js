@@ -28,7 +28,7 @@ var Spells = (function () {
     var page = document.querySelector(".page.spells");
     page.classList.add("c20-v2");
 
-    page.addEventListener("change", function (event) {
+    document.querySelector(".page.spells.c20-v2").addEventListener("change", function (event) {
       if (event.target.parentElement.parentElement.className !== "spellattackinfo") return;
       updateSpellRow(event.target.closest(".spell"));
     });

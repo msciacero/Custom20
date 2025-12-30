@@ -117,15 +117,3 @@ var Settings = (function () {
 
   return Settings;
 })();
-
-if (typeof define === "function" && define.amd) {
-  define(function () {
-    return Settings;
-  });
-} else if (typeof module !== "undefined" && module != null) {
-  module.exports = Settings;
-} else if (typeof angular !== "undefined" && angular != null) {
-  angular.module("Settings", []).factory("Settings", function () {
-    return Settings;
-  });
-}

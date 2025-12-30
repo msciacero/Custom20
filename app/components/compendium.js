@@ -438,7 +438,9 @@ var Compendium = (function () {
     var container = document.createElement("div");
 
     var description = document.createElement("div");
-    description.appendChild(createMarkdownDisplay(data.description));
+
+    // don't display code blocks
+    description.appendChild(createMarkdownDisplay(data.description.replace(/```(?:\r?\n)?/g, "")));
     container.appendChild(description);
 
     return container;
@@ -544,15 +546,3 @@ var Compendium = (function () {
   };
   return Compendium;
 })();
-
-if (typeof define === "function" && define.amd) {
-  define(function () {
-    return Compendium;
-  });
-} else if (typeof module !== "undefined" && module != null) {
-  module.exports = Compendium;
-} else if (typeof angular !== "undefined" && angular != null) {
-  angular.module("Compendium", []).factory("Compendium", function () {
-    return Compendium;
-  });
-}

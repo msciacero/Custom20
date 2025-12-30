@@ -819,15 +819,3 @@ var Journal = (function () {
   };
   return Journal;
 })();
-
-if (typeof define === "function" && define.amd) {
-  define(function () {
-    return Journal;
-  });
-} else if (typeof module !== "undefined" && module != null) {
-  module.exports = Journal;
-} else if (typeof angular !== "undefined" && angular != null) {
-  angular.module("Journal", []).factory("Journal", function () {
-    return Journal;
-  });
-}

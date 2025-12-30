@@ -254,15 +254,3 @@ var StorageHelper = (function () {
   };
   return StorageHelper;
 })();
-
-if (typeof define === "function" && define.amd) {
-  define(function () {
-    return StorageHelper;
-  });
-} else if (typeof module !== "undefined" && module != null) {
-  module.exports = StorageHelper;
-} else if (typeof angular !== "undefined" && angular != null) {
-  angular.module("StorageHelper", []).factory("StorageHelper", function () {
-    return StorageHelper;
-  });
-}

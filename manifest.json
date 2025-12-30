@@ -34,6 +34,7 @@
         "character/spells.js",
         "character/compendiumImport.js",
         "character/characterSettings.js",
+        "character/traits.js",
         "character/main.js",
         "library/external/sortable.js",
         "library/external/idb.js",

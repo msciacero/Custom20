@@ -145,15 +145,3 @@ var Defenses = (function () {
   };
   return Defenses;
 })();
-
-if (typeof define === "function" && define.amd) {
-  define(function () {
-    return Defenses;
-  });
-} else if (typeof module !== "undefined" && module != null) {
-  module.exports = Defenses;
-} else if (typeof angular !== "undefined" && angular != null) {
-  angular.module("Defenses", []).factory("Defenses", function () {
-    return Defenses;
-  });
-}

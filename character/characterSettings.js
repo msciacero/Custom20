@@ -166,15 +166,3 @@ var CharacterSettings = (function () {
   };
   return CharacterSettings;
 })();
-
-if (typeof define === "function" && define.amd) {
-  define(function () {
-    return CharacterSettings;
-  });
-} else if (typeof module !== "undefined" && module != null) {
-  module.exports = CharacterSettings;
-} else if (typeof angular !== "undefined" && angular != null) {
-  angular.module("CharacterSettings", []).factory("CharacterSettings", function () {
-    return CharacterSettings;
-  });
-}

@@ -339,15 +339,3 @@ var Conditions = (function () {
   };
   return Conditions;
 })();
-
-if (typeof define === "function" && define.amd) {
-  define(function () {
-    return Conditions;
-  });
-} else if (typeof module !== "undefined" && module != null) {
-  module.exports = Conditions;
-} else if (typeof angular !== "undefined" && angular != null) {
-  angular.module("Conditions", []).factory("Conditions", function () {
-    return Conditions;
-  });
-}

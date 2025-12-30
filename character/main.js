@@ -48,6 +48,7 @@ async function init() {
   if (settings.conditionCompendium !== "off") Conditions.init();
   if (settings.spellFilter) Spells.initFilter();
   if (settings.spellView) Spells.initUi();
+  Traits.init();
   MiniNotes.init();
   CompendiumImport.init();
   levelEvent();

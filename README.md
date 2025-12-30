@@ -18,11 +18,13 @@ _3rd Party Libraries_
 -Sortable.js by RubaXa & owenm (https://github.com/SortableJS/Sortable) - Custom journal drag & drop
 
 // TODO List
-Compendium: Feats, Species, Items
+Compendium: Species, Items
 Compendium: Advanced filter
 Mini Notes: rebuild with nested accordion groups (parent/child)
 Settings: add saved data editor
+Settings: default character sheet settings
 Sheet Settings: Sheet type
+
 Sheet Inventory Overhaul
 -Containers
 -Highlight magical

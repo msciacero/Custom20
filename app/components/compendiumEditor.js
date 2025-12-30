@@ -976,15 +976,3 @@ var CompendiumEditor = (function () {
 
   return CompendiumEditor;
 })();
-
-if (typeof define === "function" && define.amd) {
-  define(function () {
-    return CompendiumEditor;
-  });
-} else if (typeof module !== "undefined" && module != null) {
-  module.exports = CompendiumEditor;
-} else if (typeof angular !== "undefined" && angular != null) {
-  angular.module("CompendiumEditor", []).factory("CompendiumEditor", function () {
-    return CompendiumEditor;
-  });
-}

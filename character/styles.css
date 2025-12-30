@@ -767,3 +767,14 @@
   margin-bottom: 5px;
   position: relative;
 }
+
+.page .traits.c20-v2 .repitem .display .desc {
+  display: none;
+}
+.page .traits.c20-v2 .repitem .display .c20-desc {
+  display: block;
+}
+
+.page .traits.c20-v2 .trait .display-flag:checked ~ .display .c20-desc {
+  display: none;
+}

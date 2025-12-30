@@ -75,8 +75,8 @@ class ModalHelper {
     document.addEventListener("mouseup", () => this.mouseUpDrag());
 
     // set height
-    var bounds = this.modal.childNodes[0].childNodes[1].childNodes[0].getBoundingClientRect();
-    var height = bounds.height + 115;
+    var bounds = this.modal.getClientRects();
+    var height = bounds[0].height + 10;
     if (height > window.innerHeight) height = window.innerHeight - 20;
     if (height > 800) height = 800;
 

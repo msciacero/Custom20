@@ -53,16 +53,65 @@ var CompendiumImport = (function () {
       switch (compendiumData.type) {
         case "background":
           importBackground(compendiumData);
-          importTrait(compendiumData);
+          processTrait(compendiumData);
           break;
         case "feat":
-          importTrait(compendiumData);
+          processTrait(compendiumData);
           break;
         case "spell":
           importSpell(compendiumData);
           break;
       }
     }
+  }
+
+  function processTrait(data) {
+    // Parse fenced markdown code blocks (```...```) in the description and
+    // create separate traits for each block. The first line of the code block
+    // becomes the trait name and the rest becomes the description for that
+    // trait. Any text outside of code blocks remains as the original trait's
+    // description. Remove any end-of-line characters immediately after a
+    // code block.
+    if (!data || typeof data.description !== "string") {
+      importTrait(data);
+      return;
+    }
+
+    var desc = data.description;
+    var codeBlockRegex = /```([\s\S]*?)```(?:\r?\n)*/g;
+    var extractedTraits = [];
+
+    // Remove code blocks and collect their content
+    var remaining = desc.replace(codeBlockRegex, function (_, inner) {
+      // Trim leading/trailing blank lines from inner content
+      var content = inner.replace(/^(\r?\n)+/, "").replace(/(\r?\n)+$/, "");
+      var lines = content.split(/\r?\n/);
+      var name = (lines.shift() || "").trim();
+      var rest = lines.join("\n").trim();
+
+      // Build a new trait object using same fields as original
+      var newTrait = Object.assign({}, data, {
+        name: name.replaceAll("**", ""),
+        description: rest,
+      });
+
+      extractedTraits.push(newTrait);
+
+      // Remove the code block and any following EOLs from the description
+      return "";
+    });
+
+    // Trim whitespace left in the remaining description
+    remaining = remaining.replace(/^\s+/, "").replace(/\s+$/, "");
+
+    // Import the original trait with the remaining description
+    var originalTrait = Object.assign({}, data, { description: remaining });
+    importTrait(originalTrait);
+
+    // Import extracted traits first
+    extractedTraits.forEach(function (t) {
+      importTrait(t);
+    });
   }
 
   function importBackground(data) {
@@ -182,15 +231,3 @@ var CompendiumImport = (function () {
   };
   return CompendiumImport;
 })();
-
-if (typeof define === "function" && define.amd) {
-  define(function () {
-    return CompendiumImport;
-  });
-} else if (typeof module !== "undefined" && module != null) {
-  module.exports = CompendiumImport;
-} else if (typeof angular !== "undefined" && angular != null) {
-  angular.module("CompendiumImport", []).factory("CompendiumImport", function () {
-    return CompendiumImport;
-  });
-}
