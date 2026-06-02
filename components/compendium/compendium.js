@@ -138,18 +138,18 @@ var Compendium = (function () {
     var breadCrumb = document.createElement("div");
     breadCrumb.className = "compendium-breadcrumb";
     breadCrumb.setAttribute("data-v-7d9e6752", "");
-    title.setAttribute("data-v-231d5d04", "");
+    title.setAttribute("data-v-7d9e6752", "");
     breadCrumb.appendChild(title);
     breadCrumb.appendChild(createCompendiumTitleCrumb());
 
     var breadCrumbs = document.createElement("div");
     breadCrumbs.className = "compendium-breadcrumbs";
-    breadCrumbs.setAttribute("data-v-231d5d04", "");
+    breadCrumbs.setAttribute("data-v-a7a1a11c", "");
     breadCrumbs.appendChild(breadCrumb);
 
     var bigCrumb = document.createElement("div");
     bigCrumb.className = "compendium__breadcrumbs";
-    bigCrumb.setAttribute("data-v-231d5d04", "");
+    bigCrumb.setAttribute("data-v-a7a1a11c", "");
     bigCrumb.appendChild(breadCrumbs);
 
     return bigCrumb;

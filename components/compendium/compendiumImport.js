@@ -203,16 +203,12 @@ var CompendiumImport = (function () {
     updateInput(roll20Item, 'input[name="attr_itemmodifiers"]', mods.join(",") ?? "");
 
     if (itemId == null && shouldHaveAttack) {
-      if (shouldHaveAttack) updateCheckbox(roll20Item, 'input[name="attr_hasattack"]', shouldHaveAttack);
-      // if (data.propV_hands === "Versatile") {
-      //   createSecondAttackFromItem(data, roll20Item);
-      // }
+      updateCheckbox(roll20Item, 'input[name="attr_hasattack"]', shouldHaveAttack);
     } else if (itemId != null) {
       var currentAttack = roll20Item.querySelector('input[name="attr_hasattack"]').checked;
       if (currentAttack !== shouldHaveAttack) {
         updateCheckbox(roll20Item, 'input[name="attr_hasattack"]', shouldHaveAttack);
       }
-      //updateSecondAttackFromItem(data, roll20Item);
     }
 
     Inventory.updateItemDisplay(roll20Item);
@@ -291,24 +287,24 @@ var CompendiumImport = (function () {
   }
 
   function resetAttackFromItem(data, itemId) {
-    var roll20Item = document.querySelector(
+    var roll20Attack = document.querySelector(
       `.attacks input[name="attr_itemid"][value="${itemId.toLowerCase()}"]`,
     )?.parentElement;
 
-    if (roll20Item) {
-      if (!data.mod_Damage) updateInput(roll20Item, "input[name='attr_dmgbase']", "");
-      if (!data.mod_Damage_Type) updateInput(roll20Item, "input[name='attr_dmgtype']", "");
-      if (!data.mod_Secondary_Damage) updateInput(roll20Item, "input[name='attr_dmg2base']", "");
-      if (!data.mod_Secondary_Damage_Type) updateInput(roll20Item, "input[name='attr_dmg2type']", "");
-      if (!data.mod_Range) updateInput(roll20Item, "input[name='attr_atkrange']", "");
-      if (!data.modV_Weapon_Attacks) updateInput(roll20Item, "input[name='attr_atkmod']", "");
-      if (!data.modV_Weapon_Damage) updateInput(roll20Item, "input[name='attr_dmgmod']", "");
-      if (!data.mod_Critical_Range) updateInput(roll20Item, "input[name='attr_atkcritrange']", "");
-      if (!data.mod_Attack_Description) updateTextArea(roll20Item, 'textarea[name="attr_atk_desc"]', "");
+    if (roll20Attack) {
+      if (!data.mod_Damage) updateInput(roll20Attack, "input[name='attr_dmgbase']", "");
+      if (!data.mod_Damage_Type) updateInput(roll20Attack, "input[name='attr_dmgtype']", "");
+      if (!data.mod_Secondary_Damage) updateInput(roll20Attack, "input[name='attr_dmg2base']", "");
+      if (!data.mod_Secondary_Damage_Type) updateInput(roll20Attack, "input[name='attr_dmg2type']", "");
+      if (!data.mod_Range) updateInput(roll20Attack, "input[name='attr_atkrange']", "");
+      if (!data.modV_Weapon_Attacks) updateInput(roll20Attack, "input[name='attr_atkmod']", "");
+      if (!data.modV_Weapon_Damage) updateInput(roll20Attack, "input[name='attr_dmgmod']", "");
+      if (!data.mod_Critical_Range) updateInput(roll20Attack, "input[name='attr_atkcritrange']", "");
+      if (!data.mod_Attack_Description) updateTextArea(roll20Attack, 'textarea[name="attr_atk_desc"]', "");
       if (!data.modV_Weapon_Attacks && !data.modV_Weapon_Damage)
-        updateInput(roll20Item, "input[name='attr_atkmagic']", "");
+        updateInput(roll20Attack, "input[name='attr_atkmagic']", "");
       if (!data.mod_Secondary_Damage && !data.mod_Secondary_Damage_Type)
-        updateCheckbox(roll20Item, "input[name='attr_dmg2flag']", false);
+        updateCheckbox(roll20Attack, "input[name='attr_dmg2flag']", false);
     }
   }
 

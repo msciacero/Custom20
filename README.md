@@ -32,11 +32,7 @@ C20 is a browser extension for Roll20 that adds a number of quality of life impr
 - Move styles to css
 - Language support
 - Compendium: Related categories search
-- Versatile rolling support, item editor on/off
 
 ## Known Issues
 
-Versatile Weapons:
-
-- 5e sheet only creates one/two handed attacks on items loaded through API
-- 5e sheet does not synch items with multiple attacks
+- 5e sheet does not fully support versatile weapons (no synch and uses hidden inputs)

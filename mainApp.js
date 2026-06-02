@@ -16,5 +16,6 @@ waitForElement("#settings-accordion").then(() => {
     await Settings.init();
     Compendium.init();
     if (Settings.isEnabled("journal")) Journal.init();
+    if (Settings.isEnabled("markerMenu")) MarkerMenu.init();
   });
 });

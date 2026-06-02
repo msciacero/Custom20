@@ -6,9 +6,11 @@ var Settings = (function () {
   function createInterface() {
     var panel = getSettingsPanel();
     var panelBody = panel.querySelector(".panel-body div");
-    var journalCheckBox = getSettingsCheckbox({ value: "Enable Journal", isChecked: settings.journal });
+    var journalCheckBox = getSettingsCheckbox({ value: "Use C20 Journal", isChecked: settings.journal });
+    var markerMenuCheckBox = getSettingsCheckbox({ value: "Use C20 Marker Menu", isChecked: settings.markerMenu });
 
     panelBody.appendChild(journalCheckBox);
+    panelBody.appendChild(markerMenuCheckBox);
     panelBody.appendChild(getSettingsModalLink({ value: "Edit Compendium", event: CompendiumEditor.show }));
     panelBody.appendChild(getSettingsModalLink({ value: "Import/Export", event: DataEditor.show }));
     document.querySelector("#settings-accordion").appendChild(panel);
@@ -19,6 +21,15 @@ var Settings = (function () {
       journalCheckBox.children[0].classList.toggle("is-checked");
       if (settings.journal) Journal.init();
       else Journal.remove();
+      saveSettings();
+    });
+
+    markerMenuCheckBox.querySelector("input").addEventListener("click", function (event) {
+      settings.markerMenu = !settings.markerMenu;
+      markerMenuCheckBox.classList.toggle("is-checked");
+      markerMenuCheckBox.children[0].classList.toggle("is-checked");
+      if (settings.markerMenu) MarkerMenu.init();
+      else MarkerMenu.remove();
       saveSettings();
     });
   }
@@ -96,10 +107,10 @@ var Settings = (function () {
   //load
   async function loadSettings() {
     settings = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, "all", "settings");
-    if (settings === undefined)
-      settings = {
-        journal: true,
-      };
+    if (settings === undefined) settings = {};
+    if (settings.journal === undefined) settings.journal = true;
+    if (settings.markerMenu === undefined) settings.markerMenu = true;
+    await saveSettings();
   }
 
   var Settings = {

@@ -1,5 +1,5 @@
 #c20-compendium .compendium-pages__container {
-  height: calc(100vh - 160px);
+  height: calc(100vh - 200px);
 }
 
 #c20-compendium .compendium-page {
@@ -8,7 +8,7 @@
 }
 
 #c20-compendium #c20-compendium-pages:has(#c20-compendium-searchContainer) {
-  height: calc(100vh - 160px);
+  height: calc(100vh - 200px);
   display: flex;
   flex-direction: column;
   flex: 1;
@@ -53,7 +53,7 @@ html.dark .c20-compendium-menu {
 }
 
 .c20-compendium-menu select {
-  width: 160px;
+  width: 200px;
   cursor: pointer;
   font-size: 20px;
   margin-top: -7px;
