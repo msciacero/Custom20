@@ -55,7 +55,7 @@ var Spells = (function () {
     btn.className = "filterBtn";
 
     var btnImg = document.createElement("img");
-    btnImg.src = chrome.runtime.getURL(`library/icons/filter-solid-full.svg`);
+    btnImg.src = browser.runtime.getURL(`library/icons/filter-solid-full.svg`);
     btn.appendChild(btnImg);
 
     btn.addEventListener("click", function () {

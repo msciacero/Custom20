@@ -8,7 +8,7 @@ function injectScript(file, node) {
 
 // Usage
 waitForElement("#settings-accordion").then(() => {
-  injectScript(chrome.runtime.getURL("library/data/campaignInfo.js"), "body");
+  injectScript(browser.runtime.getURL("library/data/campaignInfo.js"), "body");
   waitForElement("#c20-campaignInfo").then(async () => {
     window.campaign_id = document.querySelector("#c20-campaignInfo").getAttribute("c20-campaign-id");
     await StorageHelper.initCompendium();

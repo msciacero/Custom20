@@ -25,7 +25,6 @@ async function init5e() {
   if (CharacterSettings.settings().spellFilter) Spells.initFilter();
   if (CharacterSettings.settings().spellView) Spells.initUi();
   if (CharacterSettings.settings().traitsView) Traits.init();
-  //MiniNotes.init();
   CompendiumImport.init();
   if (CharacterSettings.settings().itemView) Inventory.init();
   Attacks.init();

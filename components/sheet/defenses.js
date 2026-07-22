@@ -14,7 +14,7 @@ var Defenses = (function () {
     row.className = `row c20-health-${defenseType}`;
 
     var label = document.createElement("img");
-    label.src = chrome.runtime.getURL(`library/icons/resistance.svg`);
+    label.src = browser.runtime.getURL(`library/icons/resistance.svg`);
     label.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
     var labelText = document.createElement("span");
@@ -47,7 +47,7 @@ var Defenses = (function () {
     row.className = `row c20-health-${defenseType}`;
 
     var label = document.createElement("img");
-    label.src = chrome.runtime.getURL(`library/icons/resistance.svg`);
+    label.src = browser.runtime.getURL(`library/icons/resistance.svg`);
     label.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
     var labelText = document.createElement("span");

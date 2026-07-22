@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "C20",
-  "version": "0.0.0.1",
+  "version": "0.0.0.2",
   "icons": {
     "16": "library/icons/c20_16.png",
     "48": "library/icons/c20_48.png",
@@ -61,7 +61,6 @@
         "components/sheet/conditions.js",
         "components/sheet/defenses.js",
         "components/sheet/inventory.js",
-        "components/sheet/miniNotes.js",
         "components/sheet/spells.js",
         "components/sheet/traits.js",
         "library/external/sortable.js",
@@ -74,10 +73,10 @@
         "library/styles/shared/layout.css",
         "library/styles/shared/modal.css",
         "library/styles/shared/tab.css",
+        "library/styles/sheet/attacks.css",
         "library/styles/sheet/conditions.css",
         "library/styles/sheet/defense.css",
         "library/styles/sheet/inventory.css",
-        "library/styles/sheet/miniNote.css",
         "library/styles/sheet/settings.css",
         "library/styles/sheet/spells.css",
         "library/styles/sheet/traits.css"
