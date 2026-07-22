@@ -679,11 +679,6 @@ var CompendiumEditor = (function () {
               if (item.id !== undefined) delete item.id;
               if (item.source == undefined) item["source"] = "Unknown";
               if (item.type === "condition") if (item.groupName == undefined) item["groupName"] = "";
-              if (item.type === "spell") {
-                item.description = item.description;
-                item.higherLevels = item.higherLevels;
-              }
-
               if (item.names === undefined) {
                 item["names"] = [item.name.toLowerCase()];
 
@@ -691,12 +686,16 @@ var CompendiumEditor = (function () {
                   item["names"].push(item.groupName.toLowerCase());
               }
             });
+
+            const targetStore = advEl.game.getValue();
+
             await StorageHelper.importObjectStore(
               StorageHelper.dbNames.compendiums,
-              advEl.game.getValue(),
+              targetStore,
               jsonData,
               settings.update,
             );
+
             await updateGameSelect();
           } catch (err) {
             if (err.name !== "AbortError") throw err;

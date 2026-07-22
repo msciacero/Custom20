@@ -53,7 +53,7 @@ html.dark .c20-modal-card > div:last-of-type {
   padding-top: 100px; /* Location of the box */
   width: 100%; /* Full width */
   height: 100%; /* Full height */
-  z-index: 16000;
+  z-index: 16000 !important;
   overflow: auto; /* Enable scroll if needed */
   background-color: rgb(0, 0, 0); /* Fallback color */
   background-color: rgba(0, 0, 0, 0.4); /* Black w/ opacity */

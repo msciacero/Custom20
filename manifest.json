@@ -73,7 +73,6 @@
         "library/styles/shared/layout.css",
         "library/styles/shared/modal.css",
         "library/styles/shared/tab.css",
-        "library/styles/sheet/attacks.css",
         "library/styles/sheet/conditions.css",
         "library/styles/sheet/defense.css",
         "library/styles/sheet/inventory.css",

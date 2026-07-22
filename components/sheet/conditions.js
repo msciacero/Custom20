@@ -189,7 +189,7 @@ var Conditions = (function () {
   }
 
   async function updateConditionsList() {
-    settings.compendium = CharacterSettings.settings().conditionCompendium;
+    settings.compendium = CharacterSettings.settings.conditionCompendium;
     if (settings.compendium === "off") return;
 
     var conditions = await loadCompendiumConditions(settings.compendium);

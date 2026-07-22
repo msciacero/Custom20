@@ -1,18 +1,22 @@
-function waitForElement(selector) {
-  return new Promise((resolve) => {
-    var total = 0;
-    const interval = setInterval(() => {
+function waitForElement(selector, timeoutMs = 60000) {
+  return new Promise((resolve, reject) => {
+    const immediateElement = document.querySelector(selector);
+    if (immediateElement) return resolve(immediateElement);
+
+    const observer = new MutationObserver(() => {
       const element = document.querySelector(selector);
       if (element) {
-        clearInterval(interval);
+        clearTimeout(timeoutId);
+        observer.disconnect(); // Stop watching the DOM
         resolve(element);
       }
-      //Something is wrong, eject to prevent performance issues
-      if (total > 120) {
-        clearInterval(interval);
-        throw "C20 rolled a natural 1: Page timeout";
-      }
-      total = total + 1;
-    }, 500);
+    });
+
+    observer.observe(document.body, { childList: true, subtree: true });
+
+    const timeoutId = setTimeout(() => {
+      observer.disconnect();
+      reject(new Error("C20 rolled a natural 1: Page timeout"));
+    }, timeoutMs);
   });
 }

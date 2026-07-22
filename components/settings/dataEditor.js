@@ -1,5 +1,5 @@
 var DataEditor = (function () {
-  operation: null;
+  let operation = null;
 
   async function createModal() {
     var modal = document.createElement("div");
@@ -45,7 +45,8 @@ var DataEditor = (function () {
     modalClose.textContent = "*";
 
     modalClose.onclick = function () {
-      document.querySelector("#c20-data-modal").remove();
+      const modalTarget = document.querySelector("#c20-data-modal");
+      if (modalTarget) modalTarget.remove();
     };
 
     modalHeader.appendChild(modalTitle);
@@ -63,22 +64,21 @@ var DataEditor = (function () {
       options: [
         { text: "Import Data", value: "import" },
         { text: "Export Data", value: "export" },
-        {
-          text: "Delete Data",
-          value: "delete",
-        },
+        { text: "Delete Data", value: "delete" },
       ],
       changeHandler: async function () {
-        document.querySelector("#c20-dataEditor-import").classList.add("hidden");
-        document.querySelector("#c20-dataEditor-export").classList.add("hidden");
-        document.querySelector("#c20-dataEditor-delete").classList.add("hidden");
+        document.querySelector("#c20-dataEditor-import")?.classList.add("hidden");
+        document.querySelector("#c20-dataEditor-export")?.classList.add("hidden");
+        document.querySelector("#c20-dataEditor-delete")?.classList.add("hidden");
 
-        if (operation.getValue() === "import")
-          document.querySelector("#c20-dataEditor-import").classList.remove("hidden");
-        else if (operation.getValue() === "export")
-          document.querySelector("#c20-dataEditor-export").classList.remove("hidden");
-        else if (operation.getValue() === "delete")
-          document.querySelector("#c20-dataEditor-delete").classList.remove("hidden");
+        const selectedVal = operation.getValue();
+        if (selectedVal === "import") {
+          document.querySelector("#c20-dataEditor-import")?.classList.remove("hidden");
+        } else if (selectedVal === "export") {
+          document.querySelector("#c20-dataEditor-export")?.classList.remove("hidden");
+        } else if (selectedVal === "delete") {
+          document.querySelector("#c20-dataEditor-delete")?.classList.remove("hidden");
+        }
       },
     });
 
@@ -125,7 +125,7 @@ var DataEditor = (function () {
 
   async function createEditor() {
     var campaigns = await StorageHelper.listObjectStores(StorageHelper.dbNames.campaigns);
-    campaigns = campaigns?.filter((x) => x !== "all");
+    campaigns = campaigns?.filter((x) => x !== "all") || [];
 
     var campaignContainer = document.createElement("div");
     campaignContainer.id = "c20-dataEditor-delete";
@@ -137,16 +137,17 @@ var DataEditor = (function () {
     title.style.marginBottom = "10px";
     campaignContainer.appendChild(title);
 
-    for (var key in campaigns) {
-      campaignContainer.appendChild(await createCampaignEditor(campaigns[key]));
+    for (let i = 0; i < campaigns.length; i++) {
+      campaignContainer.appendChild(await createCampaignEditor(campaigns[i]));
     }
 
     return campaignContainer;
   }
 
   async function createCampaignEditor(campaignStore) {
-    var campaignName = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignStore, "name");
-    var characters = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignStore, "characters");
+    var campaignName =
+      (await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignStore, "name")) || "Unnamed Campaign";
+    var characters = (await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignStore, "characters")) || [];
 
     var details = document.createElement("details");
 
@@ -171,15 +172,16 @@ var DataEditor = (function () {
     summary.appendChild(btn);
     details.append(summary);
 
-    for (var key in characters) {
-      details.appendChild(await createCharacterEditor(campaignStore, characters[key]));
+    for (let i = 0; i < characters.length; i++) {
+      details.appendChild(await createCharacterEditor(campaignStore, characters[i]));
     }
 
     return details;
   }
 
   async function createCharacterEditor(campaignId, characterId) {
-    var characterName = await StorageHelper.getItem(StorageHelper.dbNames.characters, characterId, "name");
+    var characterName =
+      (await StorageHelper.getItem(StorageHelper.dbNames.characters, characterId, "name")) || "Unnamed Character";
 
     var container = document.createElement("div");
     container.style.paddingLeft = "25px";
@@ -217,17 +219,19 @@ var DataEditor = (function () {
   }
 
   async function deleteCampaign(campaignId) {
-    var campaignCharacters = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignId, "characters");
+    var campaignCharacters =
+      (await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignId, "characters")) || [];
 
-    for (var characterId in campaignCharacters) {
-      await StorageHelper.deleteObjectStore(StorageHelper.dbNames.characters, campaignCharacters[characterId]);
+    for (const characterId of campaignCharacters) {
+      await StorageHelper.deleteObjectStore(StorageHelper.dbNames.characters, characterId);
     }
 
     await StorageHelper.deleteObjectStore(StorageHelper.dbNames.campaigns, campaignId);
   }
 
   async function deleteCharacter(campaignId, characterId) {
-    var campaignCharacters = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignId, "characters");
+    var campaignCharacters =
+      (await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignId, "characters")) || [];
     campaignCharacters = campaignCharacters.filter((x) => x !== characterId);
     await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, campaignId, campaignCharacters, "characters");
 

@@ -283,7 +283,7 @@ var CharacterSettings = (function () {
       await loadSettings();
       await createUi();
     },
-    settings: function getSettings() {
+    get settings() {
       return settings;
     },
   };

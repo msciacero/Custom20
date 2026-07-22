@@ -185,6 +185,49 @@ var Compendium = (function () {
   }
 
   //Search
+  async function executeSearch(queryValue) {
+    const pageWrapper = document.querySelector("#c20-compendium-pages");
+    const clearBtn = document.querySelector("#c20-compendium-search-clear");
+
+    if (queryValue === "") {
+      pageWrapper.replaceChildren();
+      clearBtn?.classList.add("hidden");
+      return;
+    }
+
+    const results = await StorageHelper.searchIndexBySubstring(
+      StorageHelper.dbNames.compendiums,
+      settings.game,
+      "names",
+      queryValue,
+    );
+
+    if (!results || results.length === 0) {
+      pageWrapper.replaceChildren(createNoSearchResults());
+      clearBtn?.classList.remove("hidden");
+      return;
+    }
+
+    pageWrapper.replaceChildren(getPageGroups(results));
+    clearBtn?.classList.remove("hidden");
+  }
+
+  function debounce(func, delay) {
+    let timeoutId;
+
+    return function (...args) {
+      clearTimeout(timeoutId);
+
+      timeoutId = setTimeout(() => {
+        func.apply(this, args);
+      }, delay);
+    };
+  }
+
+  const debouncedSearch = debounce((val) => {
+    executeSearch(val);
+  }, 250);
+
   function createCompendiumSearch() {
     var wrapper = document.createElement("div");
     wrapper.className = "el-input__wrapper";
@@ -196,30 +239,16 @@ var Compendium = (function () {
     input.autocomplete = "off";
     input.placeholder = "Search Compendium";
     input.name = "compendium-search";
-    input.addEventListener("input", async function (event) {
-      var pageWrapper = document.querySelector("#c20-compendium-pages");
+    input.addEventListener("input", (event) => {
+      const query = event.target.value.trim();
 
-      if (event.target.value.trim() === "") {
-        pageWrapper.replaceChildren();
-        document.querySelector("#c20-compendium-search-clear").classList.add("hidden");
+      if (query === "") {
+        document.querySelector("#c20-compendium-pages").replaceChildren();
+        document.querySelector("#c20-compendium-search-clear")?.classList.add("hidden");
         return;
       }
 
-      var objNames = await StorageHelper.listIndexKeys(StorageHelper.dbNames.compendiums, settings.game, "names");
-      var objNames = objNames.filter((x) => x.includes(event.target.value));
-
-      if (!objNames || objNames?.length === 0) {
-        pageWrapper.replaceChildren(createNoSearchResults());
-        return;
-      }
-
-      const promises = objNames.map(async (x) => {
-        return await StorageHelper.getItemFromIndex(StorageHelper.dbNames.compendiums, settings.game, "names", x);
-      });
-
-      const results = await Promise.all(promises);
-      pageWrapper.replaceChildren(getPageGroups(results.flatMap((x) => x)));
-      document.querySelector("#c20-compendium-search-clear").classList.remove("hidden");
+      debouncedSearch(query);
     });
 
     wrapper.appendChild(input);

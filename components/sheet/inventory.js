@@ -180,10 +180,10 @@ var Inventory = (function () {
 
   function updateAccent(item) {
     var equippedElement = item.closest(".item").querySelector(".equipped.main");
-    if (item.value.includes("Magical (Attunement)") && CharacterSettings.settings().itemAttunementColor) {
-      equippedElement.style.setProperty("accent-color", CharacterSettings.settings().itemAttunementColor);
-    } else if (item.value.includes("Magical") && CharacterSettings.settings().itemMagicColor) {
-      equippedElement.style.setProperty("accent-color", CharacterSettings.settings().itemMagicColor);
+    if (item.value.includes("Magical (Attunement)") && CharacterSettings.settings.itemAttunementColor) {
+      equippedElement.style.setProperty("accent-color", CharacterSettings.settings.itemAttunementColor);
+    } else if (item.value.includes("Magical") && CharacterSettings.settings.itemMagicColor) {
+      equippedElement.style.setProperty("accent-color", CharacterSettings.settings.itemMagicColor);
     } else {
       equippedElement.style.removeProperty("accent-color");
     }
