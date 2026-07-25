@@ -1,75 +1,82 @@
 .c20-markdown-paragraph {
   white-space: pre-wrap;
-  margin: 0 0 6px 0 !important;
-  font-size: 13px !important;
-  line-height: 1.4 !important;
+  margin: 0 0 6px 0;
+  font-size: 13px;
+  line-height: 1.4;
   color: #333333;
 }
 
 /* Horizontal separators cleanup */
 .c20-markdown-hr {
-  border: 0 !important;
-  border-top: 1px solid #c9b4a6 !important;
-  margin: 8px 0 !important;
-  height: 0 !important;
+  border: 0;
+  border-top: 1px solid #c9b4a6;
+  margin: 8px 0;
+  height: 0;
 }
 
 /* Clean Monster Manual Accent Typography Headings */
 .c20-markdown-h3 {
-  font-family: "Georgia", serif !important;
-  font-size: 15px !important;
-  font-weight: 700 !important;
-  color: #7a2008 !important; /* Authentic Dark Red Accent */
-  margin: 12px 0 4px 0 !important;
-  padding-bottom: 2px !important;
-  border-bottom: 1px solid #c9b4a6 !important;
+  font-family: "Georgia", serif;
+  font-size: 15px;
+  font-weight: 700;
+  color: #7a2008; /* Authentic Dark Red Accent */
+  margin: 12px 0 4px 0;
+  padding-bottom: 2px;
+  border-bottom: 1px solid #c9b4a6;
 }
 
 /* Character Block Attributes Table Styles */
 .c20-markdown-table {
-  border-collapse: collapse !important;
-  width: 100% !important;
-  margin: 6px 0 !important;
-  font-size: 12px !important;
+  border-collapse: collapse;
+  width: 100%;
+  margin: 6px 0;
+  font-size: 12px;
 }
 
 .c20-markdown-table th {
-  font-weight: 700 !important;
-  color: #7a2008 !important;
-  border-bottom: 2px solid #7a2008 !important;
-  padding: 4px 6px !important;
+  font-weight: 700;
+  color: #7a2008;
+  border-bottom: 2px solid #7a2008;
+  padding: 4px 6px;
 }
 
 .c20-markdown-table td {
-  padding: 4px 6px !important;
-  color: #4a4a4a !important;
+  padding: 4px 6px;
+  color: #4a4a4a;
 }
 
 /* Automatic Zebra Striping lines mapping layout rows */
 .c20-markdown-table tbody tr:nth-child(even) {
-  background-color: #f7f2ed !important; /* Soft warm tinted backdrop overlay */
+  background-color: #f7f2ed; /* Soft warm tinted backdrop overlay */
 }
 
 /* Lists and margins formatting alignment */
 .c20-markdown-list-root {
-  margin: 6px 0 6px 18px !important;
-  padding-left: 0 !important;
-  list-style-type: disc !important;
+  margin: 6px 0 6px 18px;
+  padding-left: 0;
+  list-style-type: disc;
 }
 
 .c20-markdown-list-root li {
-  font-size: 13px !important;
-  line-height: 1.4 !important;
-  margin-bottom: 3px !important;
+  font-size: 13px;
+  line-height: 1.4;
+  margin-bottom: 3px;
 }
 
 html.dark .c20-markdown-paragraph,
 .sheet-darkmode .c20-markdown-paragraph,
 html.dark .c20-markdown-table td,
 .sheet-darkmode .c20-markdown-table td {
-  color: rgb(179, 179, 179) !important;
+  color: rgb(179, 179, 179);
 }
 
-html.dark .c20-markdown-table th {
-  color: #7a2008 !important;
+html.dark .c20-markdown-table th,
+.sheet-darkmode .c20-markdown-table th {
+  color: #e1757b;
+  border-bottom-color: #e1757b;
+}
+
+html.dark .c20-markdown-table tbody tr:nth-child(even),
+.sheet-darkmode .c20-markdown-table tbody tr:nth-child(even) {
+  background-color: #353535; /* Soft warm tinted backdrop overlay */
 }

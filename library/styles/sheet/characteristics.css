@@ -1,0 +1,13 @@
+.page .rp-traits.c20-v2 .pibf .display .c20-desc {
+  display: block;
+}
+
+.page .rp-traits.c20-v2 .pibf .display span:not(.c20-desc),
+.page .rp-traits.c20-v2 .pibf span.label,
+.page .rp-traits.c20-v2 .pibf .options-flag:checked ~ .display .c20-desc {
+  display: none;
+}
+
+.page .rp-traits.c20-v2 .pibf {
+  border-bottom-width: 5px !important;
+}

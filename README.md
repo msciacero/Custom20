@@ -31,8 +31,6 @@ C20 is a browser extension for Roll20 that adds a number of quality of life impr
 - Move styles to css
 - Language support
 - Compendium: Related categories search
-- Attack counter
-- Improved characteristics (add/remove/change section text)
 
 ## Known Issues
 

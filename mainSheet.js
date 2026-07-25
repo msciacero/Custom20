@@ -39,6 +39,7 @@ async function init5e() {
   CompendiumImport.init();
   if (CharacterSettings.settings.itemView) Inventory.init();
   Attacks.init();
+  Characteristics.init();
   levelEvent();
 }
 

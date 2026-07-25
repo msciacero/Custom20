@@ -1,14 +1,13 @@
 {
   "manifest_version": 3,
   "name": "C20",
-  "version": "0.0.0.2",
+  "version": "0.0.0.3",
   "description": "Small number of quality of life enhancements for Roll20 5e players.",
   "icons": {
     "16": "library/icons/c20_16.png",
     "48": "library/icons/c20_48.png",
     "128": "library/icons/c20_128.png"
   },
-  "permissions": ["storage"],
   "content_scripts": [
     {
       "matches": ["https://app.roll20.net/editor", "https://app.roll20.net/editor/?*"],
@@ -63,6 +62,7 @@
         "components/compendium/editors/itemEditor.js",
         "components/compendium/compendiumImport.js",
         "components/sheet/attacks.js",
+        "components/sheet/characteristics.js",
         "components/sheet/conditions.js",
         "components/sheet/defenses.js",
         "components/sheet/inventory.js",
@@ -76,6 +76,7 @@
         "library/styles/shared/markdown.css",
         "library/styles/shared/modal.css",
         "library/styles/shared/tab.css",
+        "library/styles/sheet/characteristics.css",
         "library/styles/sheet/conditions.css",
         "library/styles/sheet/defense.css",
         "library/styles/sheet/inventory.css",
