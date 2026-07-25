@@ -1,69 +1,94 @@
 function createMarkdownDisplay(text) {
   // Convert a text string that may contain markdown tables into a DocumentFragment
   // without using innerHTML. Supports bold (**text**), italic (*text* or _text_),
-  // and bold+italic (***text***). Non-table text blocks are preserved as <div>
-  // with pre-wrapped whitespace so line breaks are visible.
+  // bold+italic (***text***), and headings (# h1, ## h2, ### h3, etc.).
 
   function splitRow(line) {
-    // remove leading/trailing pipe and split on |, trimming each cell
-    if (line.trim().startsWith("|") && line.trim().endsWith("|")) line = line.trim().slice(1, -1);
-    return line.split("|").map((s) => s.trim());
+    let cleaned = line.trim();
+    if (cleaned.startsWith("|") && cleaned.endsWith("|")) {
+      cleaned = cleaned.slice(1, -1);
+    }
+
+    const cells = [];
+    let currentCell = "";
+    let isEscaped = false;
+
+    for (let index = 0; index < cleaned.length; index++) {
+      const char = cleaned[index];
+      if (char === "\\" && !isEscaped) {
+        isEscaped = true;
+        currentCell += char;
+      } else if (char === "|" && !isEscaped) {
+        cells.push(currentCell.trim());
+        currentCell = "";
+      } else {
+        isEscaped = false;
+        currentCell += char;
+      }
+    }
+    cells.push(currentCell.trim());
+    return cells;
   }
 
   function parseDivider(line) {
-    // parse alignment from divider cells, e.g. ":---", "---:", ":---:"
     const cells = splitRow(line);
     return cells.map((c) => {
       const t = c.trim();
       if (t.startsWith(":") && t.endsWith(":")) return "center";
       if (t.endsWith(":")) return "right";
       if (t.startsWith(":")) return "left";
-      return "left"; // default
+      return "left";
     });
   }
 
-  // Parse inline markdown for bold/italic and return a DocumentFragment
   function nodesFromInline(text) {
     const frag = document.createDocumentFragment();
     if (!text) return frag;
 
-    const regex = /(\*\*\*([\s\S]+?)\*\*\*)|(\*\*([\s\S]+?)\*\*)|(\*([^*]+?)\*)|(_([^_]+?)_)/g;
-    let lastIndex = 0;
-    let m;
-    while ((m = regex.exec(text)) !== null) {
-      const idx = m.index;
-      if (idx > lastIndex) {
-        frag.appendChild(document.createTextNode(text.slice(lastIndex, idx)));
+    const regex = /(\*\*\*([\s\S]+?)\*\*\*)|(\*\*([\s\S]+?)\*\*)|(\*([\s\S]+?)\*)|(_([\s\S]+?)_)/;
+    let targetText = text;
+
+    while (targetText) {
+      const match = targetText.match(regex);
+      if (!match) {
+        frag.appendChild(document.createTextNode(targetText));
+        break;
       }
 
-      if (m[2]) {
-        // ***bold+italic*** => <strong><em>...</em></strong>
+      const matchIndex = match.index;
+      if (matchIndex > 0) {
+        frag.appendChild(document.createTextNode(targetText.slice(0, matchIndex)));
+      }
+
+      let parsedNode = null;
+
+      if (match[2]) {
         const strong = document.createElement("strong");
         const em = document.createElement("em");
-        em.appendChild(nodesFromInline(m[2]));
+        em.appendChild(nodesFromInline(match[2]));
         strong.appendChild(em);
-        frag.appendChild(strong);
-      } else if (m[4]) {
-        // **bold**
+        parsedNode = strong;
+      } else if (match[4]) {
         const strong = document.createElement("strong");
-        strong.appendChild(nodesFromInline(m[4]));
-        frag.appendChild(strong);
-      } else if (m[6]) {
-        // *italic*
+        strong.appendChild(nodesFromInline(match[4]));
+        parsedNode = strong;
+      } else if (match[6]) {
         const em = document.createElement("em");
-        em.appendChild(nodesFromInline(m[6]));
-        frag.appendChild(em);
-      } else if (m[8]) {
-        // _italic_
+        em.appendChild(nodesFromInline(match[6]));
+        parsedNode = em;
+      } else if (match[8]) {
         const em = document.createElement("em");
-        em.appendChild(nodesFromInline(m[8]));
-        frag.appendChild(em);
+        em.appendChild(nodesFromInline(match[8]));
+        parsedNode = em;
       }
 
-      lastIndex = regex.lastIndex;
+      if (parsedNode) {
+        frag.appendChild(parsedNode);
+      }
+
+      targetText = targetText.slice(matchIndex + match[0].length);
     }
 
-    if (lastIndex < text.length) frag.appendChild(document.createTextNode(text.slice(lastIndex)));
     return frag;
   }
 
@@ -72,17 +97,12 @@ function createMarkdownDisplay(text) {
     const aligns = parseDivider(dividerLine);
     const table = document.createElement("table");
     table.className = "c20-markdown-table";
-    // simple styling — rely on CSS for better control
-    table.style.borderCollapse = "collapse";
-    table.style.margin = "8px 0";
 
     const thead = document.createElement("thead");
     const headRow = document.createElement("tr");
     headers.forEach((h, idx) => {
       const th = document.createElement("th");
       th.style.textAlign = aligns[idx] || "left";
-      th.style.border = "1px solid var(--border-color, #ddd)";
-      th.style.padding = "4px 6px";
       th.appendChild(nodesFromInline(h));
       headRow.appendChild(th);
     });
@@ -93,10 +113,9 @@ function createMarkdownDisplay(text) {
     rowLines.forEach((r) => {
       const cols = splitRow(r);
       const tr = document.createElement("tr");
+
       headers.forEach((_, idx) => {
         const td = document.createElement("td");
-        td.style.border = "1px solid var(--border-color, #ddd)";
-        td.style.padding = "4px 6px";
         td.style.textAlign = aligns[idx] || "left";
         td.appendChild(nodesFromInline(cols[idx] ?? ""));
         tr.appendChild(td);
@@ -108,45 +127,55 @@ function createMarkdownDisplay(text) {
   }
 
   function isDividerLine(line) {
-    // divider line typically contains dashes and pipes, optionally colons for alignment
     const cleaned = line.trim();
     if (!cleaned) return false;
-    // must contain '-' and '|' or at least '-' and ':' in reasonable quantity
     return /-/.test(cleaned) && (cleaned.includes("|") || cleaned.includes(":"));
   }
 
-  // Detect list item: leading optional spaces + (-|+|*) + space
   function isListItem(line) {
     return /^\s*([-+*])\s+/.test(line);
   }
 
-  // Create a UL (with nested ULs) from lines starting at startIndex.
+  function parseHeaderLine(line) {
+    const match = line.match(/^(\s*)(#{1,6})\s+(.+)$/);
+    if (!match) return null;
+    return {
+      level: match[2].length,
+      content: match[3],
+    };
+  }
+
   function createList(lines, startIndex) {
     const root = document.createElement("ul");
-    root.style.margin = "20px 0 20px 20px";
-    // stack of {indent, el}
+    root.className = "c20-markdown-list-root";
     const stack = [{ indent: 0, el: root }];
     let j = startIndex;
+
     while (j < lines.length) {
       const line = lines[j];
       if (line.trim() === "") break;
-      const m = line.match(/^(\s*)([-+*])\s+(.+)$/);
-      if (!m) break;
-      const indent = m[1].length;
-      const content = m[3];
 
-      // if deeper indent, create nested UL under previous LI
+      const match = line.match(/^(\s*)([-+*])\s+(.+)$/);
+      if (!match) break;
+
+      const indent = match[1].length;
+      const content = match[3];
+
       let last = stack[stack.length - 1];
       if (indent > last.indent) {
         const parentLi = last.el.lastElementChild;
         const ul = document.createElement("ul");
-        ul.style.margin = "0 0 0 16px";
-        if (parentLi) parentLi.appendChild(ul);
-        else last.el.appendChild(ul);
+        ul.className = "c20-markdown-list-nested";
+        if (parentLi) {
+          parentLi.appendChild(ul);
+        } else {
+          last.el.appendChild(ul);
+        }
         stack.push({ indent, el: ul });
       } else {
-        // pop until parent indent < current indent
-        while (stack.length > 1 && indent <= stack[stack.length - 1].indent) stack.pop();
+        while (stack.length > 1 && indent <= stack[stack.length - 1].indent) {
+          stack.pop();
+        }
       }
 
       const parentUl = stack[stack.length - 1].el;
@@ -165,20 +194,45 @@ function createMarkdownDisplay(text) {
 
   function flushBuffer() {
     if (buffer.length === 0) return;
-    const div = document.createElement("div");
-    div.style.whiteSpace = "pre-wrap"; // preserve line breaks
+
+    const p = document.createElement("p");
+    p.className = "c20-markdown-paragraph";
+
     buffer.forEach((line, idx) => {
-      div.appendChild(nodesFromInline(line));
-      if (idx < buffer.length - 1) div.appendChild(document.createElement("br"));
+      p.appendChild(nodesFromInline(line));
+      if (idx < buffer.length - 1) {
+        p.appendChild(document.createElement("br"));
+      }
     });
-    frag.appendChild(div);
+
+    frag.appendChild(p);
     buffer = [];
   }
 
   while (i < lines.length) {
     const line = lines[i];
 
-    // detect unordered list
+    if (line.trim() === "***" || line.trim() === "---") {
+      flushBuffer();
+      const hr = document.createElement("hr");
+      hr.className = "c20-markdown-hr";
+      frag.appendChild(hr);
+      i++;
+      continue;
+    }
+
+    const headingData = parseHeaderLine(line);
+    if (headingData) {
+      flushBuffer();
+
+      const headingNode = document.createElement(`h${headingData.level}`);
+      headingNode.className = `c20-markdown-h${headingData.level}`;
+      headingNode.appendChild(nodesFromInline(headingData.content));
+      frag.appendChild(headingNode);
+      i++;
+      continue;
+    }
+
     if (isListItem(line)) {
       flushBuffer();
       const { el, nextIndex } = createList(lines, i);
@@ -187,21 +241,26 @@ function createMarkdownDisplay(text) {
       continue;
     }
 
-    // detect potential table header (contains |) and next line is divider
     if (line.includes("|") && i + 1 < lines.length && isDividerLine(lines[i + 1])) {
-      // collect table lines until a blank line or a line without |
       const headerLine = line;
       const dividerLine = lines[i + 1];
       const rowLines = [];
       let j = i + 2;
+
       while (j < lines.length && lines[j].includes("|")) {
         rowLines.push(lines[j]);
         j++;
       }
-      // flush any pending text before appending table
+
       flushBuffer();
       const table = createTable(headerLine, dividerLine, rowLines);
       frag.appendChild(table);
+
+      // FIXED: Lookahead protection to consume trailing divider text lines so we skip redundant lines
+      if (lines[j] && (lines[j].trim() === "***" || lines[j].trim() === "---")) {
+        j++;
+      }
+
       i = j;
     } else {
       buffer.push(line);

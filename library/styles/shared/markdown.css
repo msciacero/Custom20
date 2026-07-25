@@ -1,0 +1,75 @@
+.c20-markdown-paragraph {
+  white-space: pre-wrap;
+  margin: 0 0 6px 0 !important;
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  color: #333333;
+}
+
+/* Horizontal separators cleanup */
+.c20-markdown-hr {
+  border: 0 !important;
+  border-top: 1px solid #c9b4a6 !important;
+  margin: 8px 0 !important;
+  height: 0 !important;
+}
+
+/* Clean Monster Manual Accent Typography Headings */
+.c20-markdown-h3 {
+  font-family: "Georgia", serif !important;
+  font-size: 15px !important;
+  font-weight: 700 !important;
+  color: #7a2008 !important; /* Authentic Dark Red Accent */
+  margin: 12px 0 4px 0 !important;
+  padding-bottom: 2px !important;
+  border-bottom: 1px solid #c9b4a6 !important;
+}
+
+/* Character Block Attributes Table Styles */
+.c20-markdown-table {
+  border-collapse: collapse !important;
+  width: 100% !important;
+  margin: 6px 0 !important;
+  font-size: 12px !important;
+}
+
+.c20-markdown-table th {
+  font-weight: 700 !important;
+  color: #7a2008 !important;
+  border-bottom: 2px solid #7a2008 !important;
+  padding: 4px 6px !important;
+}
+
+.c20-markdown-table td {
+  padding: 4px 6px !important;
+  color: #4a4a4a !important;
+}
+
+/* Automatic Zebra Striping lines mapping layout rows */
+.c20-markdown-table tbody tr:nth-child(even) {
+  background-color: #f7f2ed !important; /* Soft warm tinted backdrop overlay */
+}
+
+/* Lists and margins formatting alignment */
+.c20-markdown-list-root {
+  margin: 6px 0 6px 18px !important;
+  padding-left: 0 !important;
+  list-style-type: disc !important;
+}
+
+.c20-markdown-list-root li {
+  font-size: 13px !important;
+  line-height: 1.4 !important;
+  margin-bottom: 3px !important;
+}
+
+html.dark .c20-markdown-paragraph,
+.sheet-darkmode .c20-markdown-paragraph,
+html.dark .c20-markdown-table td,
+.sheet-darkmode .c20-markdown-table td {
+  color: rgb(179, 179, 179) !important;
+}
+
+html.dark .c20-markdown-table th {
+  color: #7a2008 !important;
+}

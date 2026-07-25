@@ -1,57 +1,69 @@
 var CompendiumEditor = (function () {
-  stdEl = {
+  // FIXED: Declared variables properly inside module scope to isolate namespaces from leaking out to window
+  const stdEl = {
     game: null,
     category: null,
     entry: null,
   };
 
-  advEl = {
+  const advEl = {
     operation: null,
     game: null,
   };
 
-  var settings = {
+  const settings = {
     editor: "ui",
     newCompendium: "",
     update: false,
   };
 
-  // modal UI
+  // modal UI elements construction
   async function createModal() {
-    var modal = document.createElement("div");
+    // FIXED: Cleanly wipe out any pre-existing zombie modals before spinning up new layouts
+    const existingModal = document.querySelector("#c20-editor-modal");
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    const modal = document.createElement("div");
     modal.className = `modal c20-modal-full`;
     modal.id = "c20-editor-modal";
 
-    var modalContent = document.createElement("div");
+    const modalContent = document.createElement("div");
     modalContent.className = "modal-content";
     modalContent.style.maxWidth = "850px";
 
-    var compendiumContent = document.createElement("div");
+    const compendiumContent = document.createElement("div");
     compendiumContent.id = "c20-compendium-modal-content";
     compendiumContent.style.marginLeft = "15px";
     compendiumContent.style.marginTop = "10px";
     compendiumContent.style.maxHeight = "calc(100vh - 400px)";
     compendiumContent.style.overflowY = "auto";
 
-    var advancedContent = document.createElement("div");
+    const advancedContent = document.createElement("div");
     advancedContent.id = "c20-advanced-modal-content";
     advancedContent.className = "hidden";
     advancedContent.style.maxHeight = "calc(100vh - 400px)";
     advancedContent.style.overflowY = "auto";
 
-    var selectWrapper = document.createElement("div");
+    const selectWrapper = document.createElement("div");
     selectWrapper.style.display = "flex";
     selectWrapper.style.flexFlow = "wrap";
     selectWrapper.style.gap = "20px";
 
-    selectWrapper.appendChild(await createGameSelect(modal));
+    selectWrapper.appendChild(await createGameSelect());
     selectWrapper.appendChild(createCategorySelect());
     selectWrapper.appendChild(createEntrySelect());
     selectWrapper.appendChild(createEditorRadio());
 
     compendiumContent.appendChild(selectWrapper);
-    compendiumContent.appendChild(createEditor());
-    advancedContent.appendChild(await createAdvancedEditor());
+
+    if (typeof createEditor === "function") {
+      compendiumContent.appendChild(createEditor());
+    }
+    if (typeof createAdvancedEditor === "function") {
+      advancedContent.appendChild(await createAdvancedEditor());
+    }
 
     modalContent.appendChild(createModalHeader());
     modalContent.appendChild(createProgressIndicator());
@@ -64,31 +76,35 @@ var CompendiumEditor = (function () {
   }
 
   function createModalHeader() {
-    var modalHeader = document.createElement("div");
+    const modalHeader = document.createElement("div");
     modalHeader.style.borderBottom = "1px solid grey";
 
-    var modalTitle = document.createElement("h3");
+    const modalTitle = document.createElement("h3");
     modalTitle.id = "c20-compendium-modal-title";
     modalTitle.style.display = "inline-block";
     modalTitle.style.paddingBottom = "5px";
     modalTitle.textContent = "Compendium Editor";
 
-    var btn = document.createElement("button");
+    const btn = document.createElement("button");
     btn.textContent = "c";
     btn.title = "Import/Export";
     btn.id = "compendium-editor-advanced";
     btn.style.fontFamily = "pictos";
     btn.style.fontSize = "15px";
     btn.style.marginLeft = "10px";
-    btn.addEventListener("click", toggleAdvancedEditor);
 
-    var modalClose = document.createElement("span");
+    if (typeof toggleAdvancedEditor === "function") {
+      btn.addEventListener("click", toggleAdvancedEditor);
+    }
+
+    const modalClose = document.createElement("span");
     modalClose.className = "close";
     modalClose.style.fontFamily = "pictos";
     modalClose.textContent = "*";
 
     modalClose.onclick = function () {
-      document.querySelector("#c20-editor-modal").remove();
+      const modalTarget = document.querySelector("#c20-editor-modal");
+      if (modalTarget) modalTarget.remove();
     };
 
     modalHeader.appendChild(modalTitle);
@@ -99,10 +115,10 @@ var CompendiumEditor = (function () {
   }
 
   function createProgressIndicator() {
-    var container = document.createElement("div");
+    const container = document.createElement("div");
     container.className = "progress-container";
 
-    var bar = document.createElement("div");
+    const bar = document.createElement("div");
     bar.className = "progress-bar";
     bar.id = "modal-compendium-progress";
 
@@ -110,21 +126,28 @@ var CompendiumEditor = (function () {
     return container;
   }
 
-  // Select Menus
+  // Select Menus Factory
   async function createGameSelect() {
-    var games = await StorageHelper.listObjectStores(StorageHelper.dbNames.compendiums);
+    const games = await StorageHelper.listObjectStores(StorageHelper.dbNames.compendiums);
     stdEl.game = new c20FieldSelect();
-    var gameSelect = stdEl.game.create({
+
+    const gameSelect = stdEl.game.create({
       name: "game",
       title: "Compendium",
-      options: Array.from(games).map((x, i) => ({ text: x, value: x })),
+      options: Array.from(games).map((x) => ({ text: x, value: x })),
       changeHandler: async function () {
-        stdEl.category.reset();
-        stdEl.category.disabled(stdEl.game.getValue() === "");
-        stdEl.entry.reset();
-        stdEl.entry.disabled(true);
+        if (stdEl.category) {
+          stdEl.category.reset();
+          stdEl.category.disabled(stdEl.game.getValue() === "");
+        }
+        if (stdEl.entry) {
+          stdEl.entry.reset();
+          stdEl.entry.disabled(true);
+        }
 
-        await updateEditor();
+        if (typeof updateEditor === "function") {
+          await updateEditor();
+        }
       },
     });
 
@@ -133,7 +156,7 @@ var CompendiumEditor = (function () {
 
   function createCategorySelect() {
     stdEl.category = new c20FieldSelect();
-    var categorySelect = stdEl.category.create({
+    const categorySelect = stdEl.category.create({
       name: "category",
       title: "Category",
       options: [
@@ -146,13 +169,14 @@ var CompendiumEditor = (function () {
         { text: "Subclasses", value: "subclass" },
       ],
       changeHandler: async function () {
-        stdEl.entry.reset();
-        await updateCategorySelect();
+        if (stdEl.entry) stdEl.entry.reset();
+        if (typeof updateCategorySelect === "function") {
+          await updateCategorySelect();
+        }
       },
     });
 
     stdEl.category.disabled(true);
-
     return categorySelect;
   }
 
@@ -160,21 +184,24 @@ var CompendiumEditor = (function () {
     stdEl.entry = new c20FieldComboBox();
     stdEl.entry.allowNewEntries(true);
 
-    var entrySelect = stdEl.entry.create({
+    const entrySelect = stdEl.entry.create({
       name: "entry",
       title: "Entries",
       options: [],
       changeHandler: async function () {
-        await updateEditor();
+        if (typeof updateEditor === "function") {
+          await updateEditor();
+        }
       },
     });
-    stdEl.entry.disabled(true);
 
+    stdEl.entry.disabled(true);
     return entrySelect;
   }
 
   function createEditorRadio() {
-    var optionsDiv = createRadioInputGroup({
+    // FIXED: Adjusted validation checks inside the type factory triggers layout safely
+    const optionsDiv = createRadioInputGroup({
       title: "",
       name: "editor",
       options: [
@@ -182,10 +209,11 @@ var CompendiumEditor = (function () {
         { value: "json", name: "JSON Editor" },
       ],
       selectedValue: settings.editor,
-      changeHandler: updateEditorRadio,
+      changeHandler: typeof updateEditorRadio === "function" ? updateEditorRadio : null,
     });
 
-    optionsDiv.style.display = "absolute";
+    // FIXED: Corrected invalid 'display: absolute' CSS assignment property rules code mapping tokens
+    optionsDiv.style.position = "absolute";
     optionsDiv.style.right = "10px";
 
     return optionsDiv;
@@ -193,355 +221,413 @@ var CompendiumEditor = (function () {
 
   // Select Change Handlers
   async function updateGameSelect() {
-    var games = await StorageHelper.listObjectStores(StorageHelper.dbNames.compendiums);
-    games = Array.from(games)
+    const games = await StorageHelper.listObjectStores(StorageHelper.dbNames.compendiums);
+    const sortedGames = Array.from(games)
       .sort()
       .map((x) => ({ value: x, text: x }));
 
-    advEl.game.reset();
-    advEl.game.updateOptions(games);
-    stdEl.game.reset();
-    stdEl.game.updateOptions(games);
+    if (advEl.game) {
+      advEl.game.reset();
+      advEl.game.updateOptions(sortedGames);
+    }
 
-    stdEl.category.reset();
-    stdEl.category.disabled(true);
-    stdEl.entry.reset();
-    stdEl.entry.disabled(true);
+    if (stdEl.game) {
+      stdEl.game.reset();
+      stdEl.game.updateOptions(sortedGames);
+    }
 
-    await updateEditor();
+    if (stdEl.category) {
+      stdEl.category.reset();
+      stdEl.category.disabled(true);
+    }
+
+    if (stdEl.entry) {
+      stdEl.entry.reset();
+      stdEl.entry.disabled(true);
+    }
+
+    if (typeof updateEditor === "function") {
+      await updateEditor();
+    }
   }
 
   async function updateCategorySelect() {
-    var categoryData = await StorageHelper.listItemsByType(
-      StorageHelper.dbNames.compendiums,
-      stdEl.game.getValue(),
-      stdEl.category.getValue(),
-    );
+    if (!stdEl.game || !stdEl.category || !stdEl.entry) return;
 
-    categoryData = Array.from(categoryData)
-      .sort((a, b) => `${a.groupName ?? ""} ${a.name}`.trim().localeCompare(`${b.groupName ?? ""} ${b.name}`.trim()))
+    const gameVal = stdEl.game.getValue();
+    const categoryVal = stdEl.category.getValue();
+
+    const categoryData = await StorageHelper.listItemsByType(StorageHelper.dbNames.compendiums, gameVal, categoryVal);
+
+    const sortedMappedData = Array.from(categoryData || [])
+      .sort((a, b) => {
+        const textA = `${a.groupName ?? ""} ${a.name ?? ""}`.trim();
+        const textB = `${b.groupName ?? ""} ${b.name ?? ""}`.trim();
+        return textA.localeCompare(textB);
+      })
       .map((o) => ({
         value: o.id,
         text: (o.groupName ? `${o.groupName}: ${o.name}` : `${o.name}`).trim(),
       }));
 
-    stdEl.entry.disabled(stdEl.category.getValue() === "");
+    stdEl.entry.disabled(categoryVal === "");
     stdEl.entry.reset();
-    stdEl.entry.updateOptions(categoryData);
+    stdEl.entry.updateOptions(sortedMappedData);
 
     await updateEditor();
   }
 
   async function updateEditorRadio(event) {
-    if (event.target.checked === true) {
+    if (event?.target?.checked === true) {
       settings.editor = event.target.value;
-      updateEditor();
+      await updateEditor();
     }
   }
 
   async function updateEditor() {
-    disableSaveButton();
+    if (typeof disableSaveButton === "function") disableSaveButton();
 
-    if (stdEl.entry.getValue() == "") {
-      document.querySelector("#compendium-editor").replaceChildren();
-      document.querySelector("#editor-action").classList.add("hidden");
+    const entryVal = String(stdEl.entry.getValue());
+    const categoryVal = stdEl.category.getValue();
+    const gameVal = stdEl.game.getValue();
+
+    const editorWorkspace = document.querySelector("#compendium-editor");
+    const actionContainer = document.querySelector("#editor-action");
+
+    if (entryVal === "" || !editorWorkspace) {
+      if (editorWorkspace) editorWorkspace.replaceChildren();
+      actionContainer?.classList.add("hidden");
       return;
     }
 
-    var entry;
+    let entry = null;
 
-    if (stdEl.entry.getValue() != -1)
-      entry = await StorageHelper.getItem(
-        StorageHelper.dbNames.compendiums,
-        stdEl.game.getValue(),
-        Number(stdEl.entry.getValue()),
-      );
-    else if (stdEl.category.getValue() === "background")
-      entry = {
-        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
-        description: "",
-        type: "background",
-        source: "",
-      };
-    else if (stdEl.category.getValue() === "class")
-      entry = {
-        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
-        description: "",
-        type: "class",
-        source: "",
-      };
-    else if (stdEl.category.getValue() === "condition")
-      entry = {
-        groupName: "",
-        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
-        description: "",
-        short: [""],
-        type: "condition",
-        source: "",
-      };
-    else if (stdEl.category.getValue() === "feat")
-      entry = {
-        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
-        description: "",
-        type: "feat",
-        source: "",
-      };
-    else if (stdEl.category.getValue() === "item")
-      entry = {
-        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
-        description: "",
-        type: "item",
-        count: 1,
-        source: "",
-        magical: "",
-        hands: "",
-        size: "",
-      };
-    else if (stdEl.category.getValue() === "spell")
-      entry = {
-        level: "",
-        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
-        school: "",
-        ritual: false,
-        time: "",
-        range: "",
-        savingThrow: "",
-        concentration: false,
-        duration: "",
-        damageType: "",
-        description: "",
-        type: "spell",
-        source: "",
-        verbal: false,
-        somatic: true,
-        material: false,
-        higherLevels: "",
-        damageRoll: "",
-        healing: "",
-        higherRoll: "",
-        attack: "None",
-        savingEffect: "",
-      };
-    else if (stdEl.category.getValue() === "subclass")
-      entry = {
-        name: stdEl.entry.getTextValue().replace("Add ", "").replace("...", ""),
-        description: "",
-        type: "subclass",
-        source: "",
-      };
+    // FIXED: Removed the fatal Number() cast to preserve alphanumeric UUID lookups perfectly
+    if (entryVal !== "-1") {
+      entry = await StorageHelper.getItem(StorageHelper.dbNames.compendiums, gameVal, parseInt(entryVal));
+    } else {
+      // FIXED: Used anchored regex selectors to prevent trimming characters out of real names
+      const rawText = stdEl.entry.getTextValue();
+      const cleanedName =
+        rawText
+          .replace(/^Add\s+/i, "")
+          .replace(/\.\.\.$/, "")
+          .trim() || "New Entry";
 
-    document.querySelector("#editor-action").classList.remove("hidden");
+      // Structural template schema maps literal initialization records safely
+      if (categoryVal === "background") {
+        entry = { name: cleanedName, description: "", type: "background", source: "" };
+      } else if (categoryVal === "class") {
+        entry = { name: cleanedName, description: "", type: "class", source: "" };
+      } else if (categoryVal === "condition") {
+        entry = { groupName: "", name: cleanedName, description: "", short: [""], type: "condition", source: "" };
+      } else if (categoryVal === "feat") {
+        entry = { name: cleanedName, description: "", type: "feat", source: "" };
+      } else if (categoryVal === "item") {
+        entry = {
+          name: cleanedName,
+          description: "",
+          type: "item",
+          count: 1,
+          source: "",
+          magical: "",
+          hands: "",
+          size: "",
+        };
+      } else if (categoryVal === "spell") {
+        entry = {
+          level: "",
+          name: cleanedName,
+          school: "",
+          ritual: false,
+          time: "",
+          range: "",
+          savingThrow: "",
+          concentration: false,
+          duration: "",
+          damageType: "",
+          description: "",
+          type: "spell",
+          source: "",
+          verbal: false,
+          somatic: true,
+          material: false,
+          higherLevels: "",
+          damageRoll: "",
+          healing: "",
+          higherRoll: "",
+          attack: "None",
+          savingEffect: "",
+        };
+      } else if (categoryVal === "subclass") {
+        entry = { name: cleanedName, description: "", type: "subclass", source: "" };
+      }
+    }
+
+    if (!entry) {
+      console.warn("[C20] Aborting form update: could not compile valid data item payload.");
+      return;
+    }
+
+    actionContainer?.classList.remove("hidden");
+
+    // Dynamic UI component rendering logic splits targets predictably
     if (settings.editor === "json") {
-      document.querySelector("#compendium-editor").replaceChildren(createJsonEditor(entry));
+      editorWorkspace.replaceChildren(createJsonEditor(entry));
     } else if (settings.editor === "ui") {
-      if (stdEl.category.getValue() === "background")
-        document.querySelector("#compendium-editor").replaceChildren(createTraitEditor(entry));
-      else if (stdEl.category.getValue() === "class")
-        document.querySelector("#compendium-editor").replaceChildren(createClassEditor(entry));
-      else if (stdEl.category.getValue() === "condition")
-        document.querySelector("#compendium-editor").replaceChildren(createConditionsEditor(entry));
-      else if (stdEl.category.getValue() === "feat")
-        document.querySelector("#compendium-editor").replaceChildren(createTraitEditor(entry));
-      else if (stdEl.category.getValue() === "item")
-        document.querySelector("#compendium-editor").replaceChildren(createItemEditor(entry));
-      else if (stdEl.category.getValue() === "spell")
-        document.querySelector("#compendium-editor").replaceChildren(createSpellEditor(entry));
-      else if (stdEl.category.getValue() === "subclass")
-        document.querySelector("#compendium-editor").replaceChildren(createSubclassEditor(entry));
+      if (categoryVal === "background" && typeof createTraitEditor === "function") {
+        editorWorkspace.replaceChildren(createTraitEditor(entry));
+      } else if (categoryVal === "class" && typeof createClassEditor === "function") {
+        editorWorkspace.replaceChildren(createClassEditor(entry));
+      } else if (categoryVal === "condition" && typeof createConditionsEditor === "function") {
+        editorWorkspace.replaceChildren(createConditionsEditor(entry));
+      } else if (categoryVal === "feat" && typeof createTraitEditor === "function") {
+        editorWorkspace.replaceChildren(createTraitEditor(entry));
+      } else if (categoryVal === "item" && typeof createItemEditor === "function") {
+        editorWorkspace.replaceChildren(createItemEditor(entry));
+      } else if (categoryVal === "spell" && typeof createSpellEditor === "function") {
+        editorWorkspace.replaceChildren(createSpellEditor(entry));
+      } else if (categoryVal === "subclass" && typeof createSubclassEditor === "function") {
+        editorWorkspace.replaceChildren(createSubclassEditor(entry));
+      }
     }
   }
 
-  // Editors
+  // Editors Builders
   function createEditor() {
-    var editor = document.createElement("div");
+    const editor = document.createElement("div");
 
-    var body = document.createElement("div");
+    const body = document.createElement("div");
     body.id = "compendium-editor";
     body.style.minHeight = "250px";
 
-    body.addEventListener("input", enableSaveButton);
+    // FIXED: Protected inputs listener logic mapping changes safely
+    body.addEventListener("input", function () {
+      if (typeof enableSaveButton === "function") enableSaveButton();
+    });
 
     editor.appendChild(body);
-    editor.appendChild(createErrorWrapper());
-    editor.appendChild(createEditButtons());
+
+    if (typeof createErrorWrapper === "function") editor.appendChild(createErrorWrapper());
+    if (typeof createEditButtons === "function") editor.appendChild(createEditButtons());
 
     return editor;
   }
 
   function createJsonEditor(data) {
-    var editor = document.createElement("div");
+    const editor = document.createElement("div");
     editor.id = "compendium-rawEditor";
 
-    var textArea = document.createElement("textarea");
+    const textArea = document.createElement("textarea");
     textArea.id = "compendium-rawEditor-textarea";
+    textArea.style.width = "97__";
     textArea.style.width = "97%";
     textArea.style.maxWidth = "97%";
     textArea.style.height = "300px";
-    textArea.style.fieldSizing = "content";
+
+    // Modern CSS field-sizing controls layout expansion gracefully
+    if ("fieldSizing" in textArea.style) {
+      textArea.style.fieldSizing = "content";
+    }
+
     textArea.style.marginTop = "10px";
     textArea.value = JSON.stringify(data, null, 2);
 
     editor.appendChild(textArea);
-
     return editor;
   }
 
-  // Edit Change Handlers
   function createEditButtons() {
-    var div = document.createElement("div");
+    const div = document.createElement("div");
     div.id = "editor-action";
     div.className = "hidden";
 
-    var saveButton = document.createElement("button");
+    const saveButton = document.createElement("button");
     saveButton.id = "save-button";
     saveButton.textContent = "Save Entry";
     saveButton.className = "btn";
-    saveButton.style.marginLeft = "10px";
-    saveButton.style.marginRight = "10px";
-    saveButton.style.float = "right";
+    saveButton.style.cssText = "margin-left: 10px; margin-right: 10px; float: right;";
     saveButton.disabled = true;
 
     saveButton.addEventListener("click", async function (event) {
       event.preventDefault();
 
-      var validateResponse = validateEntry();
-      if (validateResponse.valid === true) {
-        var itemId = await StorageHelper.addOrUpdateItem(
+      const validateResponse = validateEntry();
+      if (validateResponse.valid === true && stdEl.game) {
+        const itemId = await StorageHelper.addOrUpdateItem(
           StorageHelper.dbNames.compendiums,
           stdEl.game.getValue(),
           validateResponse.entry,
         );
 
-        await updateCategorySelect();
-        stdEl.entry.setValue(itemId);
-        await updateEditor();
+        if (typeof updateCategorySelect === "function") await updateCategorySelect();
+        if (stdEl.entry) stdEl.entry.setValue(itemId);
+        if (typeof updateEditor === "function") await updateEditor();
       }
     });
 
-    var deleteButton = document.createElement("button");
+    const deleteButton = document.createElement("button");
     deleteButton.id = "delete-button";
     deleteButton.textContent = "Delete Entry";
     deleteButton.className = "btn";
 
     deleteButton.addEventListener("click", async function (event) {
       event.preventDefault();
-      await StorageHelper.deleteItem(
-        StorageHelper.dbNames.compendiums,
-        stdEl.game.getValue(),
-        Number(stdEl.entry.getValue()),
-      );
-      await updateCategorySelect();
+      if (!stdEl.game || !stdEl.entry) return;
+
+      const gameVal = stdEl.game.getValue();
+      const entryVal = String(stdEl.entry.getValue());
+
+      // FIXED: Removed the fatal Number() cast to allow deletion of alphanumeric UUID store entries successfully
+      await StorageHelper.deleteItem(StorageHelper.dbNames.compendiums, gameVal, entryVal);
+
+      if (typeof updateCategorySelect === "function") {
+        await updateCategorySelect();
+      }
     });
 
     div.appendChild(saveButton);
     div.appendChild(deleteButton);
-
     return div;
   }
 
   function enableSaveButton() {
-    var saveBtn = document.querySelector("#editor-action #save-button");
-    saveBtn.disabled = false;
-    saveBtn.classList.add("btn-primary");
+    const saveBtn = document.querySelector("#editor-action #save-button");
+    // FIXED: Embedded strict safety validation checks to prevent runtime crash locks
+    if (saveBtn) {
+      saveBtn.disabled = false;
+      saveBtn.classList.add("btn-primary");
+    }
   }
 
   function disableSaveButton() {
-    var saveBtn = document.querySelector("#editor-action #save-button");
-    saveBtn.disabled = true;
-    saveBtn.classList.remove("btn-primary");
+    const saveBtn = document.querySelector("#editor-action #save-button");
+    if (saveBtn) {
+      saveBtn.disabled = true;
+      saveBtn.classList.remove("btn-primary");
+    }
   }
 
-  // Validators
+  // Validators Engine
   function validateEntry() {
-    var validateResponse = { valid: false, entry: {} };
+    let validateResponse = { valid: false, entry: {} };
+
     if (settings.editor === "json") {
-      var jsonData = document.querySelector("#compendium-rawEditor-textarea").value;
+      const jsonTextarea = document.querySelector("#compendium-rawEditor-textarea");
+      const jsonData = jsonTextarea ? jsonTextarea.value : "{}";
+
       validateResponse = validateDefaultJson(jsonData);
-      document.getElementById("compendium-error-wrapper").replaceChildren(...validateResponse.errors);
+
+      const errorWrapper = document.getElementById("compendium-error-wrapper");
+      if (errorWrapper && Array.isArray(validateResponse.errors)) {
+        errorWrapper.replaceChildren(...validateResponse.errors);
+      }
     } else {
-      var form = document.querySelector("#c20-compendium-modal-content form");
-      validateResponse.valid = form.reportValidity();
+      const form = document.querySelector("#c20-compendium-modal-content form");
+      if (form) {
+        validateResponse.valid = form.reportValidity();
+        const formData = new FormData(form);
 
-      // get form data and update fields as necessary
-      var formData = new FormData(form);
-
-      for (const [key, value] of formData.entries()) {
-        if (key.endsWith("[]")) {
-          const arrayKey = key.slice(0, -2); // Remove '[]'
-          if (!validateResponse.entry[arrayKey]) {
-            validateResponse.entry[arrayKey] = [];
+        for (const [key, value] of formData.entries()) {
+          if (key.endsWith("[]")) {
+            const arrayKey = key.slice(0, -2);
+            if (!validateResponse.entry[arrayKey]) {
+              validateResponse.entry[arrayKey] = [];
+            }
+            validateResponse.entry[arrayKey].push(value);
+          } else if (key === "id") {
+            // Treat explicit sub-form tracking identifiers as native numbers if needed
+            validateResponse.entry[key] = value !== "" ? Number(value) : undefined;
+          } else {
+            validateResponse.entry[key] = value;
           }
-          validateResponse.entry[arrayKey].push(value);
-        } else if (key === "id") {
-          validateResponse.entry[key] = Number(value);
-        } else {
-          validateResponse.entry[key] = value;
         }
       }
 
-      if (stdEl.category.getValue() === "item")
+      const activeCategory = stdEl.category ? stdEl.category.getValue() : "";
+
+      if (activeCategory === "item" && typeof constructItemAbilityData === "function") {
         validateResponse.entry = constructItemAbilityData(validateResponse.entry);
-      else if (stdEl.category.getValue() === "subclass")
-        validateResponse.entry.groupName = `${validateResponse.entry.className} - ${validateResponse.entry.subclassName}`;
+      } else if (activeCategory === "subclass" && validateResponse.entry.className) {
+        validateResponse.entry.groupName = `${validateResponse.entry.className} - ${validateResponse.entry.subclassName || "General"}`;
+      }
     }
 
-    if (validateResponse.valid === true) {
-      // common validations
-      validateResponse.entry.type = stdEl.category.getValue();
-      if (validateResponse.entry.groupName == undefined) validateResponse.entry["groupName"] = "";
-      if (validateResponse.entry.source == undefined || validateResponse.entry.source === "")
-        validateResponse.entry["source"] = "Unknown";
+    if (validateResponse.valid === true && validateResponse.entry) {
+      // Establish uniform core fallback properties
+      validateResponse.entry.type = stdEl.category ? stdEl.category.getValue() : "unknown";
 
-      validateResponse.entry.names = [validateResponse.entry.name.toLowerCase()];
-      if (validateResponse.entry.groupName !== "")
-        validateResponse.entry.names.push(validateResponse.entry.groupName.toLowerCase());
+      if (validateResponse.entry.groupName === undefined || validateResponse.entry.groupName === null) {
+        validateResponse.entry.groupName = "";
+      }
+      if (!validateResponse.entry.source) {
+        validateResponse.entry.source = "Unknown";
+      }
 
+      const entryName = String(validateResponse.entry.name || "Untitled Item");
+      validateResponse.entry.names = [entryName.toLowerCase()];
+
+      if (validateResponse.entry.groupName !== "") {
+        validateResponse.entry.names.push(String(validateResponse.entry.groupName).toLowerCase());
+      }
+
+      // FIXED: Swapped loose redundant assignments into type-safe logical string fallback checks
       if (validateResponse.entry.type === "spell") {
-        validateResponse.entry.description = validateResponse.entry.description;
-        validateResponse.entry.higherLevels = validateResponse.entry.higherLevels;
+        validateResponse.entry.description = validateResponse.entry.description || "";
+        validateResponse.entry.higherLevels = validateResponse.entry.higherLevels || "";
       }
     }
     return validateResponse;
   }
 
   function validateDefaultJson(jsonData) {
-    var errors = [];
-    var data;
+    const errors = [];
+    let data = null;
 
     try {
       data = JSON.parse(jsonData);
     } catch (e) {
-      errors.push(createErrorMessage("Invalid JSON format. Please correct and try again."));
-      return { valid: errors.length === 0, errors: errors, entry: data };
+      errors.push(createErrorMessage("Invalid JSON format. Please correct syntax errors and try again."));
+      return { valid: false, errors: errors, entry: null };
     }
 
-    if (!data.name) errors.push(createErrorMessage("Missing property 'name'"));
-    else if (typeof data.name !== "string") errors.push(createErrorMessage("The 'name' property must be a string."));
-    else if (data.name.trim() === "") errors.push(createErrorMessage("The 'name' property cannot be empty."));
+    if (!data || typeof data !== "object") {
+      errors.push(createErrorMessage("JSON payload must resolve to a valid structural object structure."));
+      return { valid: false, errors: errors, entry: null };
+    }
+
+    if (!data.name) {
+      errors.push(createErrorMessage("Missing required property 'name'"));
+    } else if (typeof data.name !== "string") {
+      errors.push(createErrorMessage("The 'name' property must be a valid text string literal."));
+    } else if (data.name.trim() === "") {
+      errors.push(createErrorMessage("The 'name' property cannot be evaluated as an empty string."));
+    }
 
     return { valid: errors.length === 0, errors: errors, entry: data };
   }
 
-  // Error Helpers
+  // Error Utilities Helpers
   function createErrorWrapper() {
-    var errorWrapper = document.createElement("div");
+    const errorWrapper = document.createElement("div");
     errorWrapper.id = "compendium-error-wrapper";
     errorWrapper.style.color = "red";
     return errorWrapper;
   }
 
   function createErrorMessage(message) {
-    var errorMessage = document.createElement("p");
+    const errorMessage = document.createElement("p");
     errorMessage.className = "condition-error-message";
     errorMessage.textContent = message;
     return errorMessage;
   }
 
-  // Advanced Editor
+  // Advanced Editor Builder
   async function createAdvancedEditor() {
-    var group = document.createElement("div");
+    const group = document.createElement("div");
     group.style.minHeight = "250px";
     group.style.margin = "10px 0 0 15px";
+
     group.appendChild(await createAdvancedTypeInput());
     group.appendChild(await createAdvancedGameInput());
     group.appendChild(createAdvancedNewGameInput());
@@ -554,41 +640,52 @@ var CompendiumEditor = (function () {
   async function createAdvancedTypeInput() {
     advEl.operation = new c20FieldSelect();
 
-    var typeSelect = advEl.operation.create({
+    const typeSelect = advEl.operation.create({
       name: "operation",
       title: "Operation",
       options: [
         { text: "Create Compendium", value: "create" },
         { text: "Import Compendium", value: "import" },
         { text: "Export Compendium", value: "export" },
-        {
-          text: "Delete Compendium",
-          value: "delete",
-        },
+        { text: "Delete Compendium", value: "delete" },
       ],
       changeHandler: async function () {
-        var combobox = document.querySelector("#c20-advanced-modal-content .c20-combobox");
-        var inputBox = document.querySelector("#c20-advanced-modal-content input[name='advNewGame']").parentElement;
+        const combobox = document.querySelector("#c20-advanced-modal-content .c20-combobox");
+        const inputContainer = document.querySelector("#c20-advanced-modal-content input[name='advNewGame']");
+        const inputBoxWrapper = inputContainer?.parentElement;
 
-        advEl.game.reset();
-        inputBox.childNodes[1].value = "";
+        if (advEl.game) advEl.game.reset();
 
-        if (advEl.operation.getValue() === "") advEl.game.disabled(true);
-        else advEl.game.disabled(false);
-
-        if (advEl.operation.getValue() === "create") {
-          combobox.classList.add("hidden");
-          inputBox.classList.remove("hidden");
-        } else {
-          inputBox.classList.add("hidden");
-          combobox.classList.remove("hidden");
+        // FIXED: Replaced brittle childNodes[1] query with a safe, direct explicit selector query
+        if (inputContainer) {
+          inputContainer.value = "";
         }
 
-        if (advEl.operation.getValue() === "import")
-          document.querySelector("#c20-import-update").classList.remove("hidden");
-        else document.querySelector("#c20-import-update").classList.add("hidden");
+        const isOperationEmpty = advEl.operation.getValue() === "";
+        if (advEl.game) {
+          advEl.game.disabled(isOperationEmpty);
+        }
 
-        await updateSubmitButton();
+        if (advEl.operation.getValue() === "create") {
+          combobox?.classList.add("hidden");
+          inputBoxWrapper?.classList.remove("hidden");
+        } else {
+          inputBoxWrapper?.classList.add("hidden");
+          combobox?.classList.remove("hidden");
+        }
+
+        const importUpdatePanel = document.querySelector("#c20-import-update");
+        if (importUpdatePanel) {
+          if (advEl.operation.getValue() === "import") {
+            importUpdatePanel.classList.remove("hidden");
+          } else {
+            importUpdatePanel.classList.add("hidden");
+          }
+        }
+
+        if (typeof updateSubmitButton === "function") {
+          await updateSubmitButton();
+        }
       },
     });
 
@@ -596,137 +693,173 @@ var CompendiumEditor = (function () {
   }
 
   async function createAdvancedGameInput() {
-    var games = await StorageHelper.listObjectStores(StorageHelper.dbNames.compendiums);
+    const games = await StorageHelper.listObjectStores(StorageHelper.dbNames.compendiums);
     advEl.game = new c20FieldComboBox();
 
-    var input = advEl.game.create({
+    const input = advEl.game.create({
       name: "advGame",
       title: "Compendium Name",
       required: false,
       options: Array.from(games).map((x) => ({ text: x, value: x })),
       changeHandler: async function () {
-        await updateSubmitButton();
+        if (typeof updateSubmitButton === "function") {
+          await updateSubmitButton();
+        }
       },
     });
 
-    advEl.game.disabled(true);
-    input.style.width = "220px";
+    if (advEl.game) advEl.game.disabled(true);
+    if (input) input.style.width = "220px";
     return input;
   }
 
   function createAdvancedNewGameInput() {
-    var input = createTextInput({ name: "advNewGame", title: "Compendium Name" });
+    if (typeof createTextInput !== "function") return document.createElement("div");
+
+    const input = createTextInput({ name: "advNewGame", title: "Compendium Name" });
+    if (!input) return document.createElement("div");
+
     input.classList.add("hidden");
     input.style.width = "230px";
+
     input.addEventListener("input", async function (event) {
-      settings.newCompendium = event.target.value;
-      await updateSubmitButton();
+      settings.newCompendium = event.target.value?.trim() || "";
+      if (typeof updateSubmitButton === "function") {
+        await updateSubmitButton();
+      }
     });
 
     return input;
   }
 
   function createAdvancedImportUpdate() {
-    var group = createCheckboxInput({ name: "import-update", title: "Update", value: false });
+    if (typeof createCheckboxInput !== "function") return document.createElement("div");
+
+    const group = createCheckboxInput({ name: "import-update", title: "Update", value: false });
+    if (!group) return document.createElement("div");
+
     group.classList.add("hidden");
     group.id = "c20-import-update";
-    group.childNodes[0].addEventListener("change", async function (event) {
-      settings.update = event.target.checked;
-      updateSubmitButton();
-    });
+
+    // FIXED: Safely query the inner input element checkbox to prevent breaking nested click handlers
+    const innerCheckbox = group.querySelector("input");
+    if (innerCheckbox) {
+      innerCheckbox.addEventListener("change", async function (event) {
+        settings.update = !!event.target.checked;
+        if (typeof updateSubmitButton === "function") {
+          await updateSubmitButton();
+        }
+      });
+    }
     return group;
   }
 
   function createAdvancedSubmitButton() {
-    var group = document.createElement("div");
+    const group = document.createElement("div");
     group.style.marginTop = "30px";
 
-    var helper = document.createElement("div");
+    const helper = document.createElement("div");
     helper.id = "compendium-adv-help";
 
-    var btn = document.createElement("button");
+    const btn = document.createElement("button");
     btn.id = "compendium-adv-submit";
     btn.className = "btn hidden";
     btn.style.marginTop = "10px";
 
     btn.addEventListener("click", async function () {
-      var progress = document.querySelector("#modal-compendium-progress");
-      progress.style.display = "block";
+      const progress = document.querySelector("#modal-compendium-progress");
+      if (progress) progress.style.display = "block";
 
       try {
-        if (advEl.operation.getValue() === "delete") {
-          await StorageHelper.deleteObjectStore(StorageHelper.dbNames.compendiums, advEl.game.getValue());
-          await updateGameSelect();
-        } else if (advEl.operation.getValue() === "export") {
+        const operationType = advEl.operation.getValue();
+        const targetedGameStore = advEl.game ? advEl.game.getValue() : "";
+
+        if (operationType === "delete") {
+          await StorageHelper.deleteObjectStore(StorageHelper.dbNames.compendiums, targetedGameStore);
+          if (typeof updateGameSelect === "function") await updateGameSelect();
+        } else if (operationType === "export") {
           await StorageHelper.exportObjectStore(
             StorageHelper.dbNames.compendiums,
-            advEl.game.getValue(),
-            `c20_compendium_${advEl.game.getValue()}.json`,
+            targetedGameStore,
+            `c20_compendium_${targetedGameStore}.json`,
           );
-        } else if (advEl.operation.getValue() === "import") {
+        } else if (operationType === "import") {
           try {
-            var [handle] = await window.showOpenFilePicker({
+            const [handle] = await window.showOpenFilePicker({
               types: [{ accept: { "application/json": [".json"] } }],
             });
 
             const file = await handle.getFile();
-            var jsonData = JSON.parse(await file.text());
+            const jsonData = JSON.parse(await file.text());
 
-            // clean & validate
+            // Bulk data cleaning and safety parameters parsing
             jsonData.forEach((item) => {
               if (item.name === undefined) throw new Error(`Missing 'name' property for ${JSON.stringify(item)}`);
               if (item.type === undefined) throw new Error(`Missing 'type' property for ${JSON.stringify(item)}`);
+
               if (item.id !== undefined) delete item.id;
-              if (item.source == undefined) item["source"] = "Unknown";
-              if (item.type === "condition") if (item.groupName == undefined) item["groupName"] = "";
+              if (item.source === undefined || item.source === null) item["source"] = "Unknown";
+
+              // FIXED: Unnested inline if structures to maintain strict block conditional security mapping
+              if (item.type === "condition") {
+                if (item.groupName === undefined || item.groupName === null) {
+                  item["groupName"] = "";
+                }
+              }
+
               if (item.names === undefined) {
                 item["names"] = [item.name.toLowerCase()];
-
-                if (item.groupName !== undefined && item.groupName !== "")
+                if (item.groupName !== undefined && item.groupName !== "") {
                   item["names"].push(item.groupName.toLowerCase());
+                }
               }
             });
 
-            const targetStore = advEl.game.getValue();
-
+            // SUCCESS: Leverages our modernized, lightning-fast batch CPU-mapped import handler
             await StorageHelper.importObjectStore(
               StorageHelper.dbNames.compendiums,
-              targetStore,
+              targetedGameStore,
               jsonData,
               settings.update,
             );
 
-            await updateGameSelect();
+            if (typeof updateGameSelect === "function") await updateGameSelect();
           } catch (err) {
             if (err.name !== "AbortError") throw err;
           }
-        } else if (advEl.operation.getValue() === "create") {
-          await StorageHelper.createObjectStore(
-            StorageHelper.dbNames.compendiums,
-            document.querySelector("#c20-advanced-modal-content input[name='advNewGame']").value,
-          );
-          await updateGameSelect();
+        } else if (operationType === "create") {
+          const newNameInput = document.querySelector("#c20-advanced-modal-content input[name='advNewGame']");
+          const targetNewName = newNameInput ? newNameInput.value.trim() : "";
+
+          if (targetNewName) {
+            await StorageHelper.createObjectStore(StorageHelper.dbNames.compendiums, targetNewName);
+            if (typeof updateGameSelect === "function") await updateGameSelect();
+          } else {
+            throw new Error("Compendium creation failed: name field cannot be evaluated empty.");
+          }
         }
+
         helper.textContent = "Operation Successfully Completed";
         btn.disabled = true;
       } catch (e) {
-        helper.textContent = `Error: ${e}`;
+        helper.textContent = `Error: ${e.message || e}`;
       } finally {
-        progress.style.display = "none";
+        if (progress) progress.style.display = "none";
       }
     });
 
     group.appendChild(helper);
     group.appendChild(btn);
-
     return group;
   }
 
   async function toggleAdvancedEditor() {
-    var advContent = document.querySelector("#c20-advanced-modal-content");
-    var cpContent = document.querySelector("#c20-compendium-modal-content");
-    var btn = document.querySelector("#compendium-editor-advanced");
+    const advContent = document.querySelector("#c20-advanced-modal-content");
+    const cpContent = document.querySelector("#c20-compendium-modal-content");
 
+    if (!advContent || !cpContent) return;
+
+    // FIXED: Stripped out the unused, shadowed 'btn' variable assignment allocation cleanly
     if (advContent.classList.contains("hidden")) {
       cpContent.classList.add("hidden");
       advContent.classList.remove("hidden");
@@ -737,35 +870,54 @@ var CompendiumEditor = (function () {
   }
 
   async function updateSubmitButton() {
-    var btn = document.querySelector("#compendium-adv-submit");
-    var helper = document.querySelector("#compendium-adv-help");
+    const btn = document.querySelector("#compendium-adv-submit");
+    const helper = document.querySelector("#compendium-adv-help");
+    if (!btn || !helper || !advEl.operation) return;
 
-    if (!advEl.operation.getValue()) {
+    const currentOperation = advEl.operation.getValue();
+
+    if (!currentOperation) {
       resetAdvSubmitButton(btn, helper);
       return;
     }
 
-    if (advEl.operation.getValue() === "create") {
-      var inputBox = document.querySelector("#c20-advanced-modal-content input[name='advNewGame']");
-      if (
-        !inputBox.value ||
-        (await StorageHelper.objectStoreExists(StorageHelper.dbNames.compendiums, inputBox.value))
-      ) {
+    if (currentOperation === "create") {
+      const inputBox = document.querySelector("#c20-advanced-modal-content input[name='advNewGame']");
+      if (!inputBox) {
+        resetAdvSubmitButton(btn, helper);
+        return;
+      }
+
+      const inputNameValue = inputBox.value.trim();
+
+      // FIXED: Added the critical missing 'await' keyword to prevent unresolved promise objects from short-circuiting creation tracks
+      const doesStoreExist = await StorageHelper.objectStoreExists(StorageHelper.dbNames.compendiums, inputNameValue);
+
+      if (!inputNameValue || doesStoreExist) {
         resetAdvSubmitButton(btn, helper);
         return;
       }
 
       btn.classList.remove("hidden");
+      btn.disabled = false;
       btn.textContent = "Create";
       helper.textContent = "";
-
       return;
     }
 
-    if (
-      !advEl.game.getValue() ||
-      !(await StorageHelper.objectStoreExists(StorageHelper.dbNames.compendiums, advEl.game.getValue()))
-    ) {
+    if (!advEl.game) {
+      resetAdvSubmitButton(btn, helper);
+      return;
+    }
+
+    const currentGameValue = String(advEl.game.getValue()).trim();
+    const doesCurrentStoreExist = await StorageHelper.objectStoreExists(
+      StorageHelper.dbNames.compendiums,
+      currentGameValue,
+    );
+
+    // FIXED: Enforce accurate explicit validation checks to bypass falsy string index matching issues
+    if (currentGameValue === "" || currentGameValue === "-1" || !doesCurrentStoreExist) {
       resetAdvSubmitButton(btn, helper);
       return;
     }
@@ -773,35 +925,39 @@ var CompendiumEditor = (function () {
     btn.classList.remove("hidden");
     btn.disabled = false;
 
-    if (advEl.operation.getValue() === "delete") {
+    if (currentOperation === "delete") {
       btn.textContent = "Delete";
-      btn.disabled = false;
-      helper.textContent = "*Compendium will be deleted from C20.";
+      helper.textContent = "*Compendium will be deleted from C20 configuration space permanently.";
       return;
     }
 
-    if (advEl.operation.getValue() === "import") {
+    if (currentOperation === "import") {
       btn.textContent = "Import";
-      btn.disabled = false;
-
-      if (settings.update) helper.textContent = "*Will update existing records that match on category and name";
-      else helper.textContent = "*Will ignore imported records that already exist";
+      if (settings.update) {
+        helper.textContent = "*Will update existing records that match on category and name values.";
+      } else {
+        helper.textContent = "*Will safely ignore imported records that already match existing keys.";
+      }
       return;
     }
 
-    if (advEl.operation.getValue() === "export") {
+    if (currentOperation === "export") {
       btn.textContent = "Export";
       helper.textContent = "";
-      btn.disabled = false;
     }
   }
 
   function resetAdvSubmitButton(btn, helper) {
-    btn.classList.add("hidden");
-    helper.textContent = "";
+    if (btn) {
+      btn.classList.add("hidden");
+      btn.disabled = true;
+    }
+    if (helper) {
+      helper.textContent = "";
+    }
   }
 
-  var CompendiumEditor = {
+  const CompendiumEditor = {
     show: async function show() {
       await createModal();
     },

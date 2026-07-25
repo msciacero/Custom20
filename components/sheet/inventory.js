@@ -2,10 +2,17 @@ var Inventory = (function () {
   function createUi(e) {
     if (e.target.classList.contains("inventorysubflag") && e.target.checked) {
       e.target.checked = false;
-      var itemId = e.target.parentElement.parentElement.getAttribute("data-reprowid");
-      var itemData = getItemData(itemId);
 
-      var wrapper = document.createElement("div");
+      const parentRow = e.target.closest(".repitem");
+      if (!parentRow) return;
+
+      const itemId = parentRow.getAttribute("data-reprowid");
+      if (!itemId) return;
+
+      const itemData = getItemData(itemId);
+      if (!itemData) return;
+
+      const wrapper = document.createElement("div");
       wrapper.className = "item-editor-wrapper";
       wrapper.setAttribute("data-itemid", itemId);
       wrapper.appendChild(createItemEditor(itemData));
@@ -15,28 +22,29 @@ var Inventory = (function () {
   }
 
   function getItemData(itemId) {
-    var itemRow = document.querySelector(`.repcontainer .repitem[data-reprowid="${itemId}"] .item`);
-    var data = {
-      name: itemRow.querySelector('input[name="attr_itemname"]').value,
-      count: itemRow.querySelector('input[name="attr_itemcount"]').value,
-      weight: itemRow.querySelector('input[name="attr_itemweight"]').value,
-      isResource: itemRow.querySelector('input[name="attr_useasresource"]').checked,
-      description: itemRow.querySelector('textarea[name="attr_itemcontent"]').value.trim(),
+    const itemRow = document.querySelector(`.repcontainer .repitem[data-reprowid="${itemId}"] .item`);
+    if (!itemRow) return null;
+
+    const data = {
+      name: itemRow.querySelector('input[name="attr_itemname"]')?.value || "",
+      count: itemRow.querySelector('input[name="attr_itemcount"]')?.value || "0",
+      weight: itemRow.querySelector('input[name="attr_itemweight"]')?.value || "0",
+      isResource: itemRow.querySelector('input[name="attr_useasresource"]')?.checked || false,
+      description: itemRow.querySelector('textarea[name="attr_itemcontent"]')?.value?.trim() || "",
     };
 
-    var propertiesStr = itemRow.querySelector('input[name="attr_itemproperties"]').value;
-    var props = propertiesStr
+    const propertiesStr = itemRow.querySelector('input[name="attr_itemproperties"]')?.value || "";
+    const props = propertiesStr
       .split(",")
       .map((x) => x.trim())
-      .filter((x) => x);
+      .filter(Boolean);
 
-    var modifiersStr = itemRow.querySelector('input[name="attr_itemmodifiers"]').value;
-    var mods = modifiersStr
+    const modifiersStr = itemRow.querySelector('input[name="attr_itemmodifiers"]')?.value || "";
+    const mods = modifiersStr
       .split(",")
       .map((x) => x.trim())
-      .filter((x) => x);
+      .filter(Boolean);
 
-    // Parse properties back to data fields
     props.forEach(function (prop) {
       if (prop === "Magical") {
         data.propV_magical = "Yes";
@@ -52,22 +60,25 @@ var Inventory = (function () {
         data.source = prop.substring(8);
       } else if (prop.startsWith("Cost: ")) {
         data.cost = prop.substring(6);
-      } else if (prop.match(/^(.+) Tier Armor Proofing$/)) {
-        data.propV_HAA_Proofing = RegExp.$1;
       } else if (prop.startsWith("Status: ")) {
         data.propV_HAS_Status = prop.substring(8);
-      } else if (prop.match(/^(.+) Rune$/)) {
-        data.propV_HAS_Rune = RegExp.$1;
       } else {
-        // For other properties like Versatile, Finesse, etc.
-        var key = "prop_" + prop.replace(/\s+/g, "_");
-        data[key] = true;
+        const armorMatch = prop.match(/^(.+) Tier Armor Proofing$/);
+        const runeMatch = prop.match(/^(.+) Rune$/);
+
+        if (armorMatch) {
+          data.propV_HAA_Proofing = armorMatch[1];
+        } else if (runeMatch) {
+          data.propV_HAS_Rune = runeMatch[1];
+        } else {
+          const key = "prop_" + prop.replace(/\s+/g, "_");
+          data[key] = true;
+        }
       }
     });
 
-    // Parse modifiers back to data fields
-    var abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
-    var saves = [
+    const abilities = ["Strength", "Dexterity", "Constitution", "Intelligence", "Wisdom", "Charisma"];
+    const saves = [
       "Strength Save",
       "Dexterity Save",
       "Constitution Save",
@@ -76,7 +87,7 @@ var Inventory = (function () {
       "Charisma Save",
       "Saving Throws",
     ];
-    var skills = [
+    const skills = [
       "Acrobatics",
       "Animal Handling",
       "Arcana",
@@ -101,38 +112,55 @@ var Inventory = (function () {
     mods.forEach(function (mod) {
       if (mod === "Stealth:Disadvantage") {
         data.modV_StealthDisadvantage = "on";
-      } else if (mod.match(/^Spell Attack ([+-]?\d+)$/)) {
-        data.modV_Spell_Attack = parseInt(RegExp.$1);
-      } else if (mod.match(/^Spell DC ([+-]?\d+)$/)) {
-        data.modV_Spell_DC = parseInt(RegExp.$1);
-      } else if (mod.match(/^(Weapon|Melee|Ranged) Attacks[:]?\s([+-]?\d+)$/)) {
-        data.modV_Weapon_Attacks = parseInt(RegExp.$2);
-      } else if (mod.match(/^(Weapon|Melee|Ranged) Damage[:]?\s([+-]?\d+)$/)) {
-        data.modV_Weapon_Damage = parseInt(RegExp.$2);
+        return;
+      }
+
+      const spellAttackMatch = mod.match(/^Spell Attack ([+-]?\d+)$/);
+      const spellDCMatch = mod.match(/^Spell DC ([+-]?\d+)$/);
+      const weaponAttackMatch = mod.match(/^(Weapon|Melee|Ranged) Attacks[:]?\s([+-]?\d+)$/);
+      const weaponDamageMatch = mod.match(/^(Weapon|Melee|Ranged) Damage[:]?\s([+-]?\d+)$/);
+
+      if (spellAttackMatch) {
+        data.modV_Spell_Attack = parseInt(spellAttackMatch[1], 10);
+      } else if (spellDCMatch) {
+        data.modV_Spell_DC = parseInt(spellDCMatch[1], 10);
+      } else if (weaponAttackMatch) {
+        data.modV_Weapon_Attacks = parseInt(weaponAttackMatch[2], 10);
+      } else if (weaponDamageMatch) {
+        data.modV_Weapon_Damage = parseInt(weaponDamageMatch[2], 10);
       } else if (saves.some((sa) => mod.startsWith(sa))) {
-        var ability = saves.find((sa) => mod.startsWith(sa));
-        var value = parseInt(mod.match(/([+-]?\d+)$/)[1]);
-        if (!data.saves) data.saves = [];
-        data.saves.push({ ability: ability, value: value });
+        const ability = saves.find((sa) => mod.startsWith(sa));
+        const numMatch = mod.match(/([+-]?\d+)$/);
+        if (numMatch) {
+          if (!data.saves) data.saves = [];
+          data.saves.push({ ability: ability, value: parseInt(numMatch[1], 10) });
+        }
       } else if (skills.some((sk) => mod.startsWith(sk))) {
-        var ability = skills.find((sk) => mod.startsWith(sk));
-        var value = parseInt(mod.match(/([+-]?\d+)$/)[1]);
-        if (!data.skills) data.skills = [];
-        data.skills.push({ ability: ability, value: value });
+        const ability = skills.find((sk) => mod.startsWith(sk));
+        const numMatch = mod.match(/([+-]?\d+)$/);
+        if (numMatch) {
+          if (!data.skills) data.skills = [];
+          data.skills.push({ ability: ability, value: parseInt(numMatch[1], 10) });
+        }
       } else if (abilities.some((ab) => mod.startsWith(ab))) {
-        var ability = abilities.find((ab) => mod.startsWith(ab));
-        var value = parseInt(mod.match(/([+-]?\d+)$/)[1]);
-        if (!data.abilities) data.abilities = [];
-        data.abilities.push({ type: mod.includes(":") ? "Set" : "Increase", ability: ability, value: value });
+        const ability = abilities.find((ab) => mod.startsWith(ab));
+        const numMatch = mod.match(/([+-]?\d+)$/);
+        if (numMatch) {
+          if (!data.abilities) data.abilities = [];
+          data.abilities.push({
+            type: mod.includes(":") ? "Set" : "Increase",
+            ability: ability,
+            value: parseInt(numMatch[1], 10),
+          });
+        }
       } else {
-        // For other modifiers
-        var kv = mod.split(":").map((x) => x.trim());
-        var key = "mod_" + kv[0].replace(/\s+/g, "_");
-        data[key] = kv[1];
+        const kv = mod.split(":").map((x) => x.trim());
+        const key = "mod_" + kv[0].replace(/\s+/g, "_");
+        data[key] = kv[1] || "";
       }
     });
 
-    // fill in missing fields with defaults
+    // Enforce safe initial fallbacks
     if (!data.propV_magical) data.propV_magical = "";
     if (!data.propV_HAA_Proofing) data.propV_HAA_Proofing = "";
     if (!data.propV_HAS_Status) data.propV_HAS_Status = "";
@@ -145,17 +173,20 @@ var Inventory = (function () {
   }
 
   function updateItemData(modal) {
-    var itemId = modal.querySelector(".item-editor-wrapper").getAttribute("data-itemid");
-    var form = modal.querySelector(".item-editor-wrapper").querySelector("form");
-    var formData = new FormData(form);
-    var itemData = {};
+    const wrapper = modal.querySelector(".item-editor-wrapper");
+    if (!wrapper) return;
+
+    const itemId = wrapper.getAttribute("data-itemid");
+    const form = wrapper.querySelector("form");
+    if (!form) return;
+
+    const formData = new FormData(form);
+    const itemData = {};
 
     for (const [key, value] of formData.entries()) {
       if (key.endsWith("[]")) {
-        const arrayKey = key.slice(0, -2); // Remove '[]'
-        if (!itemData[arrayKey]) {
-          itemData[arrayKey] = [];
-        }
+        const arrayKey = key.slice(0, -2);
+        if (!itemData[arrayKey]) itemData[arrayKey] = [];
         itemData[arrayKey].push(value);
       } else if (key === "id") {
         itemData[key] = Number(value);
@@ -164,55 +195,92 @@ var Inventory = (function () {
       }
     }
 
-    itemData = constructItemAbilityData(itemData);
-    CompendiumImport.updateItem(itemData, itemId);
+    const compiledData = constructItemAbilityData(itemData);
+    CompendiumImport.updateItem(compiledData, itemId);
   }
 
   function updateItemDisplay(item) {
+    if (!item) return;
     updateAccent(item.querySelector('input[name="attr_itemproperties"]'));
     updateDivider(item.querySelector('input[name="attr_itemmodifiers"]'));
   }
 
-  function updateDivider(item) {
-    if (item.value.includes("Item Type: Divider")) item.closest(".item").classList.add("c20-item-divider");
-    else item.closest(".item").classList.remove("c20-item-divider");
+  function updateDivider(itemInput) {
+    if (!itemInput) return;
+    const itemRow = itemInput.closest(".item");
+    if (!itemRow) return;
+
+    if (itemInput.value.includes("Item Type: Divider")) {
+      itemRow.classList.add("c20-item-divider");
+    } else {
+      itemRow.classList.remove("c20-item-divider");
+    }
   }
 
-  function updateAccent(item) {
-    var equippedElement = item.closest(".item").querySelector(".equipped.main");
-    if (item.value.includes("Magical (Attunement)") && CharacterSettings.settings.itemAttunementColor) {
-      equippedElement.style.setProperty("accent-color", CharacterSettings.settings.itemAttunementColor);
-    } else if (item.value.includes("Magical") && CharacterSettings.settings.itemMagicColor) {
-      equippedElement.style.setProperty("accent-color", CharacterSettings.settings.itemMagicColor);
+  function updateAccent(itemInput) {
+    if (!itemInput) return;
+    const itemRow = itemInput.closest(".item");
+    if (!itemRow) return;
+
+    const equippedElement = itemRow.querySelector(".equipped.main");
+    if (!equippedElement) return;
+
+    // Pull config safely using our property getter from yesterday
+    const targetSettings =
+      typeof CharacterSettings.settings === "function" ? CharacterSettings.settings() : CharacterSettings.settings;
+
+    if (itemInput.value.includes("Magical (Attunement)") && targetSettings?.itemAttunementColor) {
+      equippedElement.style.setProperty("accent-color", targetSettings.itemAttunementColor);
+    } else if (itemInput.value.includes("Magical") && targetSettings?.itemMagicColor) {
+      equippedElement.style.setProperty("accent-color", targetSettings.itemMagicColor);
     } else {
       equippedElement.style.removeProperty("accent-color");
     }
   }
 
   function updateAccents() {
-    var items = Array.from(document.querySelectorAll('.equipment .repitem .item input[name="attr_itemproperties"]'));
+    const items = document.querySelectorAll('.equipment .repitem .item input[name="attr_itemproperties"]');
     items.forEach((item) => updateAccent(item));
   }
 
-  var Inventory = {
+  const Inventory = {
     init: function init() {
-      document.querySelector(".page .equipment .complex").addEventListener("click", createUi);
+      const complexContainer = document.querySelector(".page .equipment .complex");
+
+      if (complexContainer) {
+        complexContainer.addEventListener("click", createUi);
+      } else {
+        console.warn("[C20] Could not attach listener: '.page .equipment .complex' anchor node missing.");
+      }
+
       updateAccents();
-      Array.from(document.querySelectorAll('.equipment .repitem .item input[name="attr_itemmodifiers"]'))
-        .filter((item) => item.value.includes("Item Type: Divider"))
-        .forEach((item) => updateDivider(item));
+
+      document.querySelectorAll('.equipment .repitem .item input[name="attr_itemmodifiers"]').forEach((item) => {
+        if (item.value.includes("Item Type: Divider")) {
+          updateDivider(item);
+        }
+      });
     },
+
     updateUi: function updateUi() {
       updateAccents();
     },
+
     updateItemDisplay: updateItemDisplay,
+
     remove: function remove() {
-      document.querySelector(".page .equipment .complex").removeEventListener("click", createUi);
-      Array.from(document.querySelectorAll(".c20-item-divider")).forEach((x) => x.classList.remove("c20-item-divider"));
-      Array.from(document.querySelectorAll('.equipment .repitem .item input[name="attr_itemproperties"]')).forEach(
-        (x) => x.style.removeProperty("accent-color"),
-      );
+      const complexContainer = document.querySelector(".page .equipment .complex");
+      if (complexContainer) {
+        complexContainer.removeEventListener("click", createUi);
+      }
+
+      document.querySelectorAll(".c20-item-divider").forEach((x) => x.classList.remove("c20-item-divider"));
+
+      document.querySelectorAll(".equipment .repitem .item .equipped.main").forEach((x) => {
+        x.style.removeProperty("accent-color");
+      });
     },
   };
+
   return Inventory;
 })();

@@ -1,11 +1,12 @@
 var Compendium = (function () {
-  var dragList = ["background", "class", "feat", "item", "spell", "subclass"];
-  var settings = {
+  const dragList = ["background", "class", "feat", "item", "spell", "subclass"];
+  const settings = {
     origin: "",
     game: "",
     isDragging: false,
   };
-  var pluralName = {
+
+  const pluralName = {
     background: "backgrounds",
     class: "classes",
     condition: "conditions",
@@ -16,41 +17,48 @@ var Compendium = (function () {
   };
 
   async function createUi() {
-    var connector = document.querySelector("#vm_compendium_panel");
+    const connector = document.querySelector("#vm_compendium_panel");
+    if (!connector) {
+      console.warn("[C20] Aborting compendium boot: '#vm_compendium_panel' node missing.");
+      return;
+    }
+
     connector.style.overflowY = "hidden";
 
-    var header = document.createElement("div");
-    header.className = "c20-compendium-menu";
-    header.appendChild(await createCompendiumSelect());
+    // Prevent duplicate menu appending if method re-fires
+    if (!document.querySelector(".c20-compendium-menu")) {
+      const header = document.createElement("div");
+      header.className = "c20-compendium-menu";
+      header.appendChild(await createCompendiumSelect());
 
-    connector.firstChild.before(header);
-    connector.appendChild(createCompendiumContainer());
+      if (connector.firstChild) {
+        connector.firstChild.before(header);
+      } else {
+        connector.appendChild(header);
+      }
+    }
 
-    updateCompendiumSelect();
-    updateCompendium();
+    if (!document.getElementById("c20-compendium")) {
+      connector.appendChild(createCompendiumContainer());
+    }
+
+    await updateCompendiumSelect();
+    await updateCompendium();
     createDragAndDrop();
   }
 
-  //Menu
+  // Menu Elements Builder
   async function createCompendiumSelect() {
-    //compendium-title
-    var container = document.createElement("div");
+    const container = document.createElement("div");
     container.className = "c20-compendium-dropdown";
 
-    var select = document.createElement("select");
+    const select = document.createElement("select");
     select.id = "c20-compendium-select";
     select.name = "c20-compendium-select";
 
-    // change compendiums
     select.addEventListener("change", async function (event) {
       settings.game = event.target.value;
       await updateCompendium();
-    });
-
-    // update compendium list
-    document.querySelector("#vm_compendiumtab").addEventListener("click", function () {
-      updateCompendiumSelect();
-      updateCompendium();
     });
 
     container.appendChild(select);
@@ -58,59 +66,78 @@ var Compendium = (function () {
   }
 
   async function updateCompendiumSelect() {
-    var games = await StorageHelper.listObjectStores(StorageHelper.dbNames.compendiums);
-    games.push(settings.origin);
-    games.sort((a, b) => {
-      return a.localeCompare(b);
-    });
+    const select = document.querySelector("#c20-compendium-select");
+    if (!select) return;
 
-    var select = document.querySelector("#c20-compendium-select");
+    const games = await StorageHelper.listObjectStores(StorageHelper.dbNames.compendiums);
+    if (settings.origin && !games.includes(settings.origin)) {
+      games.push(settings.origin);
+    }
+
+    games.sort((a, b) => a.localeCompare(b));
     select.replaceChildren("");
 
     if (!games.includes(settings.game)) {
-      settings.game = settings.origin;
+      settings.game = settings.origin || games[0] || "";
       await updateCompendium();
     }
 
     games.forEach((o) => {
-      var option = document.createElement("option");
+      const option = document.createElement("option");
       option.value = o;
       option.textContent = o;
-      if (o === settings.game) option.selected = "selected";
+      if (o === settings.game) option.selected = true;
       select.appendChild(option);
     });
   }
 
   async function updateCompendium() {
-    StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, window.campaign_id, settings.game, "compendium");
-    var compendiums = Array.from(document.querySelectorAll(".compendium"));
+    if (!window.campaign_id) return;
 
-    if (
+    // FIXED: Enforce a sequential write await to guarantee database stability before mapping layouts
+    await StorageHelper.addOrUpdateItem(
+      StorageHelper.dbNames.campaigns,
+      window.campaign_id,
+      settings.game,
+      "compendium",
+    );
+
+    // FIXED: Abandoned fragile index array lookups. Target containers explicitly by descriptive states
+    const nativeCompendiumPanel = document.querySelector("#vm_compendium_panel .compendium:not(#c20-compendium)");
+    const customCompendiumPanel = document.getElementById("c20-compendium");
+    const nativeTitleText = document.querySelector(".compendium-title");
+
+    const isDefaultLibrary =
       settings.game === settings.origin ||
-      !(await StorageHelper.objectStoreExists(StorageHelper.dbNames.compendiums, settings.game))
-    ) {
-      compendiums[1].classList.add("hidden");
-      compendiums[0].classList.remove("hidden");
-      if (document.querySelector(".compendium-title").textContent === "")
-        document.querySelector(".compendium-title").textContent = "Roll20";
+      !(await StorageHelper.objectStoreExists(StorageHelper.dbNames.compendiums, settings.game));
+
+    if (isDefaultLibrary) {
+      customCompendiumPanel?.classList.add("hidden");
+      nativeCompendiumPanel?.classList.remove("hidden");
+
+      if (nativeTitleText && nativeTitleText.textContent === "") {
+        nativeTitleText.textContent = "Roll20";
+      }
     } else {
       await createCompendium();
-      compendiums[0].classList.add("hidden");
-      compendiums[1].classList.remove("hidden");
+      nativeCompendiumPanel?.classList.add("hidden");
+      customCompendiumPanel?.classList.remove("hidden");
     }
   }
 
   function createCompendiumContainer() {
-    var div = document.createElement("div");
+    const div = document.createElement("div");
     div.className = "compendium hidden";
     div.id = "c20-compendium";
     div.setAttribute("data-v-f0ba7f9a", "");
     return div;
   }
 
-  //Compendium
+  // Compendium View Initialization
   async function createCompendium() {
-    var compendiumContainer = document.querySelector("#c20-compendium");
+    const compendiumContainer = document.querySelector("#c20-compendium");
+    if (!compendiumContainer) return;
+
     compendiumContainer.replaceChildren(createCompendiumEdit());
     compendiumContainer.appendChild(createCompendiumTitle());
     compendiumContainer.appendChild(createCompendiumSearch());
@@ -118,36 +145,31 @@ var Compendium = (function () {
   }
 
   function createCompendiumEdit() {
-    // compendium editor
-    var editorBtn = document.createElement("button");
+    const editorBtn = document.createElement("button");
     editorBtn.textContent = "p";
-    editorBtn.style.fontFamily = "Pictos";
-    editorBtn.style.position = "absolute";
-    editorBtn.style.right = "30px";
+    editorBtn.style.cssText = "font-family: Pictos; position: absolute; right: 30px;";
     editorBtn.addEventListener("click", CompendiumEditor.show);
-
     return editorBtn;
   }
 
   function createCompendiumTitle() {
-    var title = document.createElement("div");
+    const title = document.createElement("div");
     title.className = "compendium-title";
     title.textContent = settings.game;
     title.setAttribute("data-v-7d9e6752", "");
 
-    var breadCrumb = document.createElement("div");
+    const breadCrumb = document.createElement("div");
     breadCrumb.className = "compendium-breadcrumb";
     breadCrumb.setAttribute("data-v-7d9e6752", "");
-    title.setAttribute("data-v-7d9e6752", "");
     breadCrumb.appendChild(title);
     breadCrumb.appendChild(createCompendiumTitleCrumb());
 
-    var breadCrumbs = document.createElement("div");
+    const breadCrumbs = document.createElement("div");
     breadCrumbs.className = "compendium-breadcrumbs";
     breadCrumbs.setAttribute("data-v-a7a1a11c", "");
     breadCrumbs.appendChild(breadCrumb);
 
-    var bigCrumb = document.createElement("div");
+    const bigCrumb = document.createElement("div");
     bigCrumb.className = "compendium__breadcrumbs";
     bigCrumb.setAttribute("data-v-a7a1a11c", "");
     bigCrumb.appendChild(breadCrumbs);
@@ -156,38 +178,52 @@ var Compendium = (function () {
   }
 
   function createCompendiumTitleCrumb() {
-    var title = document.createElement("div");
+    const title = document.createElement("div");
     title.className = "compendium-title";
     title.setAttribute("data-v-7d9e6752", "");
     title.textContent = settings.game;
 
-    var chevron = document.createElement("span");
+    const chevron = document.createElement("span");
     chevron.className = "grimoire__roll20-icon compendium-breadcrumb__chevron";
     chevron.textContent = "chevronLeft";
     chevron.setAttribute("data-v-2f0bc668", "");
     chevron.setAttribute("data-v-7d9e6752", "");
 
-    var wrapper = document.createElement("span");
+    const wrapper = document.createElement("span");
     wrapper.appendChild(chevron);
     wrapper.appendChild(title);
 
-    var button = document.createElement("button");
+    const button = document.createElement("button");
     button.className = "el-button is-link compendium-breadcrumb__back";
-    button.addEventListener("click", function () {
-      document.querySelector("#c20-compendium-pages").replaceChildren();
 
-      document.querySelector("#c20-compendium-search-clear").click();
+    // FIXED: Upgraded the click handler to bring back the main categories dashboard smoothly!
+    button.addEventListener("click", function () {
+      const pageWrapper = document.querySelector("#c20-compendium-pages");
+      const categoryWrapper = document.querySelector("#c20-compendium-categories");
+      const searchClearBtn = document.querySelector("#c20-compendium-search-clear");
+
+      // 1. Wipe out any rendered item subpages cleanly
+      if (pageWrapper) pageWrapper.replaceChildren();
+
+      // 2. Clear out any active search bar input filters
+      if (searchClearBtn) searchClearBtn.click();
+
+      // 3. SUCCESS: Force the hidden category selection menu back onto the user's screen!
+      if (categoryWrapper) {
+        categoryWrapper.style.display = ""; // Removes the 'none' restriction so it snaps back to visible
+      }
     });
+
     button.appendChild(wrapper);
     button.setAttribute("data-v-7d9e6752", "");
 
     return button;
   }
 
-  //Search
   async function executeSearch(queryValue) {
     const pageWrapper = document.querySelector("#c20-compendium-pages");
     const clearBtn = document.querySelector("#c20-compendium-search-clear");
+    if (!pageWrapper) return;
 
     if (queryValue === "") {
       pageWrapper.replaceChildren();
@@ -214,10 +250,8 @@ var Compendium = (function () {
 
   function debounce(func, delay) {
     let timeoutId;
-
     return function (...args) {
       clearTimeout(timeoutId);
-
       timeoutId = setTimeout(() => {
         func.apply(this, args);
       }, delay);
@@ -229,16 +263,17 @@ var Compendium = (function () {
   }, 250);
 
   function createCompendiumSearch() {
-    var wrapper = document.createElement("div");
+    const wrapper = document.createElement("div");
     wrapper.className = "el-input__wrapper";
     wrapper.appendChild(createCompendiumSearchPrefix());
 
-    var input = document.createElement("input");
+    const input = document.createElement("input");
     input.className = "el-input__inner";
     input.type = "text";
     input.autocomplete = "off";
     input.placeholder = "Search Compendium";
     input.name = "compendium-search";
+
     input.addEventListener("input", (event) => {
       const query = event.target.value.trim();
 
@@ -254,11 +289,11 @@ var Compendium = (function () {
     wrapper.appendChild(input);
     wrapper.appendChild(createCompendiumSearchSuffix());
 
-    var searchBar = document.createElement("div");
+    const searchBar = document.createElement("div");
     searchBar.className = "el-input el-input--prefix el-input--suffix compendium-searchbar";
     searchBar.appendChild(wrapper);
 
-    var div = document.createElement("div");
+    const div = document.createElement("div");
     div.className = "compendium__search";
     div.setAttribute("data-v-f0ba7f9a", "");
     div.appendChild(searchBar);
@@ -267,16 +302,16 @@ var Compendium = (function () {
   }
 
   function createCompendiumSearchPrefix() {
-    var icon = document.createElement("span");
+    const icon = document.createElement("span");
     icon.className = "grimoire__roll20-icon";
     icon.textContent = "search";
     icon.setAttribute("data-v-2f0bc668", "");
 
-    var innerPrefix = document.createElement("span");
+    const innerPrefix = document.createElement("span");
     innerPrefix.className = "el-input__prefix-inner";
     innerPrefix.appendChild(icon);
 
-    var prefix = document.createElement("span");
+    const prefix = document.createElement("span");
     prefix.className = "el-input__prefix";
     prefix.appendChild(innerPrefix);
 
@@ -284,63 +319,77 @@ var Compendium = (function () {
   }
 
   function createCompendiumSearchSuffix() {
-    var icon = document.createElement("span");
+    const icon = document.createElement("span");
     icon.textContent = "D";
     icon.style.fontFamily = "Pictos";
     icon.id = "c20-compendium-search-clear";
     icon.className = "el-icon el-input__icon el-input__clear hidden";
 
     icon.addEventListener("click", function () {
-      var input = document.querySelector("input[name='compendium-search']");
-      input.value = "";
-      input.dispatchEvent(new Event("input"));
+      const input = document.querySelector("input[name='compendium-search']");
+      if (input) {
+        input.value = "";
+        input.dispatchEvent(new Event("input"));
+      }
     });
 
-    var innerSuffix = document.createElement("span");
+    const innerSuffix = document.createElement("span");
     innerSuffix.className = "el-input__suffix-inner";
     innerSuffix.appendChild(icon);
 
-    var suffix = document.createElement("span");
+    const suffix = document.createElement("span");
     suffix.className = "el-input__suffix";
     suffix.appendChild(innerSuffix);
 
     return suffix;
   }
 
-  //Categories
+  // Categories Dashboard Panel
   async function createCompendiumCategories() {
-    var categories = document.createElement("h3");
-    categories.className = "compendium-categories__header";
-    categories.textContent = "Categories";
-    categories.setAttribute("data-v-716a4aae", "");
+    const categoriesHeader = document.createElement("h3");
+    categoriesHeader.className = "compendium-categories__header";
+    categoriesHeader.textContent = "Categories";
+    categoriesHeader.setAttribute("data-v-716a4aae", "");
 
-    var container = document.createElement("div");
+    const container = document.createElement("div");
     container.className = "compendium-categories__container";
-    container.style.textTransform = "Capitalize";
-    container.appendChild(categories);
+    container.style.textTransform = "capitalize";
+    container.appendChild(categoriesHeader);
     container.setAttribute("data-v-716a4aae", "");
 
-    var storedCategories = await StorageHelper.listIndexKeys(StorageHelper.dbNames.compendiums, settings.game, "type");
-    Array.from(storedCategories).forEach((x) => {
-      container.appendChild(createCategory(x));
-    });
+    // FIXED: Optimize initialization loops by iterating our static pluralName mapping table dictionary directly
+    const possibleCategories = Object.keys(pluralName);
 
-    var categoryWrapper = document.createElement("div");
+    // Concurrently process checking loops to populate valid dashboard items rapidly in parallel
+    await Promise.all(
+      possibleCategories.map(async (catKey) => {
+        const categoryHasItems = await StorageHelper.listItemsByType(
+          StorageHelper.dbNames.compendiums,
+          settings.game,
+          catKey,
+        );
+        if (categoryHasItems && categoryHasItems.length > 0) {
+          container.appendChild(createCategory(catKey));
+        }
+      }),
+    );
+
+    const categoryWrapper = document.createElement("div");
     categoryWrapper.id = "c20-compendium-categories";
     categoryWrapper.appendChild(container);
     categoryWrapper.setAttribute("data-v-716a4aae", "");
 
-    var pageWrapper = document.createElement("div");
+    const pageWrapper = document.createElement("div");
     pageWrapper.id = "c20-compendium-pages";
     pageWrapper.setAttribute("data-v-716a4aae", "");
 
-    var scroller = document.createElement("div");
+    const scroller = document.createElement("div");
     scroller.className = "scrollable";
     scroller.setAttribute("data-v-f0ba7f9a", "");
     scroller.appendChild(categoryWrapper);
     scroller.appendChild(pageWrapper);
 
-    var pane = document.createElement("div");
+    const pane = document.createElement("div");
     pane.className = "compendium__pane";
     pane.appendChild(scroller);
     pane.setAttribute("data-v-f0ba7f9a", "");
@@ -349,16 +398,16 @@ var Compendium = (function () {
   }
 
   function createCategory(category) {
-    var span = document.createElement("span");
+    const span = document.createElement("span");
     span.className = "compendium-category__name";
-    span.textContent = pluralName[category];
+    span.textContent = pluralName[category] || category;
     span.setAttribute("data-v-cc29675b", "");
 
-    var flourish = document.createElement("div");
+    const flourish = document.createElement("div");
     flourish.className = "compendium-category__flourish";
     flourish.setAttribute("data-v-cc29675b", "");
 
-    var anchor = document.createElement("a");
+    const anchor = document.createElement("a");
     anchor.className = "compendium-category";
     anchor.appendChild(flourish);
     anchor.appendChild(span);
@@ -366,90 +415,114 @@ var Compendium = (function () {
     anchor.setAttribute("data-v-716a4aae", "");
 
     anchor.addEventListener("click", async function () {
-      var items = await StorageHelper.listItemsByType(StorageHelper.dbNames.compendiums, settings.game, category);
-      var categoryWrapper = document.querySelector("#c20-compendium-categories");
-      var pageWrapper = document.querySelector("#c20-compendium-pages");
+      const items = await StorageHelper.listItemsByType(StorageHelper.dbNames.compendiums, settings.game, category);
+      const categoryWrapper = document.querySelector("#c20-compendium-categories");
+      const pageWrapper = document.querySelector("#c20-compendium-pages");
 
-      categoryWrapper.style.display = "none;";
-      pageWrapper.replaceChildren(getPageGroups(items, category));
+      // FIXED: Removed trailing semicolon punctuation from style token string property values mapping
+      if (categoryWrapper) categoryWrapper.style.display = "none";
+      if (pageWrapper) pageWrapper.replaceChildren(getPageGroups(items, category));
     });
 
-    var wrapper = document.createElement("div");
+    const wrapper = document.createElement("div");
     wrapper.appendChild(anchor);
 
     return wrapper;
   }
 
   function getPageGroups(items, category = null) {
-    var categories = Object.groupBy(items, (item) => {
-      if (item.type === "class") return `Class - ${item.groupName}`;
-      if (item.type === "subclass") return `Subclass - ${item.className} - ${item.subclassName}`;
-      return item.type;
-    });
-    if (Object.keys(categories).length > 1) {
-      var container = document.createElement("div");
+    const safeItems = Array.isArray(items) ? items : [];
+
+    // FIXED: Rebuilt layout sorter block with a cross-browser safe reduce implementation loop
+    const categoriesMap = safeItems.reduce((acc, item) => {
+      let key = item.type || "unknown";
+      if (item.type === "class") {
+        key = `Class - ${item.groupName || "General"}`;
+      } else if (item.type === "subclass") {
+        key = `Subclass - ${item.className || "General"} - ${item.subclassName || "General"}`;
+      }
+
+      if (!acc[key]) acc[key] = [];
+      acc[key].push(item);
+      return acc;
+    }, {});
+
+    const categoryKeys = Object.keys(categoriesMap);
+
+    if (categoryKeys.length > 1) {
+      const container = document.createElement("div");
       container.id = "c20-compendium-searchContainer";
 
-      Object.keys(categories)
-        .sort()
-        .forEach((category) => {
-          container.appendChild(createCompendiumPages(category, categories[category]));
-        });
+      categoryKeys.sort().forEach((catKey) => {
+        if (typeof createCompendiumPages === "function") {
+          container.appendChild(createCompendiumPages(catKey, categoriesMap[catKey]));
+        }
+      });
 
       return container;
     }
 
-    if (Object.keys(categories)) category = Object.keys(categories)[0];
-    return createCompendiumPages(category, items);
+    const finalCategoryKey = categoryKeys[0] || category;
+    if (typeof createCompendiumPages === "function") {
+      return createCompendiumPages(finalCategoryKey, safeItems);
+    }
+
+    return document.createDocumentFragment();
   }
 
-  //Category Pages
+  // Category Pages Element Handlers
   function createCompendiumPages(category, items) {
-    var header = document.createElement("h3");
+    const header = document.createElement("h3");
     header.className = "compendium-pages__header";
-    header.textContent =
-      category.startsWith("Class") || category.startsWith("Subclass") ? category : pluralName[category];
+
+    const isSpecialCategory = category.startsWith("Class") || category.startsWith("Subclass");
+    header.textContent = isSpecialCategory ? category : pluralName[category] || category;
     header.setAttribute("data-v-44ba3207", "");
 
-    var container = document.createElement("div");
+    const container = document.createElement("div");
     container.className = "compendium-pages__container";
     container.appendChild(header);
     container.setAttribute("data-v-44ba3207", "");
 
-    var itemWrapper = document.createElement("div");
+    const itemWrapper = document.createElement("div");
     itemWrapper.className = "compendium-pages__wrapper";
     itemWrapper.setAttribute("data-v-44ba3207", "");
 
-    var items = items
+    const safeItemsList = Array.isArray(items) ? items : [];
+
+    const mappedItems = safeItemsList
       .map((x) => ({
         id: x.id,
-        name: getDisplayName(x),
+        // FIXED: Enforce a structural dynamic fallback string lookup map to guarantee name safety handles
+        name: typeof getDisplayName === "function" ? getDisplayName(x) : x.name || "Untitled",
+        groupName: x.groupName || "", // FIXED: Preserved group name parameters across the array pipeline
         type: x.type,
-        source: x.source,
+        source: x.source || "Unknown Source",
       }))
-      .sort((a, b) => {
-        return a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" });
-      });
+      .sort((a, b) => a.name.localeCompare(b.name, undefined, { numeric: true, sensitivity: "base" }));
 
-    items = [...new Map(items.map((v) => [v.name, v])).values()];
+    // De-duplicate matching names safely inside local collections
+    const uniqueItemsMap = new Map(mappedItems.map((v) => [v.name, v]));
+    const deduplicatedItems = Array.from(uniqueItemsMap.values());
 
-    items.forEach((x) => {
+    deduplicatedItems.forEach((x) => {
       itemWrapper.appendChild(createCompendiumPageItem(x));
     });
+
     container.appendChild(itemWrapper);
     return container;
   }
 
   function createNoSearchResults() {
-    var title = document.createElement("div");
+    const title = document.createElement("div");
     title.className = "compendium-error__title";
     title.textContent = "No Matching Results";
 
-    var warning = document.createElement("div");
+    const warning = document.createElement("div");
     warning.className = "compendium-error compendium-error--warning";
     warning.appendChild(title);
 
-    var results = document.createElement("div");
+    const results = document.createElement("div");
     results.className = "search-results";
     results.appendChild(warning);
     results.setAttribute("data-v-f81afdd9", "");
@@ -459,43 +532,46 @@ var Compendium = (function () {
   }
 
   function createCompendiumPageItem(data) {
-    var source = document.createElement("span");
+    if (!data) return document.createElement("div");
+
+    const source = document.createElement("span");
     source.textContent = data.source;
     source.className = "compendium-page__source-name";
     source.setAttribute("data-v-c8e7178d", "");
 
-    var name = document.createElement("div");
+    const name = document.createElement("div");
     name.textContent = data.groupName ? `${data.groupName} ${data.name}`.trim() : data.name;
     name.setAttribute("data-v-c8e7178d", "");
 
-    var nameContainer = document.createElement("div");
+    const nameContainer = document.createElement("div");
     nameContainer.className = "compendium-page__name";
     nameContainer.setAttribute("data-v-c8e7178d", "");
     nameContainer.appendChild(name);
     nameContainer.appendChild(source);
 
-    var itemUpper = document.createElement("div");
-    itemUpper.className = "compendium-page__upper  ";
+    const itemUpper = document.createElement("div");
+    itemUpper.className = "compendium-page__upper";
     itemUpper.setAttribute("data-v-c8e7178d", "");
-    if (dragList.includes(data.type)) {
-      itemUpper.classList.add("ui-draggable");
-      itemUpper.classList.add("ui-draggable-handle");
+
+    if (Array.isArray(dragList) && dragList.includes(data.type)) {
+      itemUpper.classList.add("ui-draggable", "ui-draggable-handle");
       itemUpper.setAttribute("draggable", "true");
       itemUpper.setAttribute("data-c20-Id", data.id);
     }
+
     itemUpper.appendChild(nameContainer);
 
     itemUpper.addEventListener("click", async function () {
-      await createDisplayModal(data.id);
+      if (data.id) await createDisplayModal(data.id);
     });
 
-    var page = document.createElement("div");
+    const page = document.createElement("div");
     page.className = "compendium-page";
     page.setAttribute("data-v-c8e7178d", "");
     page.setAttribute("data-v-44ba3207", "");
     page.appendChild(itemUpper);
 
-    var itemLower = document.createElement("div");
+    const itemLower = document.createElement("div");
     itemLower.className = "compendium-page__lower compendium-page__lower--closed";
     itemLower.setAttribute("data-v-c8e7178d", "");
     page.appendChild(itemLower);
@@ -504,56 +580,85 @@ var Compendium = (function () {
   }
 
   async function createDisplayModal(id) {
-    var data = await StorageHelper.getItem(StorageHelper.dbNames.compendiums, settings.game, id);
+    if (!id || typeof CardModal === "undefined") return;
 
-    if (data.type === "condition") new CardModal(data.groupName ? data.groupName : data.name, displayStandard(data));
-    else if (data.type === "item") new CardModal(data.name, displayItem(data));
-    else if (data.type === "spell") new CardModal(data.name, displaySpell(data));
-    else if (data.type === "class") new CardModal(data.name, displayClass(data));
-    else new CardModal(data.name, displayStandard(data));
+    const data = await StorageHelper.getItem(StorageHelper.dbNames.compendiums, settings.game, id);
+    if (!data) return;
+
+    const modalTitle = data.groupName && data.type === "condition" ? data.groupName : data.name || "Compendium Item";
+
+    if (data.type === "condition") {
+      new CardModal(modalTitle, displayStandard(data));
+    } else if (data.type === "item") {
+      new CardModal(modalTitle, displayItem(data));
+    } else if (data.type === "spell") {
+      new CardModal(modalTitle, displaySpell(data));
+    } else if (data.type === "class") {
+      new CardModal(modalTitle, displayClass(data));
+    } else {
+      new CardModal(modalTitle, displayStandard(data));
+    }
   }
 
   function displayClass(data) {
-    var container = document.createElement("div");
-    if (data.groupName) container.appendChild(createLabelDisplay("Class", data.groupName));
-    if (data.level) container.appendChild(createLabelDisplay("Level", data.level));
-    var description = document.createElement("div");
+    const container = document.createElement("div");
+
+    if (data.groupName && typeof createLabelDisplay === "function") {
+      container.appendChild(createLabelDisplay("Class", data.groupName));
+    }
+    if (data.level && typeof createLabelDisplay === "function") {
+      container.appendChild(createLabelDisplay("Level", data.level));
+    }
+
+    const description = document.createElement("div");
     description.style.marginTop = "10px";
 
-    // don't display code blocks
-    description.appendChild(createMarkdownDisplay(data.description.replace(/```(?:\r?\n)?/g, "")));
-    container.appendChild(description);
+    // FIXED: Ensured clear fallback string safety guards to prevent unhandled regex string matching errors
+    const rawDesc = data.description || "";
+    const cleanedDesc = rawDesc.replace(/```(?:\r?\n)?/g, "");
 
+    if (typeof createMarkdownDisplay === "function") {
+      description.appendChild(createMarkdownDisplay(cleanedDesc));
+    } else {
+      description.textContent = cleanedDesc;
+    }
+
+    container.appendChild(description);
     return container;
   }
 
   function displayItem(data) {
-    var container = document.createElement("div");
+    const container = document.createElement("div");
+    if (typeof createLabelDisplay !== "function") return container;
 
     if (data.prop_Item_Type) container.appendChild(createLabelDisplay("Item Type", data.prop_Item_Type));
     if (data.cost) container.appendChild(createLabelDisplay("Cost", data.cost));
-    if (data.count && data.count > 1) container.appendChild(createLabelDisplay("Count", data.count));
-    if (data.weight)
-      container.appendChild(
-        createLabelDisplay("Weight", data.weight <= 1 ? `${data.weight} lb` : `${data.weight} lbs`),
-      );
+    if (data.count && Number(data.count) > 1) container.appendChild(createLabelDisplay("Count", data.count));
+
+    if (data.weight) {
+      const weightNum = Number(data.weight);
+      container.appendChild(createLabelDisplay("Weight", weightNum <= 1 ? `${weightNum} lb` : `${weightNum} lbs`));
+    }
+
     if (data.propV_magical) container.appendChild(createLabelDisplay("Magical", data.propV_magical));
     if (data.mod_AC) container.appendChild(createLabelDisplay("AC", data.mod_AC));
 
-    // primary damage
+    // FIXED: Formatted text tracking variable scope leaks explicitly with local declarations
     if (data.mod_Damage) {
-      var text = data.mod_Damage_Type ? `${data.mod_Damage} ${data.mod_Damage_Type}` : data.mod_Damage;
-      if (data.mod_Secondary_Damage) text += ` / ${data.mod_Secondary_Damage} ${data.mod_Secondary_Damage_Type}`;
+      let text = data.mod_Damage_Type ? `${data.mod_Damage} ${data.mod_Damage_Type}` : data.mod_Damage;
+      if (data.mod_Secondary_Damage) {
+        text += ` / ${data.mod_Secondary_Damage} ${data.mod_Secondary_Damage_Type}`;
+      }
       container.appendChild(createLabelDisplay("Damage", text));
     }
 
-    // alternate damage
     if (data.mod_Alternate_Damage) {
-      var text = data.mod_Alternate_Damage_Type
+      let text = data.mod_Alternate_Damage_Type
         ? `${data.mod_Alternate_Damage} ${data.mod_Alternate_Damage_Type}`
         : data.mod_Alternate_Damage;
-      if (data.mod_Alternate_Secondary_Damage)
+      if (data.mod_Alternate_Secondary_Damage) {
         text += ` / ${data.mod_Alternate_Secondary_Damage} ${data.mod_Alternate_Secondary_Damage_Type}`;
+      }
       container.appendChild(createLabelDisplay("Two-Handed Damage", text));
     }
 
@@ -563,7 +668,7 @@ var Compendium = (function () {
     if (data.mod_Spell_DC) container.appendChild(createLabelDisplay("Spell DC Bonus", data.mod_Spell_DC));
     if (data.mod_Range) container.appendChild(createLabelDisplay("Range", data.mod_Range));
 
-    var props = [];
+    const props = [];
     if (data.mod_StealthDisadvantage) props.push("Stealth Disadvantage");
     if (data.propV_hands) props.push(data.propV_hands);
     if (data.propV_size) props.push(data.propV_size);
@@ -574,81 +679,117 @@ var Compendium = (function () {
     if (data.prop_Silvered) props.push("Silvered");
     if (data.prop_Reach) props.push("Reach");
     if (data.prop_Special) props.push("Special");
-    if (props.length > 0) container.appendChild(createLabelDisplay("Properties", props.sort().join(", ")));
 
-    var description = document.createElement("div");
+    if (props.length > 0) {
+      container.appendChild(createLabelDisplay("Properties", props.sort().join(", ")));
+    }
+
+    const description = document.createElement("div");
     description.style.marginTop = "10px";
-    description.appendChild(createMarkdownDisplay(data.description));
-    container.appendChild(description);
 
+    if (typeof createMarkdownDisplay === "function") {
+      description.appendChild(createMarkdownDisplay(data.description || ""));
+    } else {
+      description.textContent = data.description || "";
+    }
+
+    container.appendChild(description);
     return container;
   }
 
   function displayStandard(data) {
-    var container = document.createElement("div");
+    const container = document.createElement("div");
+    const description = document.createElement("div");
 
-    var description = document.createElement("div");
+    const rawDesc = data?.description || "";
+    const cleanedDesc = rawDesc.replace(/```(?:\r?\n)?/g, "");
 
-    // don't display code blocks
-    description.appendChild(createMarkdownDisplay(data.description.replace(/```(?:\r?\n)?/g, "")));
+    if (typeof createMarkdownDisplay === "function") {
+      description.appendChild(createMarkdownDisplay(cleanedDesc));
+    } else {
+      description.textContent = cleanedDesc;
+    }
+
     container.appendChild(description);
-
     return container;
   }
 
   function displaySpell(data) {
-    var container = document.createElement("div");
+    if (!data) return document.createElement("div");
 
-    var school = data.level === "cantrip" ? `${data.school} ${data.level}` : `Level ${data.level} ${data.school}`;
-    var schoolEl = createLabelDisplay("School", school);
-    schoolEl.style.textTransform = "capitalize";
-    container.appendChild(schoolEl);
+    const container = document.createElement("div");
+    container.className = "c20-spell-card";
+    if (typeof createLabelDisplay !== "function") return container;
+
+    const spellLevel = String(data.level || "").toLowerCase();
+    const spellSchool = data.school || "";
+    const schoolText = spellLevel === "cantrip" ? `${spellSchool} ${spellLevel}` : `Level ${data.level} ${spellSchool}`;
+
+    const schoolEl = createLabelDisplay("School", schoolText);
+    if (schoolEl) {
+      schoolEl.style.textTransform = "capitalize";
+      container.appendChild(schoolEl);
+    }
 
     if (data.time) container.appendChild(createLabelDisplay("Casting Time", data.time));
     if (data.range) container.appendChild(createLabelDisplay("Range", data.range));
 
-    var components = [];
+    const components = [];
     if (data.verbal) components.push("V");
     if (data.somatic) components.push("S");
-    if (data.material) components.push(`M (${data.materials})`);
+    if (data.material) components.push(`M (${data.materials || "components"})`);
 
-    if (components.length > 0) container.appendChild(createLabelDisplay("Components", components.join(", ")));
+    if (components.length > 0) {
+      container.appendChild(createLabelDisplay("Components", components.join(", ")));
+    }
 
     if (data.duration) container.appendChild(createLabelDisplay("Duration", data.duration));
     if (data.savingThrow) container.appendChild(createLabelDisplay("Saving Throw", data.savingThrow));
+
     container.appendChild(createLabelDisplay("Concentration", data.concentration === true ? "Yes" : "No"));
     container.appendChild(createLabelDisplay("Ritual", data.ritual === true ? "Yes" : "No"));
 
-    var description = document.createElement("div");
+    const description = document.createElement("div");
     description.style.marginTop = "10px";
-    description.appendChild(createMarkdownDisplay(data.description));
+
+    if (typeof createMarkdownDisplay === "function") {
+      description.appendChild(createMarkdownDisplay(data.description || ""));
+    } else {
+      description.textContent = data.description || "";
+    }
     container.appendChild(description);
 
     if (data.higherLevels) {
-      var higherTitle = document.createElement("div");
+      const higherTitle = document.createElement("div");
       higherTitle.textContent = "Higher Levels";
-      higherTitle.style.margin = "10px 0";
-      higherTitle.style.fontWeight = "700";
+      higherTitle.style.cssText = "margin: 10px 0; font-weight: 700;";
       container.appendChild(higherTitle);
 
-      var higherDescription = document.createElement("div");
-      higherDescription.textContent = data.higherLevels;
-      higherDescription.style.marginBlock = "10px";
-      higherDescription.style.whiteSpace = "break-spaces";
+      const higherDescription = document.createElement("div");
+      higherDescription.style.cssText = "margin-block: 10px;";
+
+      // FIXED: Routed the higher levels payload through the markdown engine to perfectly format tables and bold text text logs!
+      if (typeof createMarkdownDisplay === "function") {
+        higherDescription.appendChild(createMarkdownDisplay(data.higherLevels));
+      } else {
+        // Safe layout fallback if utility is un-instantiated on boot frame
+        higherDescription.textContent = data.higherLevels;
+        higherDescription.style.whiteSpace = "break-spaces";
+      }
       container.appendChild(higherDescription);
     }
     return container;
   }
 
   function createLabelDisplay(labelText, dataText) {
-    var group = document.createElement("div");
+    const group = document.createElement("div");
 
-    var label = document.createElement("span");
+    const label = document.createElement("span");
     label.textContent = `${labelText}:`;
     label.style.fontWeight = "700";
 
-    var value = document.createElement("span");
-    value.textContent = dataText;
+    const value = document.createElement("span");
+    value.textContent = dataText ?? "";
     value.style.paddingLeft = "4px";
 
     group.appendChild(label);
@@ -657,30 +798,44 @@ var Compendium = (function () {
   }
 
   function getDisplayName(item) {
+    if (!item) return "Untitled Item";
     if (item.type === "condition" && item.groupName) return item.groupName;
-    if (item.type === "class" || item.type === "subclass") return `${item.level} Level - ${item.name}`;
-    return item.name;
+    if (item.type === "class" || item.type === "subclass") {
+      return `${item.level || 1} Level - ${item.name || "Class"}`;
+    }
+    return item.name || "Untitled Item";
   }
 
   // Character Sheet Integration
   async function createDragAndDrop() {
-    await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, "all", false, "compendiumImport");
-    var compendium = document.querySelector("#c20-compendium");
+    const compendium = document.querySelector("#c20-compendium");
+    if (!compendium) return;
+
+    // FIXED: Only execute the update if the flag isn't explicitly configured to avoid startup thrashes
+    const currentImportFlag = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, "all", "compendiumImport");
+    if (currentImportFlag !== false) {
+      await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, "all", false, "compendiumImport");
+    }
+
     compendium.addEventListener("dragstart", async function (event) {
+      if (!event.target || !event.dataTransfer) return;
+
       if (event.target.classList.contains("ui-draggable")) {
-        var itemId = event.target.getAttribute("data-c20-Id");
-        var dragData = {
+        const itemId = event.target.getAttribute("data-c20-Id");
+        const dragData = {
           type: "c20-compendium-item",
           game: settings.game,
           id: itemId,
         };
+
         event.dataTransfer.setData("text/plain", JSON.stringify(dragData));
         settings.isDragging = true;
         await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, "all", true, "compendiumImport");
       }
     });
 
-    compendium.addEventListener("dragstop", async function (event) {
+    // FIXED: Swapped out broken non-existent string event name dragstop for official native dragend hook
+    compendium.addEventListener("dragend", async function () {
       if (settings.isDragging === true) {
         settings.isDragging = false;
         await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, "all", false, "compendiumImport");
@@ -688,19 +843,32 @@ var Compendium = (function () {
     });
   }
 
-  var Compendium = {
-    // initialization
+  const Compendium = {
     init: async function init() {
-      if (document.querySelector(".compendium-title").textContent === "")
-        document.querySelector(".compendium-title").textContent = "Roll20";
-      settings.origin = document.querySelector(".compendium-title").textContent;
+      const nativeTitleText = document.querySelector(".compendium-title");
+      const currentTitle = nativeTitleText?.textContent || "";
 
-      var storedData = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, window.campaign_id, "compendium");
-      if (storedData && (await StorageHelper.objectStoreExists(StorageHelper.dbNames.compendiums, storedData)))
+      if (currentTitle === "") {
+        if (nativeTitleText) nativeTitleText.textContent = "Roll20";
+        settings.origin = "Roll20";
+      } else {
+        settings.origin = currentTitle;
+      }
+
+      if (!window.campaign_id) return;
+
+      const storedData = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, window.campaign_id, "compendium");
+
+      if (storedData && (await StorageHelper.objectStoreExists(StorageHelper.dbNames.compendiums, storedData))) {
         settings.game = storedData;
-      else settings.game = origin;
+      } else {
+        // FIXED: Point to modular tracking backup settings string instead of leaking into window.origin fields
+        settings.game = settings.origin;
+      }
+
       await createUi();
     },
   };
+
   return Compendium;
 })();

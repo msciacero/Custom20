@@ -1,94 +1,123 @@
 var Attacks = (function () {
   function processInput(event) {
-    if (event.target.name === "attr_dmgmod") updateDamageModifier(event);
-    else if (event.target.name === "attr_atk_desc") updateAttackDescription(event);
+    if (event.target.name === "attr_dmgmod") {
+      updateDamageModifier(event);
+    } else if (event.target.name === "attr_atk_desc") {
+      updateAttackDescription(event);
+    }
   }
 
   function updateAttackDescription(event) {
-    var roll20Item = getInventoryItem(event);
+    const roll20Item = getInventoryItem(event);
     if (!roll20Item) return;
 
-    var itemMods = getItemModifiers(roll20Item);
+    const itemMods = getItemModifiers(roll20Item);
+    const inputValue = event.target.value?.trim() || "";
+    let found = false;
 
-    var found = false;
-    for (var i = 0; i < itemMods.length; i++) {
+    for (let i = 0; i < itemMods.length; i++) {
       if (itemMods[i].startsWith("Attack Description")) {
-        if (event.target.value) itemMods[i] = "Attack Description: " + event.target.value;
-        else itemMods.splice(i, 1);
-
+        if (inputValue) {
+          itemMods[i] = "Attack Description: " + inputValue;
+        } else {
+          itemMods.splice(i, 1);
+        }
         found = true;
         break;
       }
     }
 
-    if (!found) itemMods.push("Attack Description: " + event.target.value);
+    if (!found && inputValue) {
+      itemMods.push("Attack Description: " + inputValue);
+    }
+
     updateItemModifiers(roll20Item, itemMods);
   }
 
   function updateDamageModifier(event) {
-    var roll20Item = getInventoryItem(event);
+    const roll20Item = getInventoryItem(event);
     if (!roll20Item) return;
 
-    var magicmod = event.target.closest(".options").querySelector("input[name='attr_atkmagic']").value;
+    // Optional chaining to prevent early-load structural crashes
+    const optionsParent = event.target.closest(".options");
+    const magicmod = optionsParent?.querySelector("input[name='attr_atkmagic']")?.value || "";
     if (magicmod) return;
 
-    var itemMods = getItemModifiers(roll20Item);
-    var attack_type_regex = /(?:^|,)\s*Item Type: (Melee|Ranged) Weapon(?:,|$)/i;
-    var attack_type_results = attack_type_regex.exec(itemMods.join(","));
-    var atktype = attack_type_results ? attack_type_results[1] : "";
+    const itemMods = getItemModifiers(roll20Item);
+    const attackTypeRegex = /(?:^|,)\s*Item Type: (Melee|Ranged) Weapon(?:,|$)/i;
+    const attackTypeResults = attackTypeRegex.exec(itemMods.join(","));
+    const atktype = attackTypeResults ? attackTypeResults[1] : "Weapon";
+    const numericValue = Number(event.target.value) || 0;
 
-    var damagemod_found = false;
-    for (var i = 0; i < itemMods.length; i++) {
+    let damagemod_found = false;
+    for (let i = 0; i < itemMods.length; i++) {
       if (itemMods[i].match(/^(Weapon|Melee|Ranged) Damage[:]?\s([+-]?\d+)$/)) {
         damagemod_found = true;
-        if (event.target.value !== 0) itemMods[i] = atktype + " Damage " + event.target.value;
-        else itemMods.splice(i, 1);
 
+        if (numericValue !== 0) {
+          itemMods[i] = `${atktype} Damage +${numericValue}`;
+        } else {
+          itemMods.splice(i, 1);
+        }
         break;
       }
     }
 
-    if (!damagemod_found) itemMods.push(atktype + " Damage " + event.target.value);
+    if (!damagemod_found && numericValue !== 0) {
+      itemMods.push(`${atktype} Damage +${numericValue}`);
+    }
 
+    // Debounced loop boundary execution placeholder layout frame
     setTimeout(() => {
       updateItemModifiers(roll20Item, itemMods);
     }, 1000);
   }
 
   function getInventoryItem(event) {
-    var itemId = event.target.closest(".repitem")?.querySelector('input[name="attr_itemid"]')?.value;
+    const parentRow = event.target.closest(".repitem");
+    const itemId = parentRow?.querySelector('input[name="attr_spellid"], input[name="attr_itemid"]')?.value;
+    if (!itemId) return null;
+
     return document.querySelector(`.page .equipment .complex .repitem[data-reprowid="${itemId}" i]`);
   }
 
   function getItemModifiers(roll20Item) {
-    var itemMods = roll20Item.querySelector("input[name='attr_itemmodifiers']").value;
-    if (itemMods) itemMods = itemMods.split(",");
-    else itemMods = [];
-
-    return itemMods;
+    const modifiersInput = roll20Item.querySelector("input[name='attr_itemmodifiers']");
+    const itemMods = modifiersInput?.value || "";
+    return itemMods ? itemMods.split(",") : [];
   }
 
   function updateItemModifiers(roll20Item, itemMods) {
-    var input = roll20Item.querySelector("input[name='attr_itemmodifiers']");
-    itemMods = itemMods.join(",");
-    if (input && input.value !== itemMods) {
-      input.value = itemMods;
+    const input = roll20Item.querySelector("input[name='attr_itemmodifiers']");
+    if (!input) return;
+
+    const consolidatedMods = itemMods.join(",");
+    if (input.value !== consolidatedMods) {
+      input.value = consolidatedMods;
+      // Trigger native Roll20 synchronization engine updates safely
       input.dispatchEvent(new Event("blur"));
     }
   }
 
-  var Attacks = {
+  const Attacks = {
     init: function init() {
-      document.querySelector(".page .attacks .repcontainer").addEventListener("change", processInput);
+      const repContainer = document.querySelector(".page .attacks .repcontainer");
+      if (repContainer) {
+        repContainer.addEventListener("change", processInput);
+      } else {
+        console.warn("[C20] Could not attach listener: '.page .attacks .repcontainer' anchor node missing.");
+      }
 
-      Array.from(document.querySelectorAll(".page .attacks .repcontainer input[name='attr_dmgmod']"))
-        ?.filter((x) => x.value)
-        ?.forEach((x) => updateDamageModifier({ target: x }));
+      // Initialize existing damage modifier values safely
+      document.querySelectorAll(".page .attacks .repcontainer input[name='attr_dmgmod']").forEach((x) => {
+        if (x.value && Number(x.value) !== 0) updateDamageModifier({ target: x });
+      });
 
-      Array.from(document.querySelectorAll(".page .attacks .repcontainer textarea[name='attr_atk_desc']"))
-        ?.filter((x) => x.value)
-        ?.forEach((x) => updateDamageModifier({ target: x }));
+      document.querySelectorAll(".page .attacks .repcontainer textarea[name='attr_atk_desc']").forEach((x) => {
+        if (x.value) updateAttackDescription({ target: x });
+      });
     },
   };
+
   return Attacks;
 })();

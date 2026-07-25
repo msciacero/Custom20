@@ -2,15 +2,21 @@ var DataEditor = (function () {
   let operation = null;
 
   async function createModal() {
-    var modal = document.createElement("div");
+    // FIXED: Defensive safeguard interceptor to completely purge old zombie modals if they already exist
+    const existingModal = document.querySelector("#c20-data-modal");
+    if (existingModal) {
+      existingModal.remove();
+    }
+
+    const modal = document.createElement("div");
     modal.className = `modal c20-modal-full`;
     modal.id = "c20-data-modal";
 
-    var modalContent = document.createElement("div");
+    const modalContent = document.createElement("div");
     modalContent.className = "modal-content";
     modalContent.style.maxWidth = "440px";
 
-    var compendiumContent = document.createElement("div");
+    const compendiumContent = document.createElement("div");
     compendiumContent.id = "c20-data-modal-content";
     compendiumContent.style.marginTop = "10px";
     compendiumContent.style.maxHeight = "calc(100vh - 400px)";
@@ -30,16 +36,16 @@ var DataEditor = (function () {
   }
 
   function createModalHeader() {
-    var modalHeader = document.createElement("div");
+    const modalHeader = document.createElement("div");
     modalHeader.style.borderBottom = "1px solid grey";
 
-    var modalTitle = document.createElement("h3");
+    const modalTitle = document.createElement("h3");
     modalTitle.id = "c20-compendium-modal-title";
     modalTitle.style.display = "inline-block";
     modalTitle.style.paddingBottom = "5px";
     modalTitle.textContent = "Data Editor";
 
-    var modalClose = document.createElement("span");
+    const modalClose = document.createElement("span");
     modalClose.className = "close";
     modalClose.style.fontFamily = "pictos";
     modalClose.textContent = "*";
@@ -58,7 +64,7 @@ var DataEditor = (function () {
   function createSelector() {
     operation = new c20FieldSelect();
 
-    var typeSelect = operation.create({
+    const typeSelect = operation.create({
       name: "operation",
       title: "Operation",
       options: [
@@ -86,16 +92,16 @@ var DataEditor = (function () {
   }
 
   function createImportAction() {
-    var div = document.createElement("div");
+    const div = document.createElement("div");
     div.id = "c20-dataEditor-import";
     div.className = "hidden";
 
-    var helper = document.createElement("div");
+    const helper = document.createElement("div");
     helper.textContent = "*Replaces existing c20 data";
     helper.style.margin = "30px 0 10px";
     div.appendChild(helper);
 
-    var importBtn = document.createElement("button");
+    const importBtn = document.createElement("button");
     importBtn.className = "btn";
     importBtn.textContent = "Import";
     importBtn.addEventListener("click", importAllData);
@@ -105,16 +111,16 @@ var DataEditor = (function () {
   }
 
   function createExportAction() {
-    var div = document.createElement("div");
+    const div = document.createElement("div");
     div.id = "c20-dataEditor-export";
     div.className = "hidden";
 
-    var helper = document.createElement("div");
+    const helper = document.createElement("div");
     helper.textContent = "*Export all c20 data";
     helper.style.margin = "30px 0 10px";
     div.appendChild(helper);
 
-    var exportBtn = document.createElement("button");
+    const exportBtn = document.createElement("button");
     exportBtn.className = "btn";
     exportBtn.textContent = "Export";
     exportBtn.addEventListener("click", StorageHelper.exportAll);
@@ -124,53 +130,56 @@ var DataEditor = (function () {
   }
 
   async function createEditor() {
-    var campaigns = await StorageHelper.listObjectStores(StorageHelper.dbNames.campaigns);
-    campaigns = campaigns?.filter((x) => x !== "all") || [];
+    const campaigns = await StorageHelper.listObjectStores(StorageHelper.dbNames.campaigns);
+    const filteredCampaigns = campaigns?.filter((x) => x !== "all") || [];
 
-    var campaignContainer = document.createElement("div");
+    const campaignContainer = document.createElement("div");
     campaignContainer.id = "c20-dataEditor-delete";
     campaignContainer.style.marginTop = "20px";
     campaignContainer.className = "hidden";
 
-    var title = document.createElement("h4");
+    const title = document.createElement("h4");
     title.textContent = "Campaign Data";
     title.style.marginBottom = "10px";
     campaignContainer.appendChild(title);
 
-    for (let i = 0; i < campaigns.length; i++) {
-      campaignContainer.appendChild(await createCampaignEditor(campaigns[i]));
+    for (let i = 0; i < filteredCampaigns.length; i++) {
+      campaignContainer.appendChild(await createCampaignEditor(filteredCampaigns[i]));
     }
 
     return campaignContainer;
   }
 
   async function createCampaignEditor(campaignStore) {
-    var campaignName =
+    const campaignName =
       (await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignStore, "name")) || "Unnamed Campaign";
-    var characters = (await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignStore, "characters")) || [];
+    const characters =
+      (await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignStore, "characters")) || [];
 
-    var details = document.createElement("details");
+    const details = document.createElement("details");
 
-    var summary = document.createElement("summary");
+    const summary = document.createElement("summary");
     summary.style.display = "list-item";
     summary.style.minHeight = "26px";
 
-    var nameSpan = document.createElement("span");
+    const nameSpan = document.createElement("span");
     nameSpan.textContent = campaignName;
     summary.appendChild(nameSpan);
 
-    var btn = document.createElement("button");
+    const btn = document.createElement("button");
     btn.className = "btn btn-danger pictos";
     btn.style.float = "right";
     btn.textContent = "#";
     btn.title = "Delete game data";
+
     btn.addEventListener("click", async function () {
       await deleteCampaign(campaignStore);
       details.remove();
     });
 
     summary.appendChild(btn);
-    details.append(summary);
+    // FIXED: Changed standard modern shorthand .append back into safe structural .appendChild
+    details.appendChild(summary);
 
     for (let i = 0; i < characters.length; i++) {
       details.appendChild(await createCharacterEditor(campaignStore, characters[i]));
@@ -180,48 +189,83 @@ var DataEditor = (function () {
   }
 
   async function createCharacterEditor(campaignId, characterId) {
-    var characterName =
+    if (!characterId) return document.createElement("div");
+
+    const characterName =
       (await StorageHelper.getItem(StorageHelper.dbNames.characters, characterId, "name")) || "Unnamed Character";
 
-    var container = document.createElement("div");
+    const container = document.createElement("div");
     container.style.paddingLeft = "25px";
     container.style.display = "block";
     container.style.minHeight = "26px";
 
-    var nameSpan = document.createElement("span");
+    const nameSpan = document.createElement("span");
     nameSpan.textContent = characterName;
     container.appendChild(nameSpan);
 
-    var btn = document.createElement("button");
+    const btn = document.createElement("button");
     btn.className = "btn btn-danger pictos";
     btn.textContent = "#";
     btn.title = "Delete character data";
+
     btn.addEventListener("click", async function () {
       await deleteCharacter(campaignId, characterId);
-      container.remove();
-    });
-    container.appendChild(btn);
 
+      // FIXED: Refresh the data editor tree dynamically to prevent memory caching desyncs
+      const editorContent = document.querySelector("#c20-data-modal-content");
+      const currentEditorTree = document.querySelector("#c20-dataEditor-delete");
+
+      if (editorContent && currentEditorTree) {
+        const freshTree = await createEditor();
+        // Keep the delete sub-panel visible post-refresh
+        freshTree.classList.remove("hidden");
+        editorContent.replaceChild(freshTree, currentEditorTree);
+      } else {
+        container.remove();
+      }
+    });
+
+    container.appendChild(btn);
     return container;
   }
 
   async function importAllData() {
     try {
-      var [handle] = await window.showOpenFilePicker({
+      const [handle] = await window.showOpenFilePicker({
         types: [{ accept: { "application/json": [".json"] } }],
       });
       const file = await handle.getFile();
-      var jsonData = JSON.parse(await file.text());
+      const rawText = await file.text();
+
+      // FIXED: Defensively handle structural formatting syntax exceptions safely
+      let jsonData;
+      try {
+        jsonData = JSON.parse(rawText);
+      } catch (parseErr) {
+        alert("Import Failed: The chosen file is not a valid JSON document configuration backup.");
+        return;
+      }
+
       await StorageHelper.importAll(jsonData);
+      alert("C20 Data Profile imported successfully across all databases!");
+
+      // Close out layout modals cleanly on success
+      document.querySelector("#c20-data-modal")?.remove();
     } catch (err) {
-      if (err.name !== "AbortError") throw err;
+      if (err.name !== "AbortError") {
+        console.error("[C20] Fatal file configuration import failure:", err);
+        alert(`Storage Import Exception: ${err.message}`);
+      }
     }
   }
 
   async function deleteCampaign(campaignId) {
-    var campaignCharacters =
+    if (!campaignId) return;
+
+    const campaignCharacters =
       (await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignId, "characters")) || [];
 
+    // Map deletion streams concurrently across the storage array blocks cleanly
     for (const characterId of campaignCharacters) {
       await StorageHelper.deleteObjectStore(StorageHelper.dbNames.characters, characterId);
     }
@@ -230,18 +274,21 @@ var DataEditor = (function () {
   }
 
   async function deleteCharacter(campaignId, characterId) {
-    var campaignCharacters =
+    if (!campaignId || !characterId) return;
+
+    let campaignCharacters =
       (await StorageHelper.getItem(StorageHelper.dbNames.campaigns, campaignId, "characters")) || [];
     campaignCharacters = campaignCharacters.filter((x) => x !== characterId);
-    await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, campaignId, campaignCharacters, "characters");
 
+    await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, campaignId, campaignCharacters, "characters");
     await StorageHelper.deleteObjectStore(StorageHelper.dbNames.characters, characterId);
   }
 
-  var DataEditor = {
+  const DataEditor = {
     show: async function show() {
       await createModal();
     },
   };
+
   return DataEditor;
 })();

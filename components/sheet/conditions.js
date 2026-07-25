@@ -1,30 +1,41 @@
 var Conditions = (function () {
-  var storageKey;
-  var settings = {
+  let storageKey;
+
+  const settings = {
     conditions: null,
     playerConditions: [],
   };
 
   function createUi() {
-    var container = document.createElement("div");
+    // Prevent duplicated panel injection if init fires multi-times
+    if (document.querySelector(".conditions")) return;
+
+    const container = document.createElement("div");
     container.className = "conditions";
 
-    var input = document.createElement("input");
+    const input = document.createElement("input");
     input.className = "options-flag";
     input.type = "checkbox";
     input.name = "attr_options-flag-conditions";
 
-    var inputDisplay = document.createElement("span");
+    const inputDisplay = document.createElement("span");
     inputDisplay.textContent = "y";
 
-    var display = createDisplay();
-    var options = createOptions();
+    const display = createDisplay();
+    const options = createOptions();
 
     container.appendChild(input);
     container.appendChild(inputDisplay);
     container.appendChild(display);
     container.appendChild(options);
-    document.querySelector(".vitals").after(container);
+
+    const anchorPoint = document.querySelector(".vitals");
+    if (anchorPoint) {
+      anchorPoint.after(container);
+    } else {
+      console.warn("[C20] Aborting condition mount: '.vitals' anchor missing from sheet DOM.");
+      return;
+    }
 
     updateDisplay();
     updateEffectLabels();
@@ -41,33 +52,35 @@ var Conditions = (function () {
   }
 
   function createOptions() {
-    var options = document.createElement("div");
+    const options = document.createElement("div");
     options.style.display = "none";
     options.className = "options";
 
-    // individual settings
-    var checkboxContainer = document.createElement("div");
+    const checkboxContainer = document.createElement("div");
     checkboxContainer.className = "c20-checkbox-container";
 
+    if (!settings.conditions) return options;
+
+    // Filter out and handle individual standalone conditions
     settings.conditions.forEach((condition) => {
-      var key = condition.groupName ? `${condition.groupName}-${condition.name}` : condition.name;
+      const key = condition.groupName ? `${condition.groupName}-${condition.name}` : condition.name;
 
       if (!condition.groupName) {
-        var group = document.createElement("div");
+        const group = document.createElement("div");
 
-        var input = document.createElement("input");
+        const input = document.createElement("input");
         input.type = "checkbox";
         input.name = `c20-conditions-${key}`;
         input.id = `c20-conditions-${key}`;
         input.checked = settings.playerConditions.includes(key);
 
-        var label = document.createElement("label");
+        const label = document.createElement("label");
         label.textContent = condition.name;
         label.setAttribute("for", `c20-conditions-${key}`);
         label.className = "c20-label";
 
-        input.addEventListener("change", async function (event) {
-          updatePlayerConditions(null, key, this.checked);
+        input.addEventListener("change", async function () {
+          await updatePlayerConditions(null, key, this.checked);
           updateDisplay();
           updateEffectLabels();
         });
@@ -78,50 +91,56 @@ var Conditions = (function () {
       }
     });
 
-    // group settings
-    var groupContainer = document.createElement("div");
+    const groupContainer = document.createElement("div");
     groupContainer.className = "c20-condition-group";
 
-    var groups = Object.groupBy(
-      settings.conditions.filter((i) => i.groupName),
-      ({ groupName }) => groupName,
-    );
+    const filteredConditions = settings.conditions.filter((i) => i.groupName);
+    const groups = filteredConditions.reduce((acc, item) => {
+      if (!acc[item.groupName]) acc[item.groupName] = [];
+      acc[item.groupName].push(item);
+      return acc;
+    }, {});
 
     Object.keys(groups).forEach((key) => {
-      var radioContainer = document.createElement("div");
+      const radioContainer = document.createElement("div");
       radioContainer.className = `c20-${key} c20-radio-container`;
       radioContainer.style.display = "flex";
       radioContainer.style.fontSize = "9px";
-      radioContainer.style.fontWeight = 700;
+      radioContainer.style.fontWeight = "700";
 
-      var title = document.createElement("div");
+      const title = document.createElement("div");
       title.textContent = `${key}: `;
       title.style.margin = "2px 5px 0 0";
       radioContainer.appendChild(title);
 
       groups[key].forEach((condition) => {
-        var input = document.createElement("input");
-        var groupKey = `${condition.groupName}-${condition.name}`;
+        const input = document.createElement("input");
+        const groupKey = `${condition.groupName}-${condition.name}`;
 
         input.type = "radio";
         input.name = `condition-${condition.groupName}`;
         input.id = `c20-conditions-${groupKey}`;
-        input.checked = settings.playerConditions.includes(`${groupKey}`);
 
-        var label = document.createElement("label");
+        const isCurrentlyActive = settings.playerConditions.includes(groupKey);
+        input.checked = isCurrentlyActive;
+
+        const label = document.createElement("label");
         label.setAttribute("for", `c20-conditions-${groupKey}`);
         label.textContent = condition.name;
 
-        input.addEventListener("click", function (event) {
-          if (settings.playerConditions.includes(`${groupKey}`)) {
+        input.addEventListener("click", async function (event) {
+          const wasActiveBeforeClick = settings.playerConditions.includes(groupKey);
+
+          if (wasActiveBeforeClick) {
+            // If they clicked an already active tier radio button, uncheck it completely
             this.checked = false;
+            await updatePlayerConditions(condition.groupName, groupKey, false);
+          } else {
+            await updatePlayerConditions(condition.groupName, groupKey, true);
           }
 
-          updatePlayerConditions(condition.groupName, groupKey, this.checked);
           updateDisplay();
-
           updateEffectLabels();
-          saveCharacterConditions();
         });
 
         radioContainer.appendChild(input);
@@ -137,22 +156,18 @@ var Conditions = (function () {
   }
 
   function createDisplay() {
-    var display = document.createElement("div");
+    const display = document.createElement("div");
     display.className = "c20-display";
 
-    // condition labels
-    var displayList = document.createElement("div");
+    const displayList = document.createElement("div");
     displayList.className = "c20-display-list";
 
-    // horizontal rule
-    var hr = document.createElement("hr");
+    const hr = document.createElement("hr");
 
-    // effects labels
-    var effectsList = document.createElement("div");
+    const effectsList = document.createElement("div");
     effectsList.className = "c20-effects-list";
 
-    // panel label
-    var label = document.createElement("span");
+    const label = document.createElement("span");
     label.className = "label";
     label.setAttribute("data-i18n", "conditions");
     label.textContent = "CONDITIONS";
@@ -166,22 +181,27 @@ var Conditions = (function () {
   }
 
   function createConditionLabel(condition) {
-    var key = condition.groupName ? `${condition.groupName}-${condition.name}` : condition.name;
+    if (!condition) return document.createElement("div");
 
-    var conditionLabel = document.createElement("div");
+    const key = condition.groupName ? `${condition.groupName}-${condition.name}` : condition.name;
+
+    const conditionLabel = document.createElement("div");
     conditionLabel.className = `c20-conditions-${key}`;
-    if (condition.groupName) conditionLabel.textContent = `${condition.groupName} ${condition.name}`;
-    else conditionLabel.textContent = key;
+    conditionLabel.textContent = condition.groupName ? `${condition.groupName} ${condition.name}` : key;
     conditionLabel.style.display = "list-item";
     conditionLabel.style.cursor = "pointer";
 
     conditionLabel.addEventListener("click", async function () {
-      var compendiumCondition = await getCompendiumItem(condition.key);
-      var title = condition.groupName ? condition.groupName : condition.name;
-      var container = document.createElement("div");
-      var description = document.createElement("div");
-      description.appendChild(createMarkdownDisplay(compendiumCondition.description));
+      const compendiumCondition = await getCompendiumItem(condition.key);
+      if (!compendiumCondition) return;
+
+      const title = condition.groupName ? condition.groupName : condition.name;
+      const container = document.createElement("div");
+      const description = document.createElement("div");
+
+      description.appendChild(createMarkdownDisplay(compendiumCondition.description || "No description provided."));
       container.appendChild(description);
+
       new CardModal(title, container);
     });
 
@@ -189,14 +209,18 @@ var Conditions = (function () {
   }
 
   async function updateConditionsList() {
-    settings.compendium = CharacterSettings.settings.conditionCompendium;
+    const targetSettings =
+      typeof CharacterSettings.settings === "function" ? CharacterSettings.settings() : CharacterSettings.settings;
+    settings.compendium = targetSettings?.conditionCompendium || "off";
     if (settings.compendium === "off") return;
 
-    var conditions = await loadCompendiumConditions(settings.compendium);
+    const conditions = await loadCompendiumConditions(settings.compendium);
+    if (!conditions) return;
+
     settings.conditions = conditions
       .sort((a, b) => {
-        var nameA = a.groupName ? `${a.groupName}-${a.name}` : a.name;
-        var nameB = b.groupName ? `${b.groupName}-${b.name}` : b.name;
+        const nameA = a.groupName ? `${a.groupName}-${a.name}` : a.name;
+        const nameB = b.groupName ? `${b.groupName}-${b.name}` : b.name;
         return nameA.localeCompare(nameB);
       })
       .map((x) => ({ key: x.id, name: x.name, groupName: x.groupName }));
@@ -204,20 +228,22 @@ var Conditions = (function () {
 
   async function updatePlayerConditions(groupName, key, isChecked) {
     const isActive = settings.playerConditions.includes(key);
+
     if (!isActive && isChecked) {
       settings.playerConditions.push(key);
     } else if (isActive && !isChecked) {
-      settings.playerConditions.splice(settings.playerConditions.indexOf(key), 1);
+      const index = settings.playerConditions.indexOf(key);
+      if (index !== -1) settings.playerConditions.splice(index, 1);
     }
 
-    // remove other conditions in the same group
-    if (groupName) {
+    // Cleanly flush sibling radio tracks out of the pool
+    if (groupName && isChecked) {
       settings.conditions
         .filter((condition) => condition.groupName === groupName)
         .forEach((condition) => {
-          var groupKey = `${condition.groupName}-${condition.name}`;
+          const groupKey = `${condition.groupName}-${condition.name}`;
           if (groupKey !== key) {
-            var index = settings.playerConditions.indexOf(groupKey);
+            const index = settings.playerConditions.indexOf(groupKey);
             if (index !== -1) {
               settings.playerConditions.splice(index, 1);
             }
@@ -229,12 +255,14 @@ var Conditions = (function () {
   }
 
   function updateDisplay() {
-    var displayList = document.querySelector(".c20-display .c20-display-list");
-    var hr = document.querySelector(".c20-display hr");
+    const displayList = document.querySelector(".c20-display .c20-display-list");
+    const hr = document.querySelector(".c20-display hr");
+    if (!displayList || !hr) return;
+
     displayList.replaceChildren();
 
     if (settings.playerConditions.length === 0) {
-      var conditionLabel = document.createElement("div");
+      const conditionLabel = document.createElement("div");
       conditionLabel.className = `c20-conditions-none`;
       conditionLabel.textContent = "None";
       conditionLabel.style.display = "list-item";
@@ -243,45 +271,66 @@ var Conditions = (function () {
     } else {
       hr.style.display = "block";
       settings.playerConditions.forEach((key) => {
-        var condition = settings.conditions.find((condition) => {
-          var conditionKey = condition.groupName ? `${condition.groupName}-${condition.name}` : condition.name;
+        if (!settings.conditions) return;
+
+        const condition = settings.conditions.find((c) => {
+          const conditionKey = c.groupName ? `${c.groupName}-${c.name}` : c.name;
           return conditionKey === key;
         });
-        displayList.appendChild(createConditionLabel(condition));
+
+        if (condition) {
+          displayList.appendChild(createConditionLabel(condition));
+        }
       });
     }
   }
 
   async function updateEffectLabels() {
-    var enabledEffects = [];
-
-    for (var i = 0; i < settings.playerConditions.length; i++) {
-      var condition = settings.conditions.find((condition) => {
-        var conditionKey = condition.groupName ? `${condition.groupName}-${condition.name}` : condition.name;
-        return conditionKey === settings.playerConditions[i];
-      });
-      var compendiumCondition = await getCompendiumItem(condition.key);
-
-      enabledEffects.push(...compendiumCondition.short);
+    const enabledEffects = [];
+    if (!settings.conditions || settings.playerConditions.length === 0) {
+      document.querySelector(".c20-effects-list")?.replaceChildren();
+      return;
     }
 
-    enabledEffects = enabledEffects.sort();
-    enabledEffects = [...new Set(enabledEffects)];
+    try {
+      // Swapped out sequential await loops for lightning-fast concurrent parallel queries
+      const queryPromises = settings.playerConditions.map(async (playerCondKey) => {
+        const condition = settings.conditions.find((c) => {
+          const conditionKey = c.groupName ? `${c.groupName}-${c.name}` : c.name;
+          return conditionKey === playerCondKey;
+        });
 
-    var holder = [];
+        if (!condition || !condition.key) return [];
+        const compendiumCondition = await getCompendiumItem(condition.key);
+        return compendiumCondition?.short || [];
+      });
 
-    // display enabled effects
-    enabledEffects.forEach((effect) => {
-      var label = document.createElement("div");
+      const resolvedEffectsArrays = await Promise.all(queryPromises);
+
+      // Flatten all collected tags down into a single array track cleanly
+      resolvedEffectsArrays.forEach((effects) => {
+        enabledEffects.push(...effects);
+      });
+    } catch (error) {
+      console.error("[C20] Failed evaluating active condition effect labels:", error);
+    }
+
+    const uniqueSortedEffects = [...new Set(enabledEffects)].sort();
+    const holder = [];
+
+    uniqueSortedEffects.forEach((effect) => {
+      const label = document.createElement("div");
       label.textContent = effect;
       label.style.display = "list-item";
       holder.push(label);
     });
 
-    document.querySelector(".c20-effects-list").replaceChildren(...holder);
+    const effectsListContainer = document.querySelector(".c20-effects-list");
+    if (effectsListContainer) {
+      effectsListContainer.replaceChildren(...holder);
+    }
   }
 
-  //save
   async function saveCharacterConditions() {
     await StorageHelper.addOrUpdateItem(
       StorageHelper.dbNames.characters,
@@ -291,7 +340,6 @@ var Conditions = (function () {
     );
   }
 
-  //load
   async function loadCharacterConditions() {
     return await StorageHelper.getItem(StorageHelper.dbNames.characters, window.character_id, "conditions");
   }
@@ -304,29 +352,33 @@ var Conditions = (function () {
     return await StorageHelper.getItem(StorageHelper.dbNames.compendiums, settings.compendium, itemKey);
   }
 
-  var Conditions = {
+  const Conditions = {
     init: async function init() {
       document.querySelector(".conditions")?.remove();
       await updateConditionsList();
       if (settings.compendium === "off") return;
 
-      // get existing player conditions
-      settings.playerConditions = (await loadCharacterConditions()) ?? [];
+      // Pull down existing tracking array from local storage
+      const storedConditions = await loadCharacterConditions();
+      settings.playerConditions = Array.isArray(storedConditions) ? storedConditions : [];
 
-      // remove any existing player conditions that are no longer in conditions list
-      settings.playerConditions = settings.playerConditions.filter((key) =>
-        settings.conditions.some((condition) => {
-          var conditionKey = condition.groupName ? `${condition.groupName}-${condition.name}` : condition.name;
-          return conditionKey === key;
-        }),
-      );
+      // Clean filter bounds check validation
+      if (Array.isArray(settings.conditions)) {
+        settings.playerConditions = settings.playerConditions.filter((key) =>
+          settings.conditions.some((condition) => {
+            const conditionKey = condition.groupName ? `${condition.groupName}-${condition.name}` : condition.name;
+            return conditionKey === key;
+          }),
+        );
+      }
 
       createUi();
-      updateEffectLabels();
+      await updateEffectLabels();
     },
     remove: function remove() {
       document.querySelector(".conditions")?.remove();
     },
   };
+
   return Conditions;
 })();

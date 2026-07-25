@@ -1,38 +1,56 @@
-//--Adds defenses and conditions to character sheet--
-
 var Defenses = (function () {
-  var storageKey;
+  let storageKey;
 
-  var defenses = {
+  // Serves purely as the initial default schema structure
+  const defaultDefenses = {
     resistance: "",
     immunity: "",
     vulnerability: "",
   };
 
-  function createInput(defenseType) {
-    var row = document.createElement("div");
+  function createInput(defenseType, initialValue) {
+    const row = document.createElement("div");
     row.className = `row c20-health-${defenseType}`;
 
-    var label = document.createElement("img");
+    const label = document.createElement("img");
     label.src = browser.runtime.getURL(`library/icons/resistance.svg`);
     label.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
-    var labelText = document.createElement("span");
+    const labelText = document.createElement("span");
     labelText.className = "c20-imageText";
     labelText.textContent = defenseType.charAt(0).toUpperCase();
     labelText.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
-    var input = document.createElement("input");
+    const input = document.createElement("input");
     input.type = "text";
     input.name = `attr_class_defense_${defenseType}`;
-    input.value = defenses[defenseType];
+    input.value = initialValue;
     input.placeholder = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
     input.addEventListener("change", async function (event) {
-      document.querySelector(`.health-defense .c20-health-${defenseType} .c20-defenseText`).textContent =
-        event.target.value;
-      defenses[defenseType] = event.target.value;
-      await saveDefenses();
+      const newValue = event.target.value;
+
+      // Update UI displays immediately
+      const textDisplay = document.querySelector(`.health-defense .c20-health-${defenseType} .c20-defenseText`);
+      if (textDisplay) textDisplay.textContent = newValue;
+
+      let currentStoredData = await StorageHelper.getItem(
+        StorageHelper.dbNames.characters,
+        window.character_id,
+        "defenses",
+      );
+      if (!currentStoredData) {
+        currentStoredData = { ...defaultDefenses };
+      }
+
+      currentStoredData[defenseType] = newValue;
+
+      await StorageHelper.addOrUpdateItem(
+        StorageHelper.dbNames.characters,
+        window.character_id,
+        currentStoredData,
+        "defenses",
+      );
     });
 
     row.appendChild(label);
@@ -42,23 +60,23 @@ var Defenses = (function () {
     return row;
   }
 
-  function createDisplay(defenseType) {
-    var row = document.createElement("div");
+  function createDisplay(defenseType, currentValue) {
+    const row = document.createElement("div");
     row.className = `row c20-health-${defenseType}`;
 
-    var label = document.createElement("img");
+    const label = document.createElement("img");
     label.src = browser.runtime.getURL(`library/icons/resistance.svg`);
     label.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
-    var labelText = document.createElement("span");
+    const labelText = document.createElement("span");
     labelText.className = "c20-imageText";
     labelText.textContent = defenseType.charAt(0).toUpperCase();
     labelText.title = defenseType.charAt(0).toUpperCase() + defenseType.slice(1);
 
-    var display = document.createElement("span");
+    const display = document.createElement("span");
     display.name = `attr_class_defense_${defenseType}`;
     display.className = "c20-defenseText";
-    display.textContent = defenses[defenseType];
+    display.textContent = currentValue;
     display.style.display = "inline";
     display.style.width = "initial";
 
@@ -69,38 +87,45 @@ var Defenses = (function () {
     return row;
   }
 
-  function createUi() {
-    var div = document.createElement("div");
+  function createUi(activeData) {
+    if (document.querySelector(".health-defense")) return;
+
+    const div = document.createElement("div");
     div.className = "health-defense";
 
-    var input = document.createElement("input");
+    const input = document.createElement("input");
     input.className = "options-flag";
     input.type = "checkbox";
     input.name = "attr_options-flag-defenses";
 
-    var inputDisplay = document.createElement("span");
+    const inputDisplay = document.createElement("span");
     inputDisplay.style.top = "-10px";
     inputDisplay.textContent = "y";
 
-    var display = document.createElement("div");
+    const display = document.createElement("div");
     display.className = "display";
-    display.appendChild(createDisplay("resistance"));
-    display.appendChild(createDisplay("immunity"));
-    display.appendChild(createDisplay("vulnerability"));
+    display.appendChild(createDisplay("resistance", activeData.resistance));
+    display.appendChild(createDisplay("immunity", activeData.immunity));
+    display.appendChild(createDisplay("vulnerability", activeData.vulnerability));
 
-    var options = document.createElement("div");
+    const options = document.createElement("div");
     options.className = "options";
     options.style.display = "none";
-    options.appendChild(createInput("resistance"));
-    options.appendChild(createInput("immunity"));
-    options.appendChild(createInput("vulnerability"));
+    options.appendChild(createInput("resistance", activeData.resistance));
+    options.appendChild(createInput("immunity", activeData.immunity));
+    options.appendChild(createInput("vulnerability", activeData.vulnerability));
 
     div.appendChild(input);
     div.appendChild(inputDisplay);
     div.appendChild(display);
     div.appendChild(options);
 
-    document.querySelector(".hp").before(div);
+    const anchorPoint = document.querySelector(".hp");
+    if (anchorPoint) {
+      anchorPoint.before(div);
+    } else {
+      console.warn("[C20] Could not find anchor point '.hp' to inject defense layout.");
+    }
 
     input.addEventListener("change", function (event) {
       if (event.target.checked) {
@@ -113,30 +138,32 @@ var Defenses = (function () {
     });
   }
 
-  //save
-  async function saveDefenses() {
-    await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.characters, window.character_id, defenses, "defenses");
-  }
+  // load & verify validation routines safely
+  async function loadAndRetrieveDefenses() {
+    const storedData = await StorageHelper.getItem(StorageHelper.dbNames.characters, window.character_id, "defenses");
 
-  //load
-  async function loadDefenses() {
-    var storedData = await StorageHelper.getItem(StorageHelper.dbNames.characters, window.character_id, "defenses");
     if (storedData !== undefined) {
-      defenses = storedData;
-      return;
+      return { ...defaultDefenses, ...storedData };
     }
 
-    saveDefenses();
+    // Initialize default structure if empty
+    await StorageHelper.addOrUpdateItem(
+      StorageHelper.dbNames.characters,
+      window.character_id,
+      defaultDefenses,
+      "defenses",
+    );
+    return { ...defaultDefenses };
   }
 
   var Defenses = {
     init: async function init() {
       storageKey = window.character_id + "-defenses";
-      await loadDefenses();
-      createUi();
+      const cleanData = await loadAndRetrieveDefenses();
+      createUi(cleanData);
     },
     remove: function remove() {
-      document.querySelector(".health-defense").remove();
+      document.querySelector(".health-defense")?.remove();
     },
   };
   return Defenses;

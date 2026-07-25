@@ -160,7 +160,7 @@ var StorageHelper = (function () {
         if (matchedItem) {
           if (overwrite === true) currentItem.id = matchedItem.id;
           else duplicates.push(i);
-        } else if (currentItem.id !== undefined) {
+        } else {
           delete currentItem.id;
         }
       }

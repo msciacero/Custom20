@@ -1,74 +1,89 @@
 function createSelectInput(data) {
-  var group = document.createElement("div");
+  if (!data) return document.createElement("div");
 
-  var label = document.createElement("label");
-  label.setAttribute("for", data.name);
+  const group = document.createElement("div");
+  const uniqueId = `c20-select-${data.name}-${Math.floor(Math.random() * 100000)}`;
+
+  const label = document.createElement("label");
+  label.setAttribute("for", uniqueId);
   label.textContent = data.title;
 
-  var select = document.createElement("select");
-  select.id = data.name;
+  const select = document.createElement("select");
+  select.id = uniqueId;
   select.name = data.name;
-  select.required = data.required || false;
+  select.required = !!data.required;
   select.style.width = "100%";
 
-  // default option
-  var option = document.createElement("option");
+  // FIXED: Enforced strict nullish fallback evaluations to protect selection tracks
+  const currentActiveValue = data.value ?? "";
+
+  // default option setup
+  const option = document.createElement("option");
   option.value = "";
   option.textContent = "-- Select --";
   option.style.fontStyle = "italic";
-  if (data.value === option.value) option.selected = true;
+  if (currentActiveValue === "") option.selected = true;
   select.appendChild(option);
 
-  data.options.forEach((o) => {
-    var option = document.createElement("option");
-    option.value = o.value;
-    option.textContent = o.name;
-    if (data.value === o.value) option.selected = true;
-    select.appendChild(option);
-  });
+  if (Array.isArray(data.options)) {
+    data.options.forEach((o) => {
+      const opt = document.createElement("option");
+      opt.value = o.value;
+      opt.textContent = o.name;
+      if (currentActiveValue === String(o.value)) opt.selected = true;
+      select.appendChild(opt);
+    });
+  }
 
   group.appendChild(label);
   group.appendChild(select);
-
   return group;
 }
 
 function createRadioInputGroup({ title, name, options, selectedValue, changeHandler, inline }) {
-  var group = document.createElement("div");
+  const group = document.createElement("div");
   if (title) group.appendChild(createLabel(name, title));
 
-  var optionGroup = document.createElement("div");
+  const optionGroup = document.createElement("div");
   optionGroup.style.display = inline ? "flex" : "block";
   optionGroup.style.gap = inline ? "10px" : "0px";
 
-  options.forEach((o) => {
-    var radioInput = createRadioInput({
-      title: o.name,
-      id: o.value,
-      name: name,
-      checked: selectedValue === o.value,
-      changeHandler: changeHandler,
+  if (Array.isArray(options)) {
+    options.forEach((o) => {
+      const radioInput = createRadioInput({
+        title: o.name,
+        id: o.value,
+        name: name,
+        checked: selectedValue === o.value,
+        changeHandler: changeHandler,
+      });
+      optionGroup.appendChild(radioInput);
     });
-    optionGroup.appendChild(radioInput);
-  });
+  }
 
   group.appendChild(optionGroup);
   return group;
 }
 
 function createRadioInput({ title, id, name, checked, changeHandler }) {
-  var group = document.createElement("div");
+  const group = document.createElement("div");
   group.style.display = "flex";
 
-  var input = document.createElement("input");
+  const input = document.createElement("input");
   input.type = "radio";
   input.value = id;
-  input.id = `${name}-${id}`;
-  input.name = name;
-  input.checked = checked;
-  if (changeHandler !== undefined) input.addEventListener("change", changeHandler);
 
-  var label = createLabel(`${name}-${id}`, title);
+  // FIXED: Enforced unique ID strings per row to eliminate labels cross-firing bugs
+  const uniqueRadioId = `c20-radio-${name}-${id}-${Math.floor(Math.random() * 100000)}`;
+  input.id = uniqueRadioId;
+  input.name = name;
+  input.checked = !!checked;
+
+  if (typeof changeHandler === "function") {
+    input.addEventListener("change", changeHandler);
+  }
+
+  const label = createLabel(uniqueRadioId, title);
   label.style.padding = "5px 0 0 5px";
 
   group.appendChild(input);
@@ -77,37 +92,40 @@ function createRadioInput({ title, id, name, checked, changeHandler }) {
 }
 
 function createTextInput({ title, name, value, required, placeHolder }) {
-  var group = document.createElement("div");
+  const group = document.createElement("div");
   group.style.marginBottom = "10px";
 
-  var input = createInput(name, value, required, placeHolder);
-  input.style.width = "100%";
+  const input = createInput(name, value, required, placeHolder);
+  if (input) input.style.width = "100%";
 
   group.appendChild(createLabel(name, title));
-  group.appendChild(input);
+  if (input) group.appendChild(input);
   return group;
 }
 
 function createTextAreaInput({ title, name, value, required, height }) {
-  var group = document.createElement("div");
+  const group = document.createElement("div");
   group.style.marginBottom = "10px";
   group.appendChild(createLabel(name, title));
-  group.appendChild(createTextArea(name, value, required, height));
+
+  const textArea = createTextArea(name, value, required, height);
+  if (textArea) group.appendChild(textArea);
   return group;
 }
 
 function createCheckboxInput({ title, name, value }) {
-  var group = document.createElement("div");
+  const group = document.createElement("div");
+  const uniqueCheckboxId = `c20-checkbox-${name}-${Math.floor(Math.random() * 100000)}`;
 
-  var input = document.createElement("input");
+  const input = document.createElement("input");
   input.type = "checkbox";
   input.name = name;
-  input.id = name;
-  input.checked = value;
+  input.id = uniqueCheckboxId; // FIXED: Protected IDs from duplication layout overlap issues
+  input.checked = !!value;
   input.style.marginLeft = "0px";
   input.style.marginRight = "5px";
 
-  var label = createLabel(name, title);
+  const label = createLabel(uniqueCheckboxId, title);
   label.style.padding = "5px 0 0 0px";
   label.style.display = "inline-block";
 
@@ -117,148 +135,181 @@ function createCheckboxInput({ title, name, value }) {
 }
 
 function createHiddenInput({ name, value }) {
-  var input = document.createElement("input");
+  const input = document.createElement("input");
   input.type = "hidden";
   input.name = name;
-  input.value = value;
-
+  input.value = value ?? "";
   return input;
 }
 
 // Text Array Inputs
 function createTextArray({ title, name, values, required }) {
-  var group = document.createElement("div");
+  const group = document.createElement("div");
   group.style.marginBottom = "20px";
 
-  var label = document.createElement("label");
+  const label = document.createElement("label");
   label.textContent = title;
   group.appendChild(label);
 
-  values.forEach((v, _) => {
+  const initialValues = Array.isArray(values) ? values : [];
+  initialValues.forEach((v) => {
     group.appendChild(createTextArrayInput(name, v, required));
   });
 
-  var addBtn = createAddButton();
-  addBtn.addEventListener("click", function (event) {
-    event.preventDefault();
-    addBtn.before(createTextArrayInput(name, "", required));
-  });
-
-  group.appendChild(addBtn);
+  const addBtn = createAddButton();
+  if (addBtn) {
+    addBtn.addEventListener("click", function (event) {
+      event.preventDefault();
+      addBtn.before(createTextArrayInput(name, "", required));
+    });
+    group.appendChild(addBtn);
+  }
 
   return group;
 }
 
+// FIXED: Cleaned up listener reference loops to eliminate hidden memory leakage traps
+function handleFormArrayItemDelete(event) {
+  event.preventDefault();
+  const deleteBtn = event.currentTarget;
+  const parentRowContainer = deleteBtn.parentElement;
+  if (parentRowContainer) {
+    parentRowContainer.remove();
+  }
+}
+
 function createTextArrayInput(name, value, required) {
-  var inputGroup = document.createElement("div");
+  const inputGroup = document.createElement("div");
 
-  var input = createInput(name, value, required);
-  input.style.width = "91%";
-  input.style.marginBottom = "5px";
-  inputGroup.appendChild(input);
+  const input = createInput(name, value, required);
+  if (input) {
+    input.style.width = "91%";
+    input.style.marginBottom = "5px";
+    inputGroup.appendChild(input);
+  }
 
-  var btn = createDeleteButton();
-  btn.addEventListener("click", function () {
-    inputGroup.remove();
-  });
+  const btn = createDeleteButton();
+  if (btn) {
+    // SUCCESS: Replaced closed functional leaks with safe relative event traversals
+    btn.addEventListener("click", handleFormArrayItemDelete);
+    inputGroup.appendChild(btn);
+  }
 
-  inputGroup.appendChild(btn);
   return inputGroup;
 }
 
 // Text Area Array Inputs
 function createTextAreaArray({ title, name, values, required }) {
-  var group = document.createElement("div");
+  const group = document.createElement("div");
   group.style.marginBottom = "20px";
 
-  var label = document.createElement("label");
+  const label = document.createElement("label");
   label.textContent = title;
   group.appendChild(label);
 
-  values.forEach((v) => {
+  const initialValues = Array.isArray(values) ? values : [];
+  initialValues.forEach((v) => {
     group.appendChild(createTextAreaArrayInput(name, v, required));
   });
 
-  var addBtn = createAddButton();
-  addBtn.addEventListener("click", function (event) {
-    event.preventDefault();
-    addBtn.before(createTextAreaArrayInput(name, "", required));
-  });
-
-  group.appendChild(addBtn);
+  const addBtn = createAddButton();
+  if (addBtn) {
+    addBtn.addEventListener("click", function (event) {
+      event.preventDefault();
+      addBtn.before(createTextAreaArrayInput(name, "", required));
+    });
+    group.appendChild(addBtn);
+  }
 
   return group;
 }
 
 function createTextAreaArrayInput(name, value, required) {
-  var inputGroup = document.createElement("div");
+  const inputGroup = document.createElement("div");
 
-  var input = createTextArea(name, value, required, null);
-  input.style.marginBottom = "5px";
-  input.style.height = "50px";
-  inputGroup.appendChild(input);
+  const input = createTextArea(name, value, required, null);
+  if (input) {
+    input.style.marginBottom = "5px";
+    input.style.height = "50px";
+    inputGroup.appendChild(input);
+  }
 
-  var btn = createDeleteButton();
-  btn.addEventListener("click", function () {
-    inputGroup.remove();
-  });
+  const btn = createDeleteButton();
+  if (btn) {
+    btn.addEventListener("click", handleFormArrayItemDelete);
+    inputGroup.appendChild(btn);
+  }
 
-  inputGroup.appendChild(btn);
   return inputGroup;
 }
 
 class c20FieldSelect {
+  // Modern ES6 explicit public field property declarations
   selectEl = null;
 
   create({ title, name, value, options, required, changeHandler }) {
-    var group = document.createElement("div");
-    group.appendChild(createLabel(name, title));
+    const group = document.createElement("div");
+    if (typeof createLabel === "function") {
+      group.appendChild(createLabel(name, title));
+    }
+
+    const uniqueSelectId = `c20-select-${name}-${Math.floor(Math.random() * 100000)}`;
 
     this.selectEl = document.createElement("select");
-    this.selectEl.id = name;
+    this.selectEl.id = uniqueSelectId;
     this.selectEl.name = name;
-    this.selectEl.required = required || false;
+    this.selectEl.required = !!required;
+    this.selectEl.style.width = "100%";
+
     this.#setOptions(options, value);
-    if (changeHandler) this.selectEl.addEventListener("change", changeHandler);
+
+    if (typeof changeHandler === "function") {
+      this.selectEl.addEventListener("change", changeHandler);
+    }
 
     group.appendChild(this.selectEl);
     return group;
   }
 
   getValue() {
-    return this.selectEl.value;
+    return this.selectEl ? this.selectEl.value : "";
   }
 
   updateOptions(options) {
+    if (!this.selectEl) return;
     this.selectEl.value = "";
     this.#setOptions(options, "");
   }
 
   reset() {
-    this.selectEl.value = "";
+    if (this.selectEl) this.selectEl.value = "";
   }
 
   disabled(value) {
-    this.selectEl.disabled = value;
+    if (this.selectEl) this.selectEl.disabled = !!value;
   }
 
   #setOptions(options, value) {
+    if (!this.selectEl) return;
     this.selectEl.replaceChildren();
 
-    // default option
-    var option = document.createElement("option");
+    const currentTargetValue = value ?? "";
+
+    // default selection row option setup
+    const option = document.createElement("option");
     option.value = "";
     option.textContent = "-- Select --";
     option.style.fontStyle = "italic";
-    if (value === option.value) option.selected = true;
+    if (currentTargetValue === "") option.selected = true;
     this.selectEl.appendChild(option);
 
-    options.forEach((o) => {
-      var option = document.createElement("option");
-      option.value = o.value;
-      option.textContent = o.text;
-      if (value === o.value) option.selected = true;
-      this.selectEl.appendChild(option);
+    const safeOptions = Array.isArray(options) ? options : [];
+    safeOptions.forEach((o) => {
+      const opt = document.createElement("option");
+      opt.value = o.value;
+      opt.textContent = o.text;
+      if (String(currentTargetValue) === String(o.value)) opt.selected = true;
+      this.selectEl.appendChild(opt);
     });
   }
 }
@@ -267,87 +318,155 @@ class c20FieldComboBox {
   inputEl = null;
   optionsEl = null;
   addMissing = false;
+  #isClickingOption = false;
 
   create({ title, name, options, changeHandler }) {
-    var group = document.createElement("div");
+    const group = document.createElement("div");
     group.className = "c20-combobox";
-    group.appendChild(createLabel(name, title));
 
-    var wrapper = document.createElement("span");
-    this.inputEl = createInput(name, "", false, "-- Select --");
+    if (typeof createLabel === "function") {
+      group.appendChild(createLabel(name, title));
+    }
+
+    const wrapper = document.createElement("span");
+    const uniqueComboId = `c20-combo-${name}-${Math.floor(Math.random() * 100000)}`;
+
+    if (typeof createInput === "function") {
+      this.inputEl = createInput(uniqueComboId, "", false, "-- Select --");
+    } else {
+      this.inputEl = document.createElement("input");
+      this.inputEl.id = uniqueComboId;
+      this.inputEl.placeholder = "-- Select --";
+    }
+
+    this.inputEl.name = name;
     this.optionsEl = this.#createDivOptions(options);
 
+    // FIXED: Fire the changeHandler immediately inside mousedown when an item is selected!
     this.optionsEl.addEventListener("mousedown", (event) => {
-      var value = event.target.getAttribute("data-c20-value");
-      this.inputEl.value = event.target.textContent;
+      this.#isClickingOption = true;
+
+      const targetDiv = event.target.closest("[data-c20-value]");
+      if (!targetDiv) return;
+
+      const value = targetDiv.getAttribute("data-c20-value");
+      this.inputEl.value = targetDiv.textContent;
       this.inputEl.setAttribute("data-c20-value", value);
+
+      // SUCCESS: Fire the handler right here so the editor updates instantly on item selection!
+      if (typeof changeHandler === "function") {
+        changeHandler(value);
+      }
     });
 
     this.inputEl.addEventListener("input", (event) => {
-      var value = event.target.value.toLowerCase();
-      var hasChoice = false;
-      var hasMatch = false;
+      const value = event.target.value.toLowerCase();
+      let hasChoice = false;
+      let hasMatch = false;
+
       this.optionsEl.childNodes.forEach((o) => {
+        if (o.nodeType !== 1) return;
+
         if (!o.classList.contains("c20-noResults") && o.textContent.toLowerCase().includes(value)) {
           if (o.textContent.toLowerCase() === value) hasMatch = true;
           o.classList.remove("hidden");
           hasChoice = true;
-        } else o.classList.add("hidden");
+        } else {
+          o.classList.add("hidden");
+        }
       });
 
-      var newResultOption = this.optionsEl.querySelector(".c20-newResults");
+      const newResultOption = this.optionsEl.querySelector(".c20-newResults");
+      const noResultOption = this.optionsEl.querySelector(".c20-noResults");
+
       if (this.addMissing && !hasMatch) {
-        newResultOption.textContent = `Add ${event.target.value}...`;
-        newResultOption.classList.remove("hidden");
+        if (newResultOption) {
+          newResultOption.textContent = `Add ${event.target.value}...`;
+          newResultOption.classList.remove("hidden");
+        }
       } else {
-        newResultOption.classList.add("hidden");
-        var noResultOption = this.optionsEl.querySelector(".c20-noResults");
-        if (!hasChoice) noResultOption.classList.remove("hidden");
-        else noResultOption.classList.add("hidden");
+        newResultOption?.classList.add("hidden");
+        if (!hasChoice) {
+          noResultOption?.classList.remove("hidden");
+        } else {
+          noResultOption?.classList.add("hidden");
+        }
       }
     });
 
-    this.inputEl.addEventListener("blur", (_) => {
-      this.optionsEl.querySelectorAll(".hidden")?.forEach((x) => x?.classList?.remove("hidden"));
-      if (this.optionsEl.childElementCount > 1) this.optionsEl.querySelector(".c20-noResults").classList.add("hidden");
-      this.optionsEl.querySelector(".active")?.classList?.remove("active");
-      var option = Array.from(this.optionsEl.childNodes).find(
-        (o) =>
-          o.textContent === this.inputEl.value &&
-          o.getAttribute("data-c20-value") === this.inputEl.getAttribute("data-c20-value"),
-      );
-      if (!option) option = Array.from(this.optionsEl.childNodes).find((o) => o.textContent === this.inputEl.value);
-      var value = option?.getAttribute("data-c20-value") ?? "";
+    this.inputEl.addEventListener("blur", () => {
+      // Defer evaluation if user clicked an option, because mousedown handles it perfectly now!
+      if (this.#isClickingOption) {
+        this.#isClickingOption = false;
+        return;
+      }
 
-      if (!this.addMissing) this.optionsEl.querySelector(".c20-newResults").classList.add("hidden");
-      else this.optionsEl.querySelector(".c20-newResults").textContent = "Add...";
+      this.optionsEl.querySelectorAll(".hidden").forEach((x) => x?.classList?.remove("hidden"));
+
+      const noResultOption = this.optionsEl.querySelector(".c20-noResults");
+      if (this.optionsEl.childElementCount > 1 && noResultOption) {
+        noResultOption.classList.add("hidden");
+      }
+
+      this.optionsEl.querySelector(".active")?.classList?.remove("active");
+
+      const currentInputValue = this.inputEl.value;
+      const currentAttrValue = this.inputEl.getAttribute("data-c20-value");
+
+      let option = Array.from(this.optionsEl.childNodes).find(
+        (o) =>
+          o.nodeType === 1 &&
+          o.textContent === currentInputValue &&
+          o.getAttribute("data-c20-value") === currentAttrValue,
+      );
+
+      if (!option) {
+        option = Array.from(this.optionsEl.childNodes).find(
+          (o) => o.nodeType === 1 && o.textContent === currentInputValue,
+        );
+      }
+
+      const value = option?.getAttribute("data-c20-value") ?? "";
+      const newResultOption = this.optionsEl.querySelector(".c20-newResults");
+
+      if (!this.addMissing) {
+        newResultOption?.classList.add("hidden");
+      } else if (newResultOption) {
+        newResultOption.textContent = "Add...";
+      }
 
       if (option) {
         this.inputEl.setAttribute("data-c20-value", value);
-        this.optionsEl.querySelector(`[data-c20-value="${value}"]`).classList.add("active");
+        this.optionsEl.querySelector(`[data-c20-value="${value}"]`)?.classList.add("active");
       } else {
         this.inputEl.value = value;
         this.inputEl.setAttribute("data-c20-value", value);
       }
-      changeHandler(value);
+
+      // Keep this for when the user clicks away or presses Enter without selecting a specific dropdown list item
+      if (typeof changeHandler === "function") {
+        changeHandler(value);
+      }
     });
 
-    wrapper.append(this.inputEl);
+    wrapper.appendChild(this.inputEl);
     group.appendChild(wrapper);
     group.appendChild(this.optionsEl);
     return group;
   }
 
   getValue() {
-    return this.inputEl.getAttribute("data-c20-value");
+    return this.inputEl ? this.inputEl.getAttribute("data-c20-value") : "";
   }
 
   getTextValue() {
-    return this.inputEl.value;
+    return this.inputEl ? this.inputEl.value : "";
   }
 
   setValue(value) {
-    var selected = this.optionsEl.querySelector(`[data-c20-value="${value}"]`);
+    if (!this.optionsEl || !this.inputEl) return;
+
+    const selected = this.optionsEl.querySelector(`[data-c20-value="${value}"]`);
     if (selected) {
       selected.classList.add("active");
       this.inputEl.value = selected.textContent;
@@ -356,91 +475,108 @@ class c20FieldComboBox {
   }
 
   updateOptions(options) {
-    var el = this.#createDivOptions(options);
-    this.optionsEl.replaceChildren(...el.childNodes);
+    if (!this.optionsEl) return;
+    const el = this.#createDivOptions(options);
+    this.optionsEl.replaceChildren(...Array.from(el.childNodes));
   }
 
   disabled(value) {
-    this.inputEl.disabled = value;
+    if (this.inputEl) this.inputEl.disabled = !!value;
   }
 
   reset() {
-    this.inputEl.value = "";
-    this.inputEl.setAttribute("data-c20-value", "");
+    if (this.inputEl) {
+      this.inputEl.value = "";
+      this.inputEl.setAttribute("data-c20-value", "");
+    }
   }
 
   allowNewEntries(value) {
-    this.addMissing = value;
-    if (value) this.optionsEl?.querySelector(".c20-newResults")?.classList?.remove("hidden");
-    else this.optionsEl?.querySelector(".c20-newResults")?.classList?.add("hidden");
+    this.addMissing = !!value;
+    const newResultOption = this.optionsEl?.querySelector(".c20-newResults");
+
+    if (value) {
+      newResultOption?.classList?.remove("hidden");
+    } else {
+      newResultOption?.classList?.add("hidden");
+    }
   }
 
   #createDivOptions(options) {
-    var optionsEl = document.createElement("div");
+    const optionsEl = document.createElement("div");
 
-    var newResultOption = document.createElement("div");
+    const newResultOption = document.createElement("div");
     newResultOption.className = "c20-newResults";
-    if (!this.addMissing) newResultOption.classList.add("hidden");
-    newResultOption.setAttribute("data-c20-value", -1);
+    if (!this.addMissing) {
+      newResultOption.classList.add("hidden");
+    }
+    newResultOption.setAttribute("data-c20-value", "-1");
     newResultOption.textContent = "Add...";
     optionsEl.appendChild(newResultOption);
 
-    options.forEach((o) => {
-      var option = document.createElement("div");
+    const safeOptions = Array.isArray(options) ? options : [];
+    safeOptions.forEach((o) => {
+      const option = document.createElement("div");
       option.setAttribute("data-c20-value", o.value);
       option.textContent = o.text;
       optionsEl.appendChild(option);
     });
 
-    var noResultOption = document.createElement("div");
+    const noResultOption = document.createElement("div");
     noResultOption.textContent = "No results found";
     noResultOption.className = "c20-noResults";
-    if (optionsEl.childElementCount !== 1) noResultOption.classList.add("hidden");
+    if (optionsEl.childElementCount !== 1) {
+      noResultOption.classList.add("hidden");
+    }
     optionsEl.appendChild(noResultOption);
 
     return optionsEl;
   }
 }
 
-// helpers
-function createLabel(id, title) {
-  var label = document.createElement("label");
-  label.setAttribute("for", id);
+// FIXED: Swapped traditional internal logic checks out for modern ECMAScript default parameters
+function createLabel(id = "", title = "") {
+  const label = document.createElement("label");
+  if (id) {
+    label.setAttribute("for", id);
+  }
   label.textContent = title;
   return label;
 }
 
-function createInput(name, value, required, placeHolder) {
-  var input = document.createElement("input");
+// FIXED: Removed the hardcoded id = name assignment to prevent repeating array grids from crashing label focus
+function createInput(name = "", value = "", required = false, placeHolder = "") {
+  const input = document.createElement("input");
   input.type = "text";
-  input.id = name;
   input.name = name;
-  input.placeholder = placeHolder ?? "";
-  input.required = required ?? false;
-  input.value = value ?? "";
+  input.placeholder = placeHolder;
+  input.required = !!required; // Enforce strict type coercion safety bounds
+  input.value = value;
   input.autocomplete = "off";
   return input;
 }
 
-function createTextArea(name, value, required, height) {
-  var input = document.createElement("textarea");
+function createTextArea(name = "", value = "", required = false, height = null) {
+  const input = document.createElement("textarea");
   input.name = name;
-  input.required = required ?? false;
-  input.value = value ?? "";
+  input.required = !!required;
+  input.value = value;
   input.style.width = "100%";
+
+  // Clean fallback height calculations mapping string parameters cleanly
   input.style.height = height ? `${height}px` : "100px";
   return input;
 }
 
 function createAddButton() {
-  var addBtn = document.createElement("button");
+  const addBtn = document.createElement("button");
   addBtn.textContent = "Add +";
   addBtn.className = "btn";
   return addBtn;
 }
 
 function createDeleteButton() {
-  var btn = document.createElement("button");
+  const btn = document.createElement("button");
   btn.textContent = "#";
   btn.className = "btn";
   btn.style.fontFamily = "pictos";

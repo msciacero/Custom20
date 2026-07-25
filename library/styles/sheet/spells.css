@@ -214,3 +214,21 @@
   margin-left: 2px;
   text-transform: capitalize;
 }
+
+.page.spells.c20-v2 .repitem .details span[name="attr_spelldescription"],
+.page.spells.c20-v2 .repitem .details span[name="attr_spellathigherlevels"] {
+  display: none;
+}
+
+.page.spells.c20-v2 .repitem .details .c20-spell-desc,
+.page.spells.c20-v2 .repitem .details .c20-spell-higher {
+  display: block;
+  text-wrap-mode: wrap;
+  white-space-collapse: preserve-breaks;
+  text-align: left !important;
+}
+
+.page.spells.c20-v2 .spell .details-flag:checked ~ .details .c20-spell-desc,
+.page.spells.c20-v2 .spell .details-flag:checked ~ .details .c20-spell-higher {
+  display: none;
+}

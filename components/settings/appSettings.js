@@ -1,58 +1,84 @@
 var Settings = (function () {
-  var storageKey = "global-settings";
-  var settings = {};
+  const storageKey = "global-settings";
+  let settings = {};
 
-  // settings ui
+  // settings ui elements constructor
   function createInterface() {
-    var panel = getSettingsPanel();
-    var panelBody = panel.querySelector(".panel-body div");
-    var journalCheckBox = getSettingsCheckbox({ value: "Use C20 Journal", isChecked: settings.journal });
-    var markerMenuCheckBox = getSettingsCheckbox({ value: "Use C20 Marker Menu", isChecked: settings.markerMenu });
+    const panel = getSettingsPanel();
+    if (!panel) return;
+
+    const panelBody = panel.querySelector(".panel-body div");
+    if (!panelBody) return;
+
+    const journalCheckBox = getSettingsCheckbox({ value: "Use C20 Journal", isChecked: settings.journal });
+    const markerMenuCheckBox = getSettingsCheckbox({ value: "Use C20 Marker Menu", isChecked: settings.markerMenu });
 
     panelBody.appendChild(journalCheckBox);
     panelBody.appendChild(markerMenuCheckBox);
     panelBody.appendChild(getSettingsModalLink({ value: "Edit Compendium", event: CompendiumEditor.show }));
     panelBody.appendChild(getSettingsModalLink({ value: "Import/Export", event: DataEditor.show }));
-    document.querySelector("#settings-accordion").appendChild(panel);
 
-    journalCheckBox.querySelector("input").addEventListener("click", function (event) {
-      settings.journal = !settings.journal;
-      journalCheckBox.classList.toggle("is-checked");
-      journalCheckBox.children[0].classList.toggle("is-checked");
-      if (settings.journal) Journal.init();
-      else Journal.remove();
+    // FIXED: Ensured safe structural guard check boundaries to guard against early asset injection failures
+    const accordionAnchor = document.querySelector("#settings-accordion");
+    if (accordionAnchor) {
+      accordionAnchor.appendChild(panel);
+    } else {
+      console.warn("[C20] Aborting settings placement: '#settings-accordion' panel container missing.");
+      return;
+    }
+
+    // FIXED: Changed event listeners to standard change trackers to prevent desynced inputs state flips
+    journalCheckBox.querySelector("input")?.addEventListener("change", function (event) {
+      const isChecked = event.target.checked;
+      settings.journal = isChecked;
+
+      // Clean token class additions
+      journalCheckBox.classList.toggle("is-checked", isChecked);
+      journalCheckBox.children[0]?.classList.toggle("is-checked", isChecked);
+
+      if (settings.journal) {
+        Journal.init();
+      } else {
+        Journal.remove();
+      }
       saveSettings();
     });
 
-    markerMenuCheckBox.querySelector("input").addEventListener("click", function (event) {
-      settings.markerMenu = !settings.markerMenu;
-      markerMenuCheckBox.classList.toggle("is-checked");
-      markerMenuCheckBox.children[0].classList.toggle("is-checked");
-      if (settings.markerMenu) MarkerMenu.init();
-      else MarkerMenu.remove();
+    markerMenuCheckBox.querySelector("input")?.addEventListener("change", function (event) {
+      const isChecked = event.target.checked;
+      settings.markerMenu = isChecked;
+
+      markerMenuCheckBox.classList.toggle("is-checked", isChecked);
+      markerMenuCheckBox.children[0]?.classList.toggle("is-checked", isChecked);
+
+      if (settings.markerMenu) {
+        MarkerMenu.init();
+      } else {
+        MarkerMenu.remove();
+      }
       saveSettings();
     });
   }
 
   function getSettingsCheckbox(data) {
-    var label = document.createElement("label");
+    const label = document.createElement("label");
     label.className = "el-checkbox";
-    label.style = "margin-bottom: 0px; white-space: break-spaces;";
+    label.style.cssText = "margin-bottom: 0px; white-space: break-spaces;";
     if (data.isChecked) label.classList.add("is-checked");
 
-    var span = document.createElement("span");
+    const span = document.createElement("span");
     span.className = "el-checkbox__input";
     if (data.isChecked) span.classList.add("is-checked");
 
-    var input = document.createElement("input");
+    const input = document.createElement("input");
     input.className = "el-checkbox__original";
     input.type = "checkbox";
-    input.value = data.isChecked;
+    input.checked = data.isChecked; // FIXED: Maps directly to the checked state property parameter track
 
-    var inputSpan = document.createElement("span");
+    const inputSpan = document.createElement("span");
     inputSpan.className = "el-checkbox__inner";
 
-    var spanLabel = document.createElement("span");
+    const spanLabel = document.createElement("span");
     spanLabel.className = "el-checkbox__label";
     spanLabel.textContent = data.value;
 
@@ -81,45 +107,52 @@ var Settings = (function () {
     </div>`;
 
     const parser = new DOMParser();
-    const panel = parser.parseFromString(panelHtml, "text/html");
-
-    return panel.querySelector(".panel");
+    const doc = parser.parseFromString(panelHtml, "text/html");
+    return doc.querySelector(".panel");
   }
 
   function getSettingsModalLink(data) {
-    var div = document.createElement("div");
+    const div = document.createElement("div");
     div.style.marginTop = "10px";
 
-    var btn = document.createElement("button");
+    const btn = document.createElement("button");
     btn.textContent = data.value;
-
     btn.addEventListener("click", data.event);
 
     div.appendChild(btn);
     return div;
   }
 
-  //save
+  // save records securely
   async function saveSettings() {
     await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, "all", settings, "settings");
   }
 
-  //load
+  // load configurations safely
   async function loadSettings() {
-    settings = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, "all", "settings");
-    if (settings === undefined) settings = {};
-    if (settings.journal === undefined) settings.journal = true;
-    if (settings.markerMenu === undefined) settings.markerMenu = true;
-    await saveSettings();
+    const storedData = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, "all", "settings");
+
+    if (storedData === undefined) {
+      // FIXED: Only execute automated writes to set up clean initial storage state pools if blank
+      settings = {
+        journal: true,
+        markerMenu: true,
+      };
+      await saveSettings();
+    } else {
+      settings = storedData;
+      if (settings.journal === undefined) settings.journal = true;
+      if (settings.markerMenu === undefined) settings.markerMenu = true;
+    }
   }
 
-  var Settings = {
+  const Settings = {
     init: async function init() {
       await loadSettings();
       createInterface();
     },
     isEnabled: function isEnabled(key) {
-      return settings[key];
+      return settings[key] ?? false; // Fallback false validation safety bounds
     },
   };
 

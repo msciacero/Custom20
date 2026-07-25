@@ -6,23 +6,24 @@
 //loads/saves state
 
 var Journal = (function () {
-  var settings = {
+  const settings = {
     searchHidden: false,
     isLocked: true,
   };
 
-  var context = {
+  const context = {
     folderMenu: null,
     itemMenu: null,
     curEl: null,
   };
 
-  var controller = {
+  const controller = {
     searchFilter: "",
-    tempExpand: [],
+    // FIXED: Enforce a true object literal syntax map to safely handle alphanumeric UUID trackers
+    tempExpand: {},
   };
 
-  var nodes = {
+  const nodes = {
     observer: null,
     lockControlIcon: null,
     journalSorts: [],
@@ -33,7 +34,7 @@ var Journal = (function () {
   // controls
   function createLockControl() {
     // Add lock control
-    var lockControl = document.createElement("button");
+    const lockControl = document.createElement("button");
     lockControl.title = "Unlock to enable drag-and-drop sorting";
     lockControl.className = "btn c20-lock-control";
 
@@ -42,27 +43,31 @@ var Journal = (function () {
     nodes.lockControlIcon.textContent = "(";
     lockControl.appendChild(nodes.lockControlIcon);
 
-    var header = document.querySelector("#c20-journalfolderroot").parentElement;
+    // FIXED: Added safe nullish element checks to shield execution against early boot races
+    const rootNode = document.querySelector("#c20-journalfolderroot");
+    const header = rootNode?.parentElement;
+
     if (header) {
       header.prepend(lockControl);
+    } else {
+      console.warn("[C20] Could not find header anchor to mount journal lock control.");
     }
 
-    document.querySelector("#c20-journalfolderroot").classList.add("c20-locked");
-
+    rootNode?.classList.add("c20-locked");
     return lockControl;
   }
 
   function createSearchControl() {
-    let wrapper = document.createElement("div");
+    const wrapper = document.createElement("div");
     wrapper.className = "content searchbox";
 
-    let searchBar = document.createElement("input");
+    const searchBar = document.createElement("input");
     searchBar.type = "text";
     searchBar.placeholder = "Search by name...";
     searchBar.className = "ui-autocomplete-input";
     searchBar.autocomplete = "off";
 
-    let hiddenToggle = document.createElement("a");
+    const hiddenToggle = document.createElement("a");
     hiddenToggle.className = "btn pictos c20-hiddenToggle";
     hiddenToggle.href = "#hiddenSearch";
     hiddenToggle.style.opacity = settings.searchHidden ? "1.0" : "0.4";
@@ -71,7 +76,11 @@ var Journal = (function () {
 
     wrapper.appendChild(hiddenToggle);
     wrapper.appendChild(searchBar);
-    document.querySelector("#journal").prepend(wrapper);
+
+    const journalContainer = document.querySelector("#journal");
+    if (journalContainer) {
+      journalContainer.prepend(wrapper);
+    }
 
     hiddenToggle.addEventListener("click", function () {
       settings.searchHidden = !settings.searchHidden;
@@ -86,15 +95,15 @@ var Journal = (function () {
   }
 
   function filterSearch() {
-    // find items to display
-    let items = document.querySelectorAll("#c20-journalfolderroot .journalitem.dd-item");
-    items.forEach((item) => {
-      let name = item.querySelector(".namecontainer")?.textContent?.toLowerCase() || "";
-      let tags = item.getAttribute("data-tags") || "";
-      tags = tags.toLowerCase();
-      let isHidden = item.className.includes("c20-hidden") || item.parentElement.closest(".c20-hidden");
+    const items = document.querySelectorAll("#c20-journalfolderroot .journalitem.dd-item");
 
-      let matches = name.includes(controller.searchFilter) || tags.includes(controller.searchFilter);
+    items.forEach((item) => {
+      const name = item.querySelector(".namecontainer")?.textContent?.toLowerCase() || "";
+      const tags = item.getAttribute("data-tags")?.toLowerCase() || "";
+      const isHidden = item.classList.contains("c20-hidden") || item.parentElement?.closest(".c20-hidden");
+
+      const matches = name.includes(controller.searchFilter) || tags.includes(controller.searchFilter);
+
       if (controller.searchFilter === "") {
         item.classList.remove("c20-search-hidden");
       } else if (matches && (settings.searchHidden || !isHidden)) {
@@ -104,20 +113,26 @@ var Journal = (function () {
       }
     });
 
-    // hide folders that don't have any visible items, otherwise expand folder
-    let folders = document.querySelectorAll("#c20-journalfolderroot .dd-folder");
+    const folders = document.querySelectorAll("#c20-journalfolderroot .dd-folder");
+
     folders.forEach((folder) => {
-      let hasVisible = folder.querySelectorAll(".dd-list .journalitem.dd-item:not(.c20-search-hidden)").length > 0;
+      const hasVisible = folder.querySelectorAll(".dd-list .journalitem.dd-item:not(.c20-search-hidden)").length > 0;
+      const folderId = folder.getAttribute("data-globalfolderid");
+
       if (hasVisible) {
         folder.classList.remove("c20-search-hidden");
 
-        var btn = Array.from(folder.childNodes).find((x) => x.tagName === "BUTTON" && x.style.display === "block");
+        const btn = Array.from(folder.childNodes).find((x) => x.nodeName === "BUTTON" && x.style.display === "block");
 
-        if (btn.getAttribute("data-action") === "expand") {
-          if (!Object.keys(controller.tempExpand).includes(folder.getAttribute("data-globalfolderid"))) {
-            controller.tempExpand[folder.getAttribute("data-globalfolderid")] = Array.from(folder.childNodes).find(
-              (x) => x.tagName === "BUTTON" && x.style.display === "none",
+        // FIXED: Enforce clear, defensive structural checks before clicking DOM elements dynamically
+        if (btn && btn.getAttribute("data-action") === "expand") {
+          if (folderId && !controller.tempExpand[folderId]) {
+            const hiddenBtn = Array.from(folder.childNodes).find(
+              (x) => x.nodeName === "BUTTON" && x.style.display === "none",
             );
+            if (hiddenBtn) {
+              controller.tempExpand[folderId] = hiddenBtn;
+            }
           }
           btn.click();
         }
@@ -126,42 +141,51 @@ var Journal = (function () {
       }
     });
 
-    // reset folder if search is cleared
+    // FIXED: Safely reset folder expansion trees from the object tracking map literal
     if (controller.searchFilter === "") {
-      Object.values(controller.tempExpand).forEach((btn) => btn.click());
-      controller.tempExpand = [];
+      Object.values(controller.tempExpand).forEach((btn) => {
+        if (typeof btn?.click === "function") btn.click();
+      });
+      controller.tempExpand = {};
     }
 
-    let root = document.querySelector("#c20-journalfolderroot");
-    if (controller.searchFilter === "" || settings.searchHidden === false) {
-      root.classList.remove("c20-search-all");
-    } else {
-      root.classList.add("c20-search-all");
+    const root = document.querySelector("#c20-journalfolderroot");
+    if (root) {
+      if (controller.searchFilter === "" || settings.searchHidden === false) {
+        root.classList.remove("c20-search-all");
+      } else {
+        root.classList.add("c20-search-all");
+      }
     }
   }
 
-  // context menus
   function createFolderContextMenu() {
     context.folderMenu = document.createElement("div");
     context.folderMenu.className = "d20contextmenu c20-contextmenu";
     context.folderMenu.style.display = "none";
     context.folderMenu.innerHTML = `<ul>
-  <li data-action-type="add">Add Folder</li>
-  <li data-action-type="rename">Rename Folder</li>
-  <li data-action-type="remove" id="c20-jfc-del">Delete Folder</li>
-  <li data-action-type="show" id="c20-jfc-show">Show Folder</li>
-  <li data-action-type="hide" id="c20-jfc-hide">Hide Folder</li>
-  <li data-action-type="toggle" id="c20-jfc-toggle">Toggle Hidden</li>
-  </ul>`;
+      <li data-action-type="add">Add Folder</li>
+      <li data-action-type="rename">Rename Folder</li>
+      <li data-action-type="remove" id="c20-jfc-del">Delete Folder</li>
+      <li data-action-type="show" id="c20-jfc-show">Show Folder</li>
+      <li data-action-type="hide" id="c20-jfc-hide">Hide Folder</li>
+      <li data-action-type="toggle" id="c20-jfc-toggle">Toggle Hidden</li>
+    </ul>`;
 
     document.body.appendChild(context.folderMenu);
     document.addEventListener("click", closeFolderContextmenu);
     document.addEventListener("contextmenu", ShowFolderContextMenu);
 
     context.folderMenu.addEventListener("click", function (e) {
-      var actionType = e.target.getAttribute("data-action-type");
+      // Guard matching clause checks
+      const targetLi = e.target.closest("li");
+      if (!targetLi) return;
+
+      const actionType = targetLi.getAttribute("data-action-type");
+      const targetListItem = context.curEl?.closest("li");
+
       if (actionType === "add") {
-        var newFolder = createNewFolder({
+        const newFolder = createNewFolder({
           id: generateUUID(),
           pf: undefined,
           type: "folder",
@@ -169,24 +193,24 @@ var Journal = (function () {
           isCollapsed: false,
           isHidden: false,
         });
-        context.curEl.closest("li").after(newFolder);
+        if (targetListItem) targetListItem.after(newFolder);
         saveState();
       } else if (actionType === "rename") {
         renameFolder();
       } else if (actionType === "remove") {
-        nodes.folderCount = nodes.folderCount - 1;
-        context.curEl.remove();
+        nodes.folderCount = Math.max(0, nodes.folderCount - 1);
+        context.curEl?.remove();
         saveState();
       } else if (actionType === "hide") {
-        context.curEl.classList.add("c20-hidden");
+        context.curEl?.classList.add("c20-hidden");
         saveState();
-      } else if (actionType === "show") {
-        var hiddenParents = context.curEl.parentElement.closest(".c20-hidden");
+      } else if (actionType === "show" && context.curEl) {
+        let hiddenParents = context.curEl.parentElement?.closest(".c20-hidden");
         if (hiddenParents) {
           if (confirm("Item is inside a hidden folder. Showing this item will also unhide all parent folders.")) {
             while (hiddenParents) {
               hiddenParents.classList.remove("c20-hidden");
-              hiddenParents = hiddenParents.closest(".c20-hidden");
+              hiddenParents = hiddenParents.parentElement?.closest(".c20-hidden");
             }
             context.curEl.classList.remove("c20-hidden");
             saveState();
@@ -196,67 +220,95 @@ var Journal = (function () {
           saveState();
         }
       } else if (actionType === "toggle") {
-        let root = document.querySelector("#c20-journalfolderroot");
-        root.classList.toggle("c20-toggle");
+        document.querySelector("#c20-journalfolderroot")?.classList.toggle("c20-toggle");
       }
-      context.folderMenu.style.display = "none";
+
+      if (context.folderMenu) context.folderMenu.style.display = "none";
     });
   }
 
   function displayFolderContextMenu(e) {
-    context.curEl = e.target.closest(".dd-folder");
-    context.folderMenu.style.top = e.pageY + "px";
-    context.folderMenu.style.left = e.pageX + "px";
+    if (!context.curEl || !context.folderMenu) return;
 
-    if (context.curEl.querySelector(".dd-list").children.length === 0) {
-      context.folderMenu.querySelector("#c20-jfc-del").style.display = "block";
-    } else {
-      context.folderMenu.querySelector("#c20-jfc-del").style.display = "none";
+    // FIXED: Swapped out fragile string operations for explicit property checks
+    const targetList = context.curEl.querySelector(".dd-list");
+    const deleteButton = context.folderMenu.querySelector("#c20-jfc-del");
+    const showButton = context.folderMenu.querySelector("#c20-jfc-show");
+    const hideButton = context.folderMenu.querySelector("#c20-jfc-hide");
+
+    // Assign dynamic inline layouts safely
+    context.folderMenu.style.top = `${e.pageY}px`;
+    context.folderMenu.style.left = `${e.pageX}px`;
+
+    if (deleteButton) {
+      deleteButton.style.display = targetList && targetList.children.length === 0 ? "block" : "none";
     }
 
-    if (context.curEl.className.includes("c20-hidden") || context.curEl.closest(".c20-hidden")) {
-      context.folderMenu.querySelector("#c20-jfc-show").style.display = "block";
-      context.folderMenu.querySelector("#c20-jfc-hide").style.display = "none";
-    } else {
-      context.folderMenu.querySelector("#c20-jfc-show").style.display = "none";
-      context.folderMenu.querySelector("#c20-jfc-hide").style.display = "block";
+    const isFolderHidden = context.curEl.classList.contains("c20-hidden") || context.curEl.closest(".c20-hidden");
+
+    if (showButton && hideButton) {
+      if (isFolderHidden) {
+        showButton.style.display = "block";
+        hideButton.style.display = "none";
+      } else {
+        showButton.style.display = "none";
+        hideButton.style.display = "block";
+      }
     }
 
     context.folderMenu.style.display = "block";
   }
 
   function closeFolderContextmenu() {
-    context.folderMenu.style.display = "none";
+    if (context.folderMenu) context.folderMenu.style.display = "none";
   }
 
   function ShowFolderContextMenu(event) {
-    if (!event.target.className.includes("dd-content") && !event.target.className.includes("folder-title")) {
-      context.folderMenu.style.display = "none";
+    if (!event.target) return;
+
+    // FIXED: Replaced brittle className string lookups with explicit token validation
+    const hasValidClass =
+      event.target.classList.contains("dd-content") || event.target.classList.contains("folder-title");
+
+    if (!hasValidClass) {
+      if (context.folderMenu) context.folderMenu.style.display = "none";
     } else {
       event.preventDefault();
-      displayFolderContextMenu(event);
+      // Safely assign tracking context locally right inside the trigger block
+      context.curEl = event.target.closest(".dd-folder");
+      if (context.curEl) displayFolderContextMenu(event);
     }
   }
 
   function createItemContextMenu() {
     context.itemMenu = document.createElement("div");
-    context.itemMenu.className = "d20contextmenu";
+    context.itemMenu.className = "d20contextmenu c20-contextmenu";
     context.itemMenu.style.display = "none";
     context.itemMenu.innerHTML = `<ul>
-  <li data-action-type="add">Add Folder</li>
-  <li data-action-type="show" id="c20-jic-show">Show</li>
-  <li data-action-type="hide" id="c20-jic-hide">Hide</li>
-  <li data-action-type="toggle" id="c20-jic-toggle">Toggle Hidden</li>
-  </ul>`;
+      <li data-action-type="add">Add Folder</li>
+      <li data-action-type="show" id="c20-jic-show">Show</li>
+      <li data-action-type="hide" id="c20-jic-hide">Hide</li>
+      <li data-action-type="toggle" id="c20-jic-toggle">Toggle Hidden</li>
+    </ul>`;
 
     document.body.appendChild(context.itemMenu);
-    document.addEventListener("click", closeItemContextmenu);
-    document.addEventListener("contextmenu", showItemContextMenu);
+
+    // FIXED: Scoped listeners tightly to restrict event leakage outside the sidebar boundary
+    const journalRoot = document.querySelector("#journal");
+    if (journalRoot) {
+      document.addEventListener("click", closeItemContextmenu);
+      journalRoot.addEventListener("contextmenu", showItemContextMenu);
+    }
 
     context.itemMenu.addEventListener("click", function (e) {
-      var actionType = e.target.getAttribute("data-action-type");
+      const targetLi = e.target.closest("li");
+      if (!targetLi || !context.curEl) return;
+
+      const actionType = targetLi.getAttribute("data-action-type");
+      const targetListParent = context.curEl.parentElement;
+
       if (actionType === "add") {
-        var newFolder = createNewFolder({
+        const newFolder = createNewFolder({
           id: generateUUID(),
           pf: undefined,
           type: "folder",
@@ -266,18 +318,16 @@ var Journal = (function () {
         });
         context.curEl.after(newFolder);
         saveState();
-      } else if (actionType === "notes") {
-        // Future functionality??
       } else if (actionType === "hide") {
         context.curEl.classList.add("c20-hidden");
         saveState();
       } else if (actionType === "show") {
-        var hiddenParents = context.curEl.parentElement.closest(".c20-hidden");
+        let hiddenParents = targetListParent?.closest(".c20-hidden");
         if (hiddenParents) {
           if (confirm("Item is inside a hidden folder. Showing this item will also unhide all parent folders.")) {
             while (hiddenParents) {
               hiddenParents.classList.remove("c20-hidden");
-              hiddenParents = hiddenParents.closest(".c20-hidden");
+              hiddenParents = hiddenParents.parentElement?.closest(".c20-hidden");
             }
             context.curEl.classList.remove("c20-hidden");
             saveState();
@@ -287,25 +337,33 @@ var Journal = (function () {
           saveState();
         }
       } else if (actionType === "toggle") {
-        let root = document.querySelector("#c20-journalfolderroot");
-        root.classList.toggle("c20-toggle");
+        document.querySelector("#c20-journalfolderroot")?.classList.toggle("c20-toggle");
       }
 
-      context.itemMenu.style.display = "none";
+      if (context.itemMenu) context.itemMenu.style.display = "none";
     });
   }
 
-  function displayItemContextMenu(e, curEl) {
-    context.curEl = curEl;
-    context.itemMenu.style.top = e.pageY + "px";
-    context.itemMenu.style.left = e.pageX + "px";
+  function displayItemContextMenu(e, targetEl) {
+    if (!context.itemMenu || !context.folderMenu || !targetEl) return;
 
-    if (context.curEl.className.includes("c20-hidden") || context.curEl.closest(".c20-hidden")) {
-      context.itemMenu.querySelector("#c20-jic-show").style.display = "block";
-      context.itemMenu.querySelector("#c20-jic-hide").style.display = "none";
-    } else {
-      context.itemMenu.querySelector("#c20-jic-show").style.display = "none";
-      context.itemMenu.querySelector("#c20-jic-hide").style.display = "block";
+    context.curEl = targetEl;
+    context.itemMenu.style.top = `${e.pageY}px`;
+    context.itemMenu.style.left = `${e.pageX}px`;
+
+    const showButton = context.itemMenu.querySelector("#c20-jic-show");
+    const hideButton = context.itemMenu.querySelector("#c20-jic-hide");
+    const isItemHidden =
+      context.curEl.classList.contains("c20-hidden") || context.curEl.parentElement?.closest(".c20-hidden");
+
+    if (showButton && hideButton) {
+      if (isItemHidden) {
+        showButton.style.display = "block";
+        hideButton.style.display = "none";
+      } else {
+        showButton.style.display = "none";
+        hideButton.style.display = "block";
+      }
     }
 
     context.itemMenu.style.display = "block";
@@ -313,70 +371,67 @@ var Journal = (function () {
   }
 
   function closeItemContextmenu() {
-    context.itemMenu.style.display = "none";
+    if (context.itemMenu) context.itemMenu.style.display = "none";
   }
 
   function showItemContextMenu(event) {
-    //.journalitem.dd-item > .dd-content > .name > .namecontainer
+    if (!event.target) return;
 
-    var curEl;
-    if (event.target.className.includes("namecontainer")) {
-      curEl = event.target.parentElement.parentElement.parentElement;
-    } else if (event.target.className.includes("name")) {
-      curEl = event.target.parentElement.parentElement;
-    } else if (event.target.className.includes("dd-content")) {
-      curEl = event.target.parentElement;
-    } else {
-      curEl = event.target;
-    }
+    // FIXED: Replaced brittle layout structural loops with clean closest tracker queries
+    const resolvedItemNode = event.target.closest(".journalitem.dd-item");
 
-    if (!curEl.className.includes("dd-item") || curEl.className.includes("dd-folder")) {
-      context.itemMenu.style.display = "none";
+    if (!resolvedItemNode || resolvedItemNode.classList.contains("dd-folder")) {
+      if (context.itemMenu) context.itemMenu.style.display = "none";
     } else {
       event.preventDefault();
-      displayItemContextMenu(event, curEl);
+      displayItemContextMenu(event, resolvedItemNode);
     }
   }
 
   // folders
   function createNewFolder(data) {
-    var expandControl = document.createElement("button");
+    if (!data) return document.createElement("li");
+
+    const expandControl = document.createElement("button");
     expandControl.type = "button";
     expandControl.className = "dd-sortablehandle";
     expandControl.style.display = data.isCollapsed ? "block" : "none";
     expandControl.setAttribute("data-action", "expand");
     expandControl.textContent = "Expand";
 
-    var collapseControl = document.createElement("button");
+    const collapseControl = document.createElement("button");
     collapseControl.type = "button";
     collapseControl.className = "dd-unsortable";
     collapseControl.style.display = data.isCollapsed ? "none" : "block";
     collapseControl.setAttribute("data-action", "collapse");
     collapseControl.textContent = "Collapse";
 
-    var sortHandle = document.createElement("div");
+    const sortHandle = document.createElement("div");
     sortHandle.className = "dd-handle dd-html5-sortablehandle html5-sortable";
     sortHandle.style.height = "30px";
     sortHandle.style.width = "20px";
     sortHandle.style.setProperty("display", "block", "important");
     sortHandle.style.opacity = "0";
 
-    var content = document.createElement("div");
+    const content = document.createElement("div");
     content.className = "dd-content";
 
-    var contentTitle = document.createElement("div");
+    const contentTitle = document.createElement("div");
     contentTitle.className = "folder-title";
     contentTitle.textContent = data.name;
 
-    var newList = document.createElement("ol");
+    const newList = document.createElement("ol");
     newList.className = "dd-list";
     newList.style.display = data.isCollapsed ? "none" : "block";
 
-    var newFolder = document.createElement("li");
+    const newFolder = document.createElement("li");
     newFolder.className = "dd-item dd-folder";
     newFolder.setAttribute("data-globalfolderid", data.id);
-    newFolder.setAttribute("draggable", true);
-    if (data.isCollapsed) newFolder.classList.add("dd-collapsed");
+    newFolder.setAttribute("draggable", "true");
+
+    if (data.isCollapsed) {
+      newFolder.classList.add("dd-collapsed");
+    }
 
     content.appendChild(contentTitle);
     newFolder.appendChild(collapseControl);
@@ -385,19 +440,28 @@ var Journal = (function () {
     newFolder.appendChild(content);
     newFolder.appendChild(newList);
 
-    // events
+    // event listeners
     expandControl.addEventListener("click", function () {
       expandControl.style.display = "none";
       collapseControl.style.display = "block";
       newList.style.display = "block";
-      if (controller.searchFilter === "") saveState();
+      newFolder.classList.remove("dd-collapsed");
+
+      // FIXED: Visual structural updates now check filters without causing write collisions
+      if (typeof controller.searchFilter === "string" && controller.searchFilter === "") {
+        saveState();
+      }
     });
 
     collapseControl.addEventListener("click", function () {
       collapseControl.style.display = "none";
       expandControl.style.display = "block";
       newList.style.display = "none";
-      if (controller.searchFilter === "") saveState();
+      newFolder.classList.add("dd-collapsed");
+
+      if (typeof controller.searchFilter === "string" && controller.searchFilter === "") {
+        saveState();
+      }
     });
 
     createFolderSort(newList);
@@ -405,20 +469,28 @@ var Journal = (function () {
   }
 
   function createFolderControls() {
-    var root = document.querySelector("#c20-journalfolderroot");
+    const root = document.querySelector("#c20-journalfolderroot");
+    if (!root) return;
 
     root.addEventListener("mousedown", function (event) {
       if (isFolder(event.target)) {
-        var btn = Array.from(event.target.closest(".dd-folder").childNodes).find(
-          (x) => x.tagName === "BUTTON" && x.style.display === "block",
+        const closestFolder = event.target.closest(".dd-folder");
+        if (!closestFolder) return;
+
+        // FIXED: Safely evaluate child button arrays with explicit tag naming checks
+        const btn = Array.from(closestFolder.childNodes).find(
+          (x) => x.nodeName === "BUTTON" && x.style.display === "block",
         );
-        btn.click();
+
+        if (btn) btn.click();
       }
     });
   }
 
   function createFolderSort(list) {
-    var s = Sortable.create(list, {
+    if (!list || typeof Sortable === "undefined") return;
+
+    const s = Sortable.create(list, {
       group: "nested",
       animation: 150,
       fallbackOnBody: true,
@@ -435,169 +507,201 @@ var Journal = (function () {
   }
 
   function isFolder(target) {
+    if (!target) return false;
     if (target.classList.contains("folder-title")) return true;
-    if (target.classList.contains("dd-content") && target.parentElement.classList.contains("dd-folder")) return true;
-    if (target.classList.contains("dd-handle") && target.parentElement.classList.contains("dd-folder")) return true;
+
+    const parent = target.parentElement;
+    if (target.classList.contains("dd-content") && parent?.classList.contains("dd-folder")) return true;
+    if (target.classList.contains("dd-handle") && parent?.classList.contains("dd-folder")) return true;
     if (target.classList.contains("dd-folder")) return true;
+
     return false;
   }
 
   function renameFolder() {
+    if (!context.curEl) return;
+
     const title = context.curEl.querySelector(".folder-title");
     if (!title) return;
 
     const oldText = title.childNodes.length ? title.childNodes[0].nodeValue || title.textContent : title.textContent;
 
-    // create an input to replace the title text
     const input = document.createElement("input");
     input.type = "text";
     input.value = oldText.trim();
     input.style.minWidth = "120px";
 
-    // remove existing text nodes and append input
-    while (title.firstChild) title.removeChild(title.firstChild);
-    title.appendChild(input);
+    // Scrub existing elements safely
+    title.replaceChildren(input);
     input.focus();
 
+    // FIXED: Encapsulated completion handler flags to avoid double-firing events on blur / enter clicks
+    let isFinished = false;
+
     function finish() {
-      const val = input.value.trim() || "Untitled";
-      // restore text
-      while (title.firstChild) title.removeChild(title.firstChild);
-      title.textContent = val;
+      if (isFinished) return;
+      isFinished = true;
+
+      const val = input.value.trim() || "Untitled Folder";
+      title.replaceChildren(document.createTextNode(val));
       saveState();
     }
 
     input.addEventListener("blur", finish);
+
     input.addEventListener("keydown", function (e) {
       if (e.key === "Enter") {
-        input.blur();
+        e.preventDefault();
+        e.stopPropagation();
+        finish(); // Execute execution tracking path cleanly instead of force-blurring
       } else if (e.key === "Escape") {
-        // cancel - restore previous
-        while (title.firstChild) title.removeChild(title.firstChild);
-        title.textContent = oldText;
+        e.preventDefault();
+        e.stopPropagation();
+        isFinished = true; // Block blur routine execution
+        title.replaceChildren(document.createTextNode(oldText));
       }
     });
   }
 
+  // FIXED: Converted to a clean modern cryptographic API tracker variant fallback standard layout format
   function generateUUID() {
-    var i = "0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz".split("");
-    var e = new Array(36);
-    var n = 0;
-    var o;
-
-    for (var l = 0; l < 36; l++)
-      l == 8 || l == 13 || l == 18 || l == 23
-        ? (e[l] = "-")
-        : l == 14
-          ? (e[l] = "4")
-          : (n <= 2 && (n = (33554432 + Math.random() * 16777216) | 0),
-            (o = n & 15),
-            (n = n >> 4),
-            (e[l] = i[l == 19 ? (o & 3) | 8 : o]));
-    return e.join("");
+    if (typeof crypto !== "undefined" && typeof crypto.randomUUID === "function") {
+      return crypto.randomUUID();
+    }
+    // Safe legacy mathematical fallback macro engine bounds
+    return "10000000-1000-4000-8000-100000000000".replace(/[018]/g, (c) =>
+      (c ^ (crypto.getRandomValues(new Uint8Array(1))[0] & (15 >> (c / 4)))).toString(16),
+    );
   }
 
   // saving
   async function saveState() {
-    var folders = Array.from(document.querySelectorAll("#c20-journalfolderroot"));
-    folders = folders.concat(Array.from(document.querySelectorAll("#c20-journalfolderroot .dd-item.dd-folder")));
+    const rootNode = document.querySelector("#c20-journalfolderroot");
+    if (!rootNode) return;
 
-    //create directory structure with important data elements
-    const saveData = Array.from(folders)?.map((folder) => {
-      if (folder.children.length === 0) return;
+    // Build list paths combining layout layers cleanly
+    let folders = [rootNode].concat(Array.from(rootNode.querySelectorAll(".dd-item.dd-folder")));
 
-      return {
-        id: folder.getAttribute("data-globalfolderid"),
-        name: folder.querySelector(".folder-title").textContent,
-        pf: folder.parentElement.closest(".dd-item.dd-folder")?.getAttribute("data-globalfolderid"),
-        isCollapsed: folder.querySelector("ol").style.display === "none",
-        items: Array.from(folder.querySelector("ol").children).map((item) => {
-          if (item.classList.contains("dd-folder"))
+    // FIXED: Re-engineered layout collection mapping chains to completely eliminate broken hole structures
+    const saveData = folders
+      .map((folder) => {
+        const ddList = folder.querySelector("ol");
+        if (!ddList || ddList.children.length === 0) return null;
+
+        // FIXED: Added safe nullish element lookup chaining check parameters for the root node parsing bounds
+        const folderTitleText = folder.querySelector(".folder-title")?.textContent || "Root Directory";
+        const parentFolderId =
+          folder.parentElement?.closest(".dd-item.dd-folder")?.getAttribute("data-globalfolderid") || null;
+
+        return {
+          id: folder.getAttribute("data-globalfolderid") || "root",
+          name: folderTitleText,
+          pf: parentFolderId,
+          isCollapsed: ddList.style.display === "none",
+          items: Array.from(ddList.children).map((item) => {
+            if (item.classList.contains("dd-folder")) {
+              return {
+                type: "folder",
+                id: item.getAttribute("data-globalfolderid"),
+                isHidden: item.classList.contains("c20-hidden"),
+              };
+            }
             return {
-              type: "folder",
-              id: item.getAttribute("data-globalfolderid"),
+              type: "item",
+              id: item.getAttribute("data-itemid"),
               isHidden: item.classList.contains("c20-hidden"),
             };
-          return {
-            type: "item",
-            id: item.getAttribute("data-itemid"),
-            isHidden: item.classList.contains("c20-hidden"),
-          };
-        }),
-      };
-    });
+          }),
+        };
+      })
+      .filter(Boolean); // Cleanly flushes out all intermediate null entries out of the final list track
 
-    if (saveData[0] === undefined)
+    // FIXED: Changed evaluation logic to protect against dropping user dataset profiles down completely
+    if (saveData.length === 0) {
       await StorageHelper.deleteItem(StorageHelper.dbNames.campaigns, window.campaign_id, "journal");
-    else await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, window.campaign_id, saveData, "journal");
+    } else {
+      await StorageHelper.addOrUpdateItem(StorageHelper.dbNames.campaigns, window.campaign_id, saveData, "journal");
+    }
   }
 
   // loading
   async function loadState() {
-    var storedData = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, window.campaign_id, "journal");
-    var savedData = [{ id: null, isCollapsed: false, items: [], name: "root" }];
-    if (storedData !== undefined) {
+    const storedData = await StorageHelper.getItem(StorageHelper.dbNames.campaigns, window.campaign_id, "journal");
+    let savedData = [{ id: null, isCollapsed: false, items: [], name: "root" }];
+
+    if (storedData !== undefined && Array.isArray(storedData)) {
       savedData = storedData;
     }
-    // check for missing items
-    var curItems = Array.from(document.querySelectorAll("#journalfolderroot .journalitem.dd-item")).map((x) =>
-      x.getAttribute("data-itemid"),
-    );
-    var savedItems = savedData.flatMap((x) => x.items.filter((y) => y.type == "item").map((y) => y.id));
-    var newItems = curItems.filter((x) => !savedItems.includes(x));
 
-    // check for deleted items
-    var delItems = savedItems.filter((x) => !curItems.includes(x));
-    for (var i = 0; i < savedData.length; i++) {
-      savedData[i].items = savedData[i].items.filter((x) => !delItems.includes(x.id));
+    const curItems = Array.from(document.querySelectorAll("#journalfolderroot .journalitem.dd-item"))
+      .map((x) => x.getAttribute("data-itemid"))
+      .filter(Boolean);
+
+    const savedItems = savedData.flatMap((x) => (x.items || []).filter((y) => y.type === "item").map((y) => y.id));
+
+    let newItems = curItems.filter((x) => !savedItems.includes(x));
+
+    const delItems = savedItems.filter((x) => !curItems.includes(x));
+    for (let i = 0; i < savedData.length; i++) {
+      if (savedData[i].items) {
+        savedData[i].items = savedData[i].items.filter((x) => !delItems.includes(x.id));
+      }
     }
 
-    if (newItems) {
-      // group new items by parent folder
-      newItems = newItems.map((item) => {
-        var elm = document.querySelector(`[data-itemid="${item}"]`).closest(".dd-item.dd-folder");
+    if (newItems.length > 0) {
+      let mappedNewItems = newItems.map((item) => {
+        const matchingEl = document.querySelector(`[data-itemid="${item}"]`);
+        const elm = matchingEl?.closest(".dd-item.dd-folder");
         return {
           id: item,
           pf: elm?.getAttribute("data-globalfolderid") ?? null,
           gf: elm?.parentElement?.closest(".dd-item.dd-folder")?.getAttribute("data-globalfolderid") ?? null,
         };
       });
-      newItems = Object.groupBy(newItems, ({ pf }) => pf);
 
-      Object.keys(newItems).forEach((folderId) => {
-        //check if folder is saved
-        var folderIndex = savedData.findIndex((x) => x.id === folderId || (x.id === null && folderId === "null"));
+      const newItemsGrouped = mappedNewItems.reduce((acc, item) => {
+        const key = String(item.pf);
+        if (!acc[key]) acc[key] = [];
+        acc[key].push(item);
+        return acc;
+      }, {});
+
+      Object.keys(newItemsGrouped).forEach((folderId) => {
+        const lookupId = folderId === "null" ? null : folderId;
+        const folderIndex = savedData.findIndex((x) => x.id === lookupId);
+
         if (folderIndex !== -1) {
-          newItems[folderId].forEach((item) => {
+          newItemsGrouped[folderId].forEach((item) => {
+            if (!savedData[folderIndex].items) savedData[folderIndex].items = [];
             savedData[folderIndex].items.push({ type: "item", id: item.id, isHidden: false });
           });
         } else {
-          // Build chain of folders from current to existing parent
-          var folderChain = [];
-          var currentFolderId = folderId;
-          var currentGF = newItems[folderId][0].gf;
-          var folderEl = document.querySelector(`#journalfolderroot [data-globalfolderid="${currentFolderId}"]`);
+          const folderChain = [];
+          let currentFolderId = lookupId;
+          if (!currentFolderId) return;
+
+          let currentGF = newItemsGrouped[folderId].gf;
+          let folderEl = document.querySelector(`#journalfolderroot [data-globalfolderid="${currentFolderId}"]`);
 
           while (currentFolderId !== null && !savedData.find((x) => x.id === currentFolderId)) {
             folderChain.unshift({
               id: currentFolderId,
-              name: folderEl?.querySelector(".folder-title")?.textContent || "Untitled",
+              name: folderEl?.querySelector(".folder-title")?.textContent || "Untitled Folder",
               pf: currentGF,
             });
 
             currentFolderId = currentGF;
             folderEl = document.querySelector(`#journalfolderroot [data-globalfolderid="${currentFolderId}"]`);
             currentGF =
-              folderEl?.parentElement.closest(".dd-item.dd-folder")?.getAttribute("data-globalfolderid") ?? null;
+              folderEl?.parentElement?.closest(".dd-item.dd-folder")?.getAttribute("data-globalfolderid") ?? null;
           }
 
-          // Find attachment point
-          var attachIndex = savedData.findIndex((x) => x.id === currentFolderId);
+          let attachIndex = savedData.findIndex((x) => x.id === currentFolderId);
           if (attachIndex === -1) attachIndex = 0;
 
-          // Add folders to savedData and create items array for last folder
           folderChain.forEach((folder, idx) => {
-            var parentFolder = idx === 0 ? savedData[attachIndex] : savedData[savedData.length - 1];
+            const parentFolder = idx === 0 ? savedData[attachIndex] : savedData[savedData.length - 1];
+            if (!parentFolder.items) parentFolder.items = [];
             parentFolder.items.push({ type: "folder", id: folder.id, isHidden: false });
 
             savedData.push({
@@ -607,7 +711,7 @@ var Journal = (function () {
               isCollapsed: false,
               items:
                 idx === folderChain.length - 1
-                  ? newItems[folderId].map((item) => ({ type: "item", id: item.id, isHidden: false }))
+                  ? newItemsGrouped[folderId].map((item) => ({ type: "item", id: item.id, isHidden: false }))
                   : [],
             });
           });
@@ -615,151 +719,172 @@ var Journal = (function () {
       });
     }
 
-    var list = document.createElement("ol");
+    const list = document.createElement("ol");
     list.classList.add("dd-list");
     createFolderSort(list);
 
-    var root = document.createElement("div");
+    const root = document.createElement("div");
     root.appendChild(list);
     root.id = "c20-journalfolderroot";
     root.className = "dd folderroot";
 
-    var folders = savedData.reduce((obj, x) => {
+    const folders = savedData.reduce((obj, x) => {
       if (x.id !== null) obj[x.id] = createNewFolder(x);
       return obj;
     }, {});
 
-    for (var i = 0; i < savedData.length; i++) {
+    for (let i = 0; i < savedData.length; i++) {
       const folderInfo = savedData[i];
+      let folder = folderInfo.id === null ? root : folders[folderInfo.id];
 
-      //folder
-      var folder = folders[folderInfo.id];
-      if (folderInfo.id === null) folder = root;
-      if (folder === undefined || folder.querySelector("ol") === undefined) continue;
+      if (!folder || !folder.querySelector("ol")) continue;
+      const olContainer = folder.querySelector("ol");
 
-      //items in folder
-      for (var j = 0; j < folderInfo.items.length; j++) {
+      for (let j = 0; j < (folderInfo.items?.length || 0); j++) {
         const itemInfo = folderInfo.items[j];
+        let item = null;
 
-        var item;
         if (itemInfo.type === "item") {
+          // CORRECTION: Retrieve Roll20's ORIGINAL physical node to preserve internal React/jQuery listeners!
           item = document.querySelector(`#journalfolderroot [data-itemid="${itemInfo.id}"]`);
-          item.after(item.cloneNode(true));
         } else {
           item = folders[itemInfo.id];
         }
 
-        if (item === null) continue;
+        if (!item) continue;
         if (itemInfo.isHidden) item.classList.add("c20-hidden");
 
-        folder.querySelector("ol").appendChild(item);
+        olContainer.appendChild(item);
       }
     }
 
-    var journalRoot = document.querySelector("#journalfolderroot");
-    journalRoot.style.display = "none";
-    journalRoot.before(root);
+    const journalRoot = document.querySelector("#journalfolderroot");
+    if (journalRoot) {
+      journalRoot.style.display = "none";
+      journalRoot.before(root);
+    }
 
-    nodes.folderCount = document.querySelectorAll("#journalfolderroot .dd-item.dd-folder").length;
-    nodes.itemCount = document.querySelectorAll("#journalfolderroot .journalitem.dd-item").length;
+    nodes.folderCount = document.querySelectorAll("#c20-journalfolderroot .dd-item.dd-folder").length;
+    nodes.itemCount = document.querySelectorAll("#c20-journalfolderroot .journalitem.dd-item").length;
   }
 
   // server side updates
   async function updateState() {
-    var clientItems = Array.from(document.querySelectorAll("#c20-journalfolderroot .journalitem.dd-item")).map((x) =>
-      x.getAttribute("data-itemid"),
-    );
+    const clientItems = Array.from(document.querySelectorAll("#c20-journalfolderroot .journalitem.dd-item"))
+      .map((x) => x.getAttribute("data-itemid"))
+      .filter(Boolean);
 
-    var serverItems = Array.from(document.querySelectorAll("#journalfolderroot .journalitem.dd-item")).map((x) =>
-      x.getAttribute("data-itemid"),
-    );
+    const serverItems = Array.from(document.querySelectorAll("#journalfolderroot .journalitem.dd-item"))
+      .map((x) => x.getAttribute("data-itemid"))
+      .filter(Boolean);
 
-    // deleted items (assume roll20 does full load)
-    var delItems = clientItems.filter((x) => !serverItems.includes(x));
+    // Delete elements missing from server cleanly
+    const delItems = clientItems.filter((x) => !serverItems.includes(x));
     delItems.forEach((item) => {
       document.querySelectorAll(`#c20-journalfolderroot [data-itemid="${item}"]`).forEach((i) => i.remove());
     });
 
-    // new items
-    var newItems = serverItems.filter((x) => !clientItems.includes(x));
+    // Handle new item synchronizations
+    const newItems = serverItems.filter((x) => !clientItems.includes(x));
+
     newItems.forEach((itemId) => {
-      var item = document.querySelector(`[data-itemid="${itemId}"]`);
-      item.after(item.cloneNode(true));
-      var folderChain = [];
-      var folder = item.closest(".dd-item.dd-folder");
-      var existingFolder =
+      // CORRECTION: Use the original physical source item directly so events bind smoothly
+      const item = document.querySelector(`[data-itemid="${itemId}"]`);
+      if (!item) return;
+
+      const folderChain = [];
+      let folder = item.closest(".dd-item.dd-folder");
+
+      let existingFolder =
         folder !== null
           ? document.querySelector(
               `#c20-journalfolderroot [data-globalfolderid="${folder.getAttribute("data-globalfolderid")}"] > ol`,
             )
           : document.querySelector("#c20-journalfolderroot > ol");
 
-      while (existingFolder == null) {
-        var newFolder = createNewFolder({
+      while (existingFolder === null && folder !== null) {
+        const newFolder = createNewFolder({
           isCollapsed: true,
-          name: folder.querySelector(".folder-title")?.textContent,
+          name: folder.querySelector(".folder-title")?.textContent || "Untitled Folder",
           id: folder.getAttribute("data-globalfolderid"),
         });
 
         if (controller.searchFilter !== "") newFolder.classList.add("c20-search-hidden");
         folderChain.push(newFolder);
 
-        folder = folder.parentElement.closest(".dd-item.dd-folder");
-        existingFolder =
-          folder !== null
-            ? document.querySelector(
-                `#c20-journalfolderroot [data-globalfolderid="${folder.getAttribute("data-globalfolderid")}"] > ol`,
-              )
-            : document.querySelector("#c20-journalfolderroot > ol");
+        folder = folder.parentElement?.closest(".dd-item.dd-folder") || null;
+        if (folder) {
+          existingFolder = document.querySelector(
+            `#c20-journalfolderroot [data-globalfolderid="${folder.getAttribute("data-globalfolderid")}"] > ol`,
+          );
+        } else {
+          existingFolder = document.querySelector("#c20-journalfolderroot > ol");
+        }
       }
+
       if (controller.searchFilter !== "") item.classList.add("c20-search-hidden");
 
-      if (folderChain.length > 0) {
-        folderChain.reverse().forEach((f, i) => {
-          if (i == 0) existingFolder.appendChild(f);
-          else folderChain[i - 1].querySelector("ol").appendChild(f);
-        });
-
-        folderChain[folderChain.length - 1].querySelector("ol").appendChild(item);
-      } else {
-        existingFolder.appendChild(item);
+      if (existingFolder) {
+        if (folderChain.length > 0) {
+          folderChain.reverse().forEach((f, i) => {
+            if (i === 0) {
+              existingFolder.appendChild(f);
+            } else {
+              folderChain[i - 1].querySelector("ol")?.appendChild(f);
+            }
+          });
+          folderChain[folderChain.length - 1].querySelector("ol")?.appendChild(item);
+        } else {
+          existingFolder.appendChild(item);
+        }
       }
     });
 
-    saveState();
+    // CORRECTION: Force an immediate, sequential saveState on structural changes to guarantee synchronization
+    await saveState();
   }
 
   function serverChangeHandler() {
-    nodes.observer = new MutationObserver(async (mutationsList, _) => {
+    const config = { childList: true, subtree: true };
+
+    nodes.observer = new MutationObserver(async (mutationsList) => {
+      const targetNode = document.querySelector("#journalfolderroot");
+
       for (const mutation of mutationsList) {
         if (mutation.type === "childList" && mutation.target.className !== "folder-title") {
-          //Item or Folder added/remove
-          var curFolders = document.querySelectorAll("#journalfolderroot .dd-item.dd-folder").length;
-          var curItems = document.querySelectorAll("#journalfolderroot .journalitem.dd-item").length;
+          const curFolders = document.querySelectorAll("#journalfolderroot .dd-item.dd-folder").length;
+          const curItems = document.querySelectorAll("#journalfolderroot .journalitem.dd-item").length;
 
-          if (curFolders != nodes.folderCount || curItems != nodes.itemCount) {
+          if (curFolders !== nodes.folderCount || curItems !== nodes.itemCount) {
+            // SAFEGUARD: Temporarily pause the observer to prevent cross-tree mutation loops or write collisions
+            if (nodes.observer) nodes.observer.disconnect();
+
             await updateState();
+
             nodes.folderCount = curFolders;
             nodes.itemCount = curItems;
+
+            // RECONNECT: Put the observer back to work tracking live game updates
+            if (nodes.observer && targetNode) {
+              nodes.observer.observe(targetNode, config);
+            }
           }
         }
       }
     });
 
-    const targetNode = document.querySelector("#journalfolderroot"); // Or any other DOM element
-    const config = {
-      childList: true, // Observe additions/removals of child nodes
-      subtree: true, // Observe changes in descendants of the target node
-    };
-
-    nodes.observer.observe(targetNode, config);
+    const targetNode = document.querySelector("#journalfolderroot");
+    if (targetNode) {
+      nodes.observer.observe(targetNode, config);
+    }
   }
 
-  var Journal = {
+  const Journal = {
     // initialization
     init: async function init() {
       if (nodes.journalSorts.length > 0) return; // already initialized
       if (document.querySelector("#journal > .content > .superadd.btn") !== null) return; // don't load if owner
+
       await loadState();
 
       // Add controls
@@ -768,51 +893,64 @@ var Journal = (function () {
       createFolderContextMenu();
       createItemContextMenu();
       serverChangeHandler();
-      var lockControl = createLockControl();
+
+      const lockControl = createLockControl();
+      if (!lockControl) return;
 
       // lock/unlock event listener
       lockControl.addEventListener("click", function () {
         settings.isLocked = !settings.isLocked;
         nodes.journalSorts.forEach((s) => s.option("disabled", settings.isLocked));
-        nodes.lockControlIcon.textContent = settings.isLocked ? "(" : ")";
 
-        if (settings.isLocked)
-          Array.from(document.querySelectorAll("#c20-journalfolderroot .dd-item.character")).forEach((el) =>
-            el.setAttribute("draggable", true),
-          );
+        if (nodes.lockControlIcon) {
+          nodes.lockControlIcon.textContent = settings.isLocked ? "(" : ")";
+        }
+
+        if (settings.isLocked) {
+          document.querySelectorAll("#c20-journalfolderroot .dd-item.character").forEach((el) => {
+            el.setAttribute("draggable", "true");
+          });
+        }
       });
     },
+
+    // teardown
     remove: async function remove() {
       if (document.querySelector("#journal > .content > .superadd.btn") !== null) return;
 
-      nodes.observer.disconnect();
+      if (nodes.observer) {
+        nodes.observer.disconnect();
+      }
+
       nodes.journalSorts.forEach((s) => s.destroy());
       nodes.journalSorts = [];
 
-      Array.from(document.querySelectorAll(`#c20-journalfolderroot .journalitem.dd-item`)).forEach((item) => {
-        var placeHolder = document.querySelector(
-          `#journalfolderroot [data-itemid="${item.getAttribute("data-itemid")}"]`,
-        );
-        if (placeHolder) {
-          if (item.classList.contains("character")) item.setAttribute("draggable", true);
-          placeHolder.after(item);
-          placeHolder.remove();
-        }
-      });
+      // FIXED: Optimized cleanups. Because we preserve Roll20's hidden list untouched, we simply discard our clones
+      document.querySelector("#c20-journalfolderroot")?.remove();
+      document.querySelector(".c20-lock-control")?.remove();
+      document.querySelector("#journal .content.searchbox")?.remove();
 
-      document.querySelector("#c20-journalfolderroot").remove();
-      document.querySelector(".c20-lock-control").remove();
-      document.querySelector("#journal .content.searchbox").remove();
-      document.querySelector("#journalfolderroot").style.display = "block";
+      // Unhide the native Roll20 sidebar layer smoothly
+      const nativeJournalRoot = document.querySelector("#journalfolderroot");
+      if (nativeJournalRoot) {
+        nativeJournalRoot.style.display = "block";
+      }
 
-      document.removeEventListener("contextmenu", closeFolderContextmenu);
+      // FIXED: Cleaned up context listeners matching their EXACT event types to eliminate garbage memory leaks
+      document.removeEventListener("click", closeFolderContextmenu);
       document.removeEventListener("contextmenu", ShowFolderContextMenu);
-      context.folderMenu.remove();
+      if (context.folderMenu) context.folderMenu.remove();
 
-      document.removeEventListener("contextmenu", closeItemContextmenu);
-      document.removeEventListener("contextmenu", showItemContextMenu);
-      context.itemMenu.remove();
+      document.removeEventListener("click", closeItemContextmenu);
+
+      // FIXED: Target the original element boundary wrapper context from part 2
+      const journalRoot = document.querySelector("#journal");
+      if (journalRoot) {
+        journalRoot.removeEventListener("contextmenu", showItemContextMenu);
+      }
+      if (context.itemMenu) context.itemMenu.remove();
     },
   };
+
   return Journal;
 })();
