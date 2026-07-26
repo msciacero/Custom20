@@ -36,10 +36,10 @@ async function init5e() {
   if (CharacterSettings.settings.spellFilter) await Spells.initFilter();
   if (CharacterSettings.settings.spellView) await Spells.initUi();
   if (CharacterSettings.settings.traitsView) Traits.init();
+  if (CharacterSettings.settings.characterView) Characteristics.init();
   CompendiumImport.init();
   if (CharacterSettings.settings.itemView) Inventory.init();
   Attacks.init();
-  Characteristics.init();
   levelEvent();
 }
 

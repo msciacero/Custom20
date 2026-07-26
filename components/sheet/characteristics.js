@@ -61,8 +61,6 @@ var Characteristics = (function () {
       selector.querySelectorAll(".c20-desc").forEach((x) => x.remove());
       selector.removeEventListener("change", checkForUpdates);
       selector.classList.remove("c20-v2");
-
-      if (observer) observer.disconnect();
     },
   };
   return Characteristics;

@@ -12,6 +12,9 @@ var CharacterSettings = (function () {
     container.appendChild(
       createCheckboxRow({ name: "itemView", title: "show enhanced inventory", event: inventoryEvent }),
     );
+    container.appendChild(
+      createCheckboxRow({ name: "characterView", title: "show styled characteristics", event: characterEvent }),
+    );
     container.appendChild(createCheckboxRow({ name: "traitsView", title: "show styled traits", event: traitsEvent }));
     container.appendChild(
       createCheckboxRow({ name: "spellFilter", title: "show spell filter", event: spellFilterEvent }),
@@ -208,6 +211,11 @@ var CharacterSettings = (function () {
       Inventory.updateUi();
     }
 
+    if (settings.characterView !== df.characterView) {
+      if (df.characterView) Characteristics.init();
+      else Characteristics.remove();
+    }
+
     if (settings.traitsView !== df.traitsView) {
       if (df.traitsView) Traits.init();
       else Traits.remove();
@@ -248,6 +256,14 @@ var CharacterSettings = (function () {
 
     if (settings.spellView) Spells.initUi();
     else Spells.removeUi();
+  }
+
+  async function characterEvent(event) {
+    settings.characterView = event.target.checked;
+    await saveSettings();
+
+    if (settings.characterView) Characteristics.init();
+    else Characteristics.remove();
   }
 
   async function traitsEvent(event) {
@@ -311,6 +327,7 @@ var CharacterSettings = (function () {
     if (data.spellView ?? true) data.spellView = true;
     if (data.itemAttunementColor === undefined || data.itemAttunementColor === null) data.itemAttunementColor = "";
     if (data.itemMagicColor === undefined || data.itemMagicColor === null) data.itemMagicColor = "";
+    if (data.characterView ?? true) data.characterView = true;
     if (data.traitsView ?? true) data.traitsView = true;
     if (data.itemView ?? true) data.itemView = true;
 

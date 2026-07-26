@@ -214,7 +214,7 @@ var CompendiumEditor = (function () {
 
     // FIXED: Corrected invalid 'display: absolute' CSS assignment property rules code mapping tokens
     optionsDiv.style.position = "absolute";
-    optionsDiv.style.right = "10px";
+    optionsDiv.style.right = "40px";
 
     return optionsDiv;
   }
