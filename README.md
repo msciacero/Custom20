@@ -53,6 +53,55 @@ C20 is a browser extension for Roll20 that adds a number of quality of life impr
 
 ---
 
+### Characteristics / Features and Traits Updates
+
+- Added some markdown format support
+  - Bold: https://www.markdownguide.org/basic-syntax/#bold
+  - Italic: https://www.markdownguide.org/basic-syntax/#italic
+  - Bold and Italic: https://www.markdownguide.org/basic-syntax/#bold-and-italic
+  - Header: https://www.markdownguide.org/basic-syntax/#headings
+  - Unordered Lists: https://www.markdownguide.org/basic-syntax/#unordered-lists
+  - Tables: https://www.markdownguide.org/extended-syntax/#tables
+- Removed titles from scrolls to make boxes more generic
+
+![Characteristics View](/_docs/images/characteristics-1.png)
+
+---
+
+### Conditions Section
+
+Track and display conditions that are afflicting this character
+
+- Display condition and effects
+- Only shows unique effects if multiple conditions are enabled
+- Click on condition name to read full description (maybe one day I will make this look nice)
+
+![Conditions View](/_docs/images/conditions-1.png) ![Conditions Editor](/_docs/images/conditions-2.png)
+
+---
+
+### Defenses Section
+
+- Dedicated location for resistance, vulnerability, and immunity.
+- Option wheel is on the right side between speed and hit point boxes
+
+![Defense View](/_docs/images/defense-1.png) ![Defense Editor](/_docs/images/defense-2.png)
+
+---
+
+### Inventory Updates
+
+- Customizable color to denote magic and attuned items
+- Full UI inventory editor
+  - Edit item modifiers
+  - Armor and weapons stats
+  - Track upgrades for "The Complete Armorer's Handbook"
+- Item type of "Divider" only displays the item name
+
+![Inventory View](/_docs/images/inventory-1.png) ![Inventory Editor](/_docs/images/inventory-2.png)
+
+---
+
 ### Journal Updates
 
 Only enabled for players because GMs already get most of these features.
@@ -75,55 +124,6 @@ Only enabled for players because GMs already get most of these features.
 - Adds titles next to each icon
 
 ![Marker Menu](/_docs/images/markers-1.png)
-
----
-
-### Defenses Section
-
-- Dedicated location for resistance, vulnerability, and immunity.
-- Option wheel is on the right side between speed and hit point boxes
-
-![Defense View](/_docs/images/defense-1.png) ![Defense Editor](/_docs/images/defense-2.png)
-
----
-
-### Conditions Section
-
-Track and display conditions that are afflicting this character
-
-- Display condition and effects
-- Only shows unique effects if multiple conditions are enabled
-- Click on condition name to read full description (maybe one day I will make this look nice)
-
-![Conditions View](/_docs/images/conditions-1.png) ![Conditions Editor](/_docs/images/conditions-2.png)
-
----
-
-### Inventory Updates
-
-- Customizable color to denote magic and attuned items
-- Full UI inventory editor
-  - Edit item modifiers
-  - Armor and weapons stats
-  - Track upgrades for "The Complete Armorer's Handbook"
-- Item type of "Divider" only displays the item name
-
-![Inventory View](/_docs/images/inventory-1.png) ![Inventory Editor](/_docs/images/inventory-2.png)
-
----
-
-### Characteristics / Features and Traits Updates
-
-- Added some markdown format support
-  - Bold: https://www.markdownguide.org/basic-syntax/#bold
-  - Italic: https://www.markdownguide.org/basic-syntax/#italic
-  - Bold and Italic: https://www.markdownguide.org/basic-syntax/#bold-and-italic
-  - Header: https://www.markdownguide.org/basic-syntax/#headings
-  - Unordered Lists: https://www.markdownguide.org/basic-syntax/#unordered-lists
-  - Tables: https://www.markdownguide.org/extended-syntax/#tables
-- Removed titles from scrolls to make boxes more generic
-
-![Characteristics View](/_docs/images/characteristics-1.png)
 
 ---
 
