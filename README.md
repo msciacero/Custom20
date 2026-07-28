@@ -53,7 +53,7 @@ Only enabled for players because GMs already get most of these features.
 - Exclude/include hidden journal items (2)
 - Enable/disable drag and drop sorting (3)
 
-[![Journal Header](/_docs/images/journal-1.png)]
+![Journal Header](/_docs/images/journal-1.png)
 
 ---
 
@@ -61,7 +61,7 @@ Only enabled for players because GMs already get most of these features.
 
 - Adds titles next to each icon
 
-[![Marker Menu](/_docs/images/markers-1.png)]
+![Marker Menu](/_docs/images/markers-1.png)
 
 ---
 
@@ -70,7 +70,7 @@ Only enabled for players because GMs already get most of these features.
 - Dedicated location for resistance, vulnerability, and immunity.
 - Option wheel is on the right side between speed and hit point boxes
 
-[![Defense View](/_docs/images/defense-1.png)] [![Defense Editor](/_docs/images/defense-2.png)]
+![Defense View](/_docs/images/defense-1.png) ![Defense Editor](/_docs/images/defense-2.png)
 
 ---
 
@@ -82,7 +82,7 @@ Track and display conditions that are afflicting this character
 - Only shows unique effects if multiple conditions are enabled
 - Click on condition name to read full description (maybe one day I will make this look nice)
 
-[![Conditions View](/_docs/images/conditions-1.png)] [![Conditions Editor](/_docs/images/conditions-2.png)]
+![Conditions View](/_docs/images/conditions-1.png) ![Conditions Editor](/_docs/images/conditions-2.png)
 
 ---
 
@@ -95,7 +95,7 @@ Track and display conditions that are afflicting this character
   - Track upgrades for "The Complete Armorer's Handbook"
 - Item type of "Divider" only displays the item name
 
-[![Inventory View](/_docs/images/inventory-1.png)] [![Inventory Editor](/_docs/images/inventory-2.png)]
+![Inventory View](/_docs/images/inventory-1.png) ![Inventory Editor](/_docs/images/inventory-2.png)
 
 ---
 
@@ -110,7 +110,7 @@ Track and display conditions that are afflicting this character
   - Tables: https://www.markdownguide.org/extended-syntax/#tables
 - Removed titles from scrolls to make boxes more generic
 
-[![Characteristics View](/_docs/images/characteristics-1.png)]
+![Characteristics View](/_docs/images/characteristics-1.png)
 
 ---
 
@@ -119,12 +119,12 @@ Track and display conditions that are afflicting this character
 - Added row view layout with additional spell details
 - Added markdown support to spell descriptions
 - Added spell filter
-  - Show only prepared/ritual spells (1)
-  - Filter spells by requirements (2)
-  - Show/hide spell filter (3)
-  - Reset spell filter (4)
+  - Show only prepared/ritual spells
+  - Filter spells by requirements
+  - Show/hide spell filter
+  - Reset spell filter
 
-[![Spell View](/_docs/images/spell-1.png)]
+![Spell View](/_docs/images/spell-1.png)
 
 ---
 
@@ -138,7 +138,7 @@ Track and display conditions that are afflicting this character
   - Set as Default: Sets current settings as future default settings
   - Reset to Default: Resets sheet to your default settings
 
-[![Game Settings](/_docs/images/settings-1.png)] [![Sheet Settings](/_docs/images/settings-2.png)]
+![Game Settings](/_docs/images/settings-1.png) ![Sheet Settings](/_docs/images/settings-2.png)
 
 ---
 
