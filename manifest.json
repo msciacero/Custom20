@@ -1,7 +1,7 @@
 {
   "manifest_version": 3,
   "name": "C20",
-  "version": "0.0.0.4",
+  "version": "0.0.0.5",
   "description": "Small number of quality of life enhancements for Roll20 5e players.",
   "icons": {
     "16": "library/icons/c20_16.png",

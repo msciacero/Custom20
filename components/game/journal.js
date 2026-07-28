@@ -64,7 +64,6 @@ var Journal = (function () {
 
     let hiddenToggle = document.createElement("a");
     hiddenToggle.className = "btn pictos c20-hiddenToggle";
-    hiddenToggle.href = "#hiddenSearch";
     hiddenToggle.style.opacity = settings.searchHidden ? "1.0" : "0.4";
     hiddenToggle.textContent = "E";
     hiddenToggle.title = "Search hidden items";
@@ -386,14 +385,14 @@ var Journal = (function () {
     newFolder.appendChild(newList);
 
     // events
-    expandControl.addEventListener("click", function () {
+    expandControl.addEventListener("click", function (event) {
       expandControl.style.display = "none";
       collapseControl.style.display = "block";
       newList.style.display = "block";
       if (controller.searchFilter === "") saveState();
     });
 
-    collapseControl.addEventListener("click", function () {
+    collapseControl.addEventListener("click", function (event) {
       collapseControl.style.display = "none";
       expandControl.style.display = "block";
       newList.style.display = "none";
@@ -408,7 +407,7 @@ var Journal = (function () {
     var root = document.querySelector("#c20-journalfolderroot");
 
     root.addEventListener("mousedown", function (event) {
-      if (isFolder(event.target)) {
+      if (isFolder(event.target) && event.button === 0) {
         var btn = Array.from(event.target.closest(".dd-folder").childNodes).find(
           (x) => x.tagName === "BUTTON" && x.style.display === "block",
         );
