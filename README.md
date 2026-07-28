@@ -40,7 +40,7 @@ C20 is a browser extension for Roll20 that adds a number of quality of life impr
 
 ## Features
 
-### Journal
+### Journal Updates
 
 Only enabled for players because GMs already get most of these features.
 
@@ -57,23 +57,24 @@ Only enabled for players because GMs already get most of these features.
 
 ---
 
-### Markers
+### Marker Updates
 
-Adds titles next to each icon
+- Adds titles next to each icon
 
 [![Marker Menu](/_docs/images/markers-1.png)]
 
 ---
 
-### Defenses
+### Defenses Section
 
-Dedicated location for resistance, vulnerability, and immunity.
+- Dedicated location for resistance, vulnerability, and immunity.
+- Option wheel is on the right side between speed and hit point boxes
 
-[![Marker Menu](/_docs/images/defense-1.png)] [![Marker Menu](/_docs/images/defense-2.png)]
+[![Defense View](/_docs/images/defense-1.png)] [![Defense Editor](/_docs/images/defense-2.png)]
 
 ---
 
-### Conditions
+### Conditions Section
 
 Track and display conditions that are afflicting this character
 
@@ -81,4 +82,56 @@ Track and display conditions that are afflicting this character
 - Only shows unique effects if multiple conditions are enabled
 - Click on condition name to read full description (maybe one day I will make this look nice)
 
-[![Marker Menu](/_docs/images/conditions-1.png)] [![Marker Menu](/_docs/images/conditions-2.png)]
+[![Conditions View](/_docs/images/conditions-1.png)] [![Conditions Editor](/_docs/images/conditions-2.png)]
+
+### Inventory Updates
+
+- Customizable color to denote magic and attuned items
+- Full UI inventory editor
+  - Edit item modifiers
+  - Armor and weapons stats
+  - Track upgrades for "The Complete Armorer's Handbook"
+- Item type of "Divider" only displays the item name
+
+[![Inventory View](/_docs/images/inventory-1.png)] [![Inventory Editor](/_docs/images/inventory-2.png)]
+
+### Characteristics / Features and Traits Updates
+
+- Added some markdown format support
+  - Bold: https://www.markdownguide.org/basic-syntax/#bold
+  - Italic: https://www.markdownguide.org/basic-syntax/#italic
+  - Bold and Italic: https://www.markdownguide.org/basic-syntax/#bold-and-italic
+  - Header: https://www.markdownguide.org/basic-syntax/#headings
+  - Unordered Lists: https://www.markdownguide.org/basic-syntax/#unordered-lists
+  - Tables: https://www.markdownguide.org/extended-syntax/#tables
+- Removed titles from scrolls to make boxes more generic
+
+[![Characteristics View](/_docs/images/characteristics-1.png)]
+
+### Spell Updates
+
+- Added row view layout with additional spell details
+- Added markdown support to spell descriptions
+- Added spell filter
+  - Show only prepared/ritual spells (1)
+  - Filter spells by requirements (2)
+  - Show/hide spell filter (3)
+  - Reset spell filter (4)
+
+[![Spell View](/_docs/images/spell-1.png)]
+
+### Settings
+
+- Game Settings
+  - Enable/disable features for the campaign screen
+  - Import/Export local data
+- Character Settings
+  - Enable/disable features for the character sheet
+  - Set as Default: Sets current settings as future default settings
+  - Reset to Default: Resets sheet to your default settings
+
+[![Game Settings](/_docs/images/settings-1.png)] [![Sheet Settings](/_docs/images/settings-2.png)]
+
+### Compendium (TBD)
+
+### Compendium Editor (TBD)
