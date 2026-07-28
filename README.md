@@ -40,6 +40,19 @@ C20 is a browser extension for Roll20 that adds a number of quality of life impr
 
 ## Features
 
+- [Characteristics/Features](https://github.com/msciacero/C20#characteristics--features-and-traits-updates)
+- [Conditions Section](https://github.com/msciacero/C20#conditions-section)
+- [Defenses Section](https://github.com/msciacero/C20#defenses-section)
+- [Inventory Updates](https://github.com/msciacero/C20#inventory-updates)
+- [Journal Updates](https://github.com/msciacero/C20#journal-updates)
+- [Marker Menu Updates](https://github.com/msciacero/C20#marker-updates)
+- [Spell View](https://github.com/msciacero/C20#spell-updates)
+- [C20 Settings](https://github.com/msciacero/C20#settings)
+- Compendium
+- Compendium Editor
+
+---
+
 ### Journal Updates
 
 Only enabled for players because GMs already get most of these features.
