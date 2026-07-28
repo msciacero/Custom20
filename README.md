@@ -2,8 +2,6 @@
 
 C20 is a browser extension for Roll20 that adds a number of quality of life improvements to the D&D 5e 2014 character sheet and game.
 
-## Overall Features
-
 ### App Features
 
 - Additional journal actions for players (hide, filter, sort, and folder management)
@@ -20,38 +18,24 @@ C20 is a browser extension for Roll20 that adds a number of quality of life impr
 - Inventory tweaks that allow dividers, different colors for magical items, and advanced item editor
 - Features and Traits has some markdown syntax support (bold, italic, list, tables)
 
-## 3rd Party Libraries
+## Table of Contents
 
-- expr-eval (https://github.com/silentmatt/expr-eval) - Calculate roll20 dice formulas
-- FontAwesome Icons (https://fontawesome.com/) - Filter/Shield Icon
-- idb (https://github.com/jakearchibald/idb) - async indexeddb helper
-- Sortable.js by RubaXa & owenm (https://github.com/SortableJS/Sortable) - Custom journal drag & drop
-
-## Wish List
-
-- Compendium: Species, Monsters, Features, Groupings (Type/Name|GroupName), category search filter
-- Move styles to css
-- Language support
-- Compendium: Related categories search
-
-## Known Issues
-
-- 5e sheet does not fully support versatile weapons (no synch and uses hidden inputs)
+- Features
+  - [Characteristics/Features](https://github.com/msciacero/C20#characteristics--features-and-traits-updates)
+  - [Conditions Section](https://github.com/msciacero/C20#conditions-section)
+  - [Defenses Section](https://github.com/msciacero/C20#defenses-section)
+  - [Inventory Updates](https://github.com/msciacero/C20#inventory-updates)
+  - [Journal Updates](https://github.com/msciacero/C20#journal-updates)
+  - [Marker Menu Updates](https://github.com/msciacero/C20#marker-updates)
+  - [Spell View](https://github.com/msciacero/C20#spell-updates)
+  - [C20 Settings](https://github.com/msciacero/C20#settings)
+  - Compendium
+  - Compendium Editor
+- [3rd Party Libraries](https://github.com/msciacero/C20#3rd-party-libraries)
+- [Wish List](https://github.com/msciacero/C20#wish-list)
+- [Known Issues](https://github.com/msciacero/C20#known-issues)
 
 ## Features
-
-- [Characteristics/Features](https://github.com/msciacero/C20#characteristics--features-and-traits-updates)
-- [Conditions Section](https://github.com/msciacero/C20#conditions-section)
-- [Defenses Section](https://github.com/msciacero/C20#defenses-section)
-- [Inventory Updates](https://github.com/msciacero/C20#inventory-updates)
-- [Journal Updates](https://github.com/msciacero/C20#journal-updates)
-- [Marker Menu Updates](https://github.com/msciacero/C20#marker-updates)
-- [Spell View](https://github.com/msciacero/C20#spell-updates)
-- [C20 Settings](https://github.com/msciacero/C20#settings)
-- Compendium
-- Compendium Editor
-
----
 
 ### Characteristics / Features and Traits Updates
 
@@ -160,3 +144,30 @@ Only enabled for players because GMs already get most of these features.
 ---
 
 ### Compendium Editor (TBD)
+
+## 3rd Party Libraries
+
+- expr-eval (https://github.com/silentmatt/expr-eval) - Calculate roll20 dice formulas
+- FontAwesome Icons (https://fontawesome.com/) - Filter/Shield Icon
+- idb (https://github.com/jakearchibald/idb) - async indexeddb helper
+- Sortable.js by RubaXa & owenm (https://github.com/SortableJS/Sortable) - Custom journal drag & drop
+
+## Wish List
+
+- Compendium: Species, Monsters, Features, Groupings (Type/Name|GroupName), category search filter
+- Move styles to css
+- Language support
+- Compendium: Related categories search
+
+## Known Issues
+
+- 5e sheet does not fully support versatile weapons (no synch and uses hidden inputs)
+
+## Random Questions and Answers
+
+1. _Why isn't this an FAQ?_ Because no one has asked any questions.
+2. _Why doesn't feature x work?_ Sorry, sometimes I break things. I swear its not on purpose and I might not even know I did it.
+3. _Why did you make this?_ My friend wanted to organize their journal and for some reason I thought that sounded like a simple task. Little did I know...
+4. _When do you add new features?_ When I feel like it. Half the battle is trying to find a concept that works.
+5. _Why is markdown support limited?_ Safety. People might want to share homebrew items and I wanted to reduce the chance of malicious text being executed.
+6. _Does this support dark mode?_ I don't use dark mode but I try to support it for people who do. If I missed something, just let me know.
