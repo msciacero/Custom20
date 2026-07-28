@@ -84,6 +84,8 @@ Track and display conditions that are afflicting this character
 
 [![Conditions View](/_docs/images/conditions-1.png)] [![Conditions Editor](/_docs/images/conditions-2.png)]
 
+---
+
 ### Inventory Updates
 
 - Customizable color to denote magic and attuned items
@@ -94,6 +96,8 @@ Track and display conditions that are afflicting this character
 - Item type of "Divider" only displays the item name
 
 [![Inventory View](/_docs/images/inventory-1.png)] [![Inventory Editor](/_docs/images/inventory-2.png)]
+
+---
 
 ### Characteristics / Features and Traits Updates
 
@@ -108,6 +112,8 @@ Track and display conditions that are afflicting this character
 
 [![Characteristics View](/_docs/images/characteristics-1.png)]
 
+---
+
 ### Spell Updates
 
 - Added row view layout with additional spell details
@@ -119,6 +125,8 @@ Track and display conditions that are afflicting this character
   - Reset spell filter (4)
 
 [![Spell View](/_docs/images/spell-1.png)]
+
+---
 
 ### Settings
 
@@ -132,6 +140,10 @@ Track and display conditions that are afflicting this character
 
 [![Game Settings](/_docs/images/settings-1.png)] [![Sheet Settings](/_docs/images/settings-2.png)]
 
+---
+
 ### Compendium (TBD)
+
+---
 
 ### Compendium Editor (TBD)
