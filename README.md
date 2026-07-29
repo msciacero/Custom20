@@ -29,8 +29,8 @@ C20 is a browser extension for Roll20 that adds a number of quality of life impr
   - [Marker Menu Updates](https://github.com/msciacero/C20#marker-updates)
   - [Spell View](https://github.com/msciacero/C20#spell-updates)
   - [C20 Settings](https://github.com/msciacero/C20#settings)
-  - Compendium
-  - Compendium Editor
+  - [Compendium](https://github.com/msciacero/C20#compendium)
+  - [Compendium Editor](https://github.com/msciacero/C20#compendium-editor)
 - [3rd Party Libraries](https://github.com/msciacero/C20#3rd-party-libraries)
 - [Wish List](https://github.com/msciacero/C20#wish-list)
 - [Known Issues](https://github.com/msciacero/C20#known-issues)
@@ -139,11 +139,30 @@ Only enabled for players because GMs already get most of these features.
 
 ---
 
-### Compendium (TBD)
+### Compendium
+
+- Select different compendiums
+  - Roll20 compendium (D&D 5th Edition)
+  - Each compendium is isolated
+- Custom compendiums
+  - Fuzzy search filter
+  - Drag and drop items to character sheet (including popped out sheets)
+    - Backgrounds, classes, subclasses, and feats add a new trait
+    - Items will be added to inventory and create attack and resources if specified
+    - Spells will be added to spell list
+
+![Compendium](/_docs/images/compendium-1.png)
 
 ---
 
-### Compendium Editor (TBD)
+### Compendium Editor
+
+- Allows players to create and edit items for their custom compendiums
+- Currently supports backgrounds, classes, conditions, feats, items, spells, and subclasses
+- Full UI or JSON editor
+- Easter egg next to the Compendium Editor
+
+![Editor](/_docs/images/editor-1.png)
 
 ## 3rd Party Libraries
 
