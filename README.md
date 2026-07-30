@@ -141,6 +141,7 @@ Only enabled for players because GMs already get most of these features.
 
 ### Compendium
 
+- Only supports new compendium
 - Select different compendiums
   - Roll20 compendium (D&D 5th Edition)
   - Each compendium is isolated

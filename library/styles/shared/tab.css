@@ -32,17 +32,14 @@
   margin-top: 10px;
 }
 
-html.dark .c20-tab-buttons,
-.sheet-darkmode .c20-tab-buttons {
+html.dark .c20-tab-buttons {
   background-color: #702c91;
 }
 
-html.dark .c20-tab-button:hover,
-.sheet-darkmode .c20-tab-button:hover {
+html.dark .c20-tab-button:hover {
   background-color: #a980bd;
 }
 
-html.dark .c20-tab-button.active,
-.sheet-darkmode .c20-tab-button.active {
+html.dark .c20-tab-button.active {
   background-color: #a980bd;
 }

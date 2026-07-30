@@ -86,10 +86,7 @@ class CardModal {
       this.settings.initialY = e.clientY - this.modal.offsetTop;
     });
 
-    body.style.fontSize = "16px";
-    body.style.height = "calc(100% - 75px)";
-    body.style.overflowY = "auto";
-    body.style.padding = "10px 20px";
+    body.classList.add("c20-modal-body");
 
     // FIXED: Removed duplicate header appending layout code that mutated block ordering
     container.appendChild(body);

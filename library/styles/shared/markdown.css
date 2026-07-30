@@ -72,7 +72,7 @@ html.dark .c20-markdown-table td,
 
 html.dark .c20-markdown-table th,
 .sheet-darkmode .c20-markdown-table th {
-  color: #e1757b;
+  color: #e1757b !important;
   border-bottom-color: #e1757b;
 }
 
