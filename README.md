@@ -48,7 +48,7 @@ C20 is a browser extension for Roll20 that adds a number of quality of life impr
   - Tables: https://www.markdownguide.org/extended-syntax/#tables
 - Removed titles from scrolls to make boxes more generic
 
-![Characteristics View](/_docs/images/characteristics-1.png)
+![Characteristics View](/.docs/images/characteristics-1.png)
 
 ---
 
@@ -60,7 +60,7 @@ Track and display conditions that are afflicting this character
 - Only shows unique effects if multiple conditions are enabled
 - Click on condition name to read full description (maybe one day I will make this look nice)
 
-![Conditions View](/_docs/images/conditions-1.png) ![Conditions Editor](/_docs/images/conditions-2.png)
+![Conditions View](/.docs/images/conditions-1.png) ![Conditions Editor](/.docs/images/conditions-2.png)
 
 ---
 
@@ -69,7 +69,7 @@ Track and display conditions that are afflicting this character
 - Dedicated location for resistance, vulnerability, and immunity.
 - Option wheel is on the right side between speed and hit point boxes
 
-![Defense View](/_docs/images/defense-1.png) ![Defense Editor](/_docs/images/defense-2.png)
+![Defense View](/.docs/images/defense-1.png) ![Defense Editor](/.docs/images/defense-2.png)
 
 ---
 
@@ -82,7 +82,7 @@ Track and display conditions that are afflicting this character
   - Track upgrades for "The Complete Armorer's Handbook"
 - Item type of "Divider" only displays the item name
 
-![Inventory View](/_docs/images/inventory-1.png) ![Inventory Editor](/_docs/images/inventory-2.png)
+![Inventory View](/.docs/images/inventory-1.png) ![Inventory Editor](/.docs/images/inventory-2.png)
 
 ---
 
@@ -99,7 +99,7 @@ Only enabled for players because GMs already get most of these features.
 - Exclude/include hidden journal items (2)
 - Enable/disable drag and drop sorting (3)
 
-![Journal Header](/_docs/images/journal-1.png)
+![Journal Header](/.docs/images/journal-1.png)
 
 ---
 
@@ -107,7 +107,7 @@ Only enabled for players because GMs already get most of these features.
 
 - Adds titles next to each icon
 
-![Marker Menu](/_docs/images/markers-1.png)
+![Marker Menu](/.docs/images/markers-1.png)
 
 ---
 
@@ -121,7 +121,7 @@ Only enabled for players because GMs already get most of these features.
   - Show/hide spell filter
   - Reset spell filter
 
-![Spell View](/_docs/images/spell-1.png)
+![Spell View](/.docs/images/spell-1.png)
 
 ---
 
@@ -135,7 +135,7 @@ Only enabled for players because GMs already get most of these features.
   - Set as Default: Sets current settings as future default settings
   - Reset to Default: Resets sheet to your default settings
 
-![Game Settings](/_docs/images/settings-1.png) ![Sheet Settings](/_docs/images/settings-2.png)
+![Game Settings](/.docs/images/settings-1.png) ![Sheet Settings](/.docs/images/settings-2.png)
 
 ---
 
@@ -151,7 +151,7 @@ Only enabled for players because GMs already get most of these features.
     - Items will be added to inventory and create attack and resources if specified
     - Spells will be added to spell list
 
-![Compendium](/_docs/images/compendium-1.png)
+![Compendium](/.docs/images/compendium-1.png)
 
 ---
 
@@ -162,7 +162,7 @@ Only enabled for players because GMs already get most of these features.
 - Full UI or JSON editor
 - Easter egg next to the Compendium Editor
 
-![Editor](/_docs/images/editor-1.png)
+![Editor](/.docs/images/editor-1.png)
 
 ## 3rd Party Libraries
 

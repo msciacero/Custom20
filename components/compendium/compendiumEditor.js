@@ -58,12 +58,8 @@ var CompendiumEditor = (function () {
 
     compendiumContent.appendChild(selectWrapper);
 
-    if (typeof createEditor === "function") {
-      compendiumContent.appendChild(createEditor());
-    }
-    if (typeof createAdvancedEditor === "function") {
-      advancedContent.appendChild(await createAdvancedEditor());
-    }
+    compendiumContent.appendChild(createEditor());
+    advancedContent.appendChild(await createAdvancedEditor());
 
     modalContent.appendChild(createModalHeader());
     modalContent.appendChild(createProgressIndicator());
@@ -93,9 +89,7 @@ var CompendiumEditor = (function () {
     btn.style.fontSize = "15px";
     btn.style.marginLeft = "10px";
 
-    if (typeof toggleAdvancedEditor === "function") {
-      btn.addEventListener("click", toggleAdvancedEditor);
-    }
+    btn.addEventListener("click", toggleAdvancedEditor);
 
     const modalClose = document.createElement("span");
     modalClose.className = "close";
@@ -145,9 +139,7 @@ var CompendiumEditor = (function () {
           stdEl.entry.disabled(true);
         }
 
-        if (typeof updateEditor === "function") {
-          await updateEditor();
-        }
+        await updateEditor();
       },
     });
 
@@ -170,9 +162,7 @@ var CompendiumEditor = (function () {
       ],
       changeHandler: async function () {
         if (stdEl.entry) stdEl.entry.reset();
-        if (typeof updateCategorySelect === "function") {
-          await updateCategorySelect();
-        }
+        await updateCategorySelect();
       },
     });
 
@@ -189,9 +179,7 @@ var CompendiumEditor = (function () {
       title: "Entries",
       options: [],
       changeHandler: async function () {
-        if (typeof updateEditor === "function") {
-          await updateEditor();
-        }
+        await updateEditor();
       },
     });
 
@@ -209,12 +197,8 @@ var CompendiumEditor = (function () {
         { value: "json", name: "JSON Editor" },
       ],
       selectedValue: settings.editor,
-      changeHandler: typeof updateEditorRadio === "function" ? updateEditorRadio : null,
+      changeHandler: updateEditorRadio,
     });
-
-    // FIXED: Corrected invalid 'display: absolute' CSS assignment property rules code mapping tokens
-    optionsDiv.style.position = "absolute";
-    optionsDiv.style.right = "40px";
 
     return optionsDiv;
   }
@@ -246,9 +230,7 @@ var CompendiumEditor = (function () {
       stdEl.entry.disabled(true);
     }
 
-    if (typeof updateEditor === "function") {
-      await updateEditor();
-    }
+    await updateEditor();
   }
 
   async function updateCategorySelect() {
@@ -285,7 +267,7 @@ var CompendiumEditor = (function () {
   }
 
   async function updateEditor() {
-    if (typeof disableSaveButton === "function") disableSaveButton();
+    disableSaveButton();
 
     const entryVal = String(stdEl.entry.getValue());
     const categoryVal = stdEl.category.getValue();
@@ -375,19 +357,19 @@ var CompendiumEditor = (function () {
     if (settings.editor === "json") {
       editorWorkspace.replaceChildren(createJsonEditor(entry));
     } else if (settings.editor === "ui") {
-      if (categoryVal === "background" && typeof createTraitEditor === "function") {
+      if (categoryVal === "background") {
         editorWorkspace.replaceChildren(createTraitEditor(entry));
-      } else if (categoryVal === "class" && typeof createClassEditor === "function") {
+      } else if (categoryVal === "class") {
         editorWorkspace.replaceChildren(createClassEditor(entry));
-      } else if (categoryVal === "condition" && typeof createConditionsEditor === "function") {
+      } else if (categoryVal === "condition") {
         editorWorkspace.replaceChildren(createConditionsEditor(entry));
-      } else if (categoryVal === "feat" && typeof createTraitEditor === "function") {
+      } else if (categoryVal === "feat") {
         editorWorkspace.replaceChildren(createTraitEditor(entry));
-      } else if (categoryVal === "item" && typeof createItemEditor === "function") {
+      } else if (categoryVal === "item") {
         editorWorkspace.replaceChildren(createItemEditor(entry));
-      } else if (categoryVal === "spell" && typeof createSpellEditor === "function") {
+      } else if (categoryVal === "spell") {
         editorWorkspace.replaceChildren(createSpellEditor(entry));
-      } else if (categoryVal === "subclass" && typeof createSubclassEditor === "function") {
+      } else if (categoryVal === "subclass") {
         editorWorkspace.replaceChildren(createSubclassEditor(entry));
       }
     }
@@ -403,13 +385,13 @@ var CompendiumEditor = (function () {
 
     // FIXED: Protected inputs listener logic mapping changes safely
     body.addEventListener("input", function () {
-      if (typeof enableSaveButton === "function") enableSaveButton();
+      enableSaveButton();
     });
 
     editor.appendChild(body);
 
-    if (typeof createErrorWrapper === "function") editor.appendChild(createErrorWrapper());
-    if (typeof createEditButtons === "function") editor.appendChild(createEditButtons());
+    editor.appendChild(createErrorWrapper());
+    editor.appendChild(createEditButtons());
 
     return editor;
   }
@@ -460,9 +442,9 @@ var CompendiumEditor = (function () {
           validateResponse.entry,
         );
 
-        if (typeof updateCategorySelect === "function") await updateCategorySelect();
+        await updateCategorySelect();
         if (stdEl.entry) stdEl.entry.setValue(itemId);
-        if (typeof updateEditor === "function") await updateEditor();
+        await updateEditor();
       }
     });
 
@@ -481,9 +463,7 @@ var CompendiumEditor = (function () {
       // FIXED: Removed the fatal Number() cast to allow deletion of alphanumeric UUID store entries successfully
       await StorageHelper.deleteItem(StorageHelper.dbNames.compendiums, gameVal, entryVal);
 
-      if (typeof updateCategorySelect === "function") {
-        await updateCategorySelect();
-      }
+      await updateCategorySelect();
     });
 
     div.appendChild(saveButton);
@@ -546,7 +526,7 @@ var CompendiumEditor = (function () {
 
       const activeCategory = stdEl.category ? stdEl.category.getValue() : "";
 
-      if (activeCategory === "item" && typeof constructItemAbilityData === "function") {
+      if (activeCategory === "item") {
         validateResponse.entry = constructItemAbilityData(validateResponse.entry);
       } else if (activeCategory === "subclass" && validateResponse.entry.className) {
         validateResponse.entry.groupName = `${validateResponse.entry.className} - ${validateResponse.entry.subclassName || "General"}`;
@@ -683,9 +663,7 @@ var CompendiumEditor = (function () {
           }
         }
 
-        if (typeof updateSubmitButton === "function") {
-          await updateSubmitButton();
-        }
+        await updateSubmitButton();
       },
     });
 
@@ -702,9 +680,7 @@ var CompendiumEditor = (function () {
       required: false,
       options: Array.from(games).map((x) => ({ text: x, value: x })),
       changeHandler: async function () {
-        if (typeof updateSubmitButton === "function") {
-          await updateSubmitButton();
-        }
+        await updateSubmitButton();
       },
     });
 
@@ -724,9 +700,7 @@ var CompendiumEditor = (function () {
 
     input.addEventListener("input", async function (event) {
       settings.newCompendium = event.target.value?.trim() || "";
-      if (typeof updateSubmitButton === "function") {
-        await updateSubmitButton();
-      }
+      await updateSubmitButton();
     });
 
     return input;
@@ -746,9 +720,7 @@ var CompendiumEditor = (function () {
     if (innerCheckbox) {
       innerCheckbox.addEventListener("change", async function (event) {
         settings.update = !!event.target.checked;
-        if (typeof updateSubmitButton === "function") {
-          await updateSubmitButton();
-        }
+        await updateSubmitButton();
       });
     }
     return group;
@@ -776,7 +748,8 @@ var CompendiumEditor = (function () {
 
         if (operationType === "delete") {
           await StorageHelper.deleteObjectStore(StorageHelper.dbNames.compendiums, targetedGameStore);
-          if (typeof updateGameSelect === "function") await updateGameSelect();
+          await updateGameSelect();
+          await Compendium.update();
         } else if (operationType === "export") {
           await StorageHelper.exportObjectStore(
             StorageHelper.dbNames.compendiums,
@@ -823,7 +796,8 @@ var CompendiumEditor = (function () {
               settings.update,
             );
 
-            if (typeof updateGameSelect === "function") await updateGameSelect();
+            await updateGameSelect();
+            await Compendium.update();
           } catch (err) {
             if (err.name !== "AbortError") throw err;
           }
@@ -833,7 +807,8 @@ var CompendiumEditor = (function () {
 
           if (targetNewName) {
             await StorageHelper.createObjectStore(StorageHelper.dbNames.compendiums, targetNewName);
-            if (typeof updateGameSelect === "function") await updateGameSelect();
+            await updateGameSelect();
+            await Compendium.update();
           } else {
             throw new Error("Compendium creation failed: name field cannot be evaluated empty.");
           }

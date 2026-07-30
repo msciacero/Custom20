@@ -862,11 +862,14 @@ var Compendium = (function () {
       if (storedData && (await StorageHelper.objectStoreExists(StorageHelper.dbNames.compendiums, storedData))) {
         settings.game = storedData;
       } else {
-        // FIXED: Point to modular tracking backup settings string instead of leaking into window.origin fields
         settings.game = settings.origin;
       }
 
       await createUi();
+    },
+    update: async function update() {
+      await updateCompendiumSelect();
+      await updateCompendium();
     },
   };
 
